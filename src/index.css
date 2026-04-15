@@ -1,1 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+body {
+  font-family: 'Fira Code', 'FiraCode Nerd Font Mono', monospace;
+  background-color: #0a0b14;
+  margin: 0;
+}
