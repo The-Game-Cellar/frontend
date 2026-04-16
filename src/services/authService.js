@@ -5,8 +5,8 @@ const CLIENT_ID = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'game-cellar-client
 const TOKEN_URL = `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`;
 
 /**
- * Exchange username + password for a JWT via Keycloak.
- * Returns the raw access_token string on success.
+ * Exchange username + password for tokens via Keycloak.
+ * Returns { access_token, refresh_token } on success.
  */
 export async function login(username, password) {
   const body = new URLSearchParams({
@@ -28,7 +28,33 @@ export async function login(username, password) {
   }
 
   const data = await res.json();
-  return data.access_token;
+  return { access_token: data.access_token, refresh_token: data.refresh_token };
+}
+
+/**
+ * Exchange a refresh_token for new tokens.
+ * Returns { access_token, refresh_token } on success.
+ * Throws if the refresh_token is expired or invalid.
+ */
+export async function refreshAccessToken(refreshToken) {
+  const body = new URLSearchParams({
+    grant_type: 'refresh_token',
+    client_id: CLIENT_ID,
+    refresh_token: refreshToken,
+  });
+
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+
+  if (!res.ok) {
+    throw new Error('Token refresh failed');
+  }
+
+  const data = await res.json();
+  return { access_token: data.access_token, refresh_token: data.refresh_token };
 }
 
 /**

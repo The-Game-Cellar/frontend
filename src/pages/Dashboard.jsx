@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import GameCard from '../components/common/GameCard';
 
 // Placeholder mock data — replace with API calls when backend is ready
@@ -28,9 +29,9 @@ function SectionHeader({ title, linkText, linkTo }) {
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-lg font-medium text-[#e8e4dc]">{title}</h2>
       {linkText && (
-        <a href={linkTo} className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+        <Link to={linkTo} className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
           {linkText} →
-        </a>
+        </Link>
       )}
     </div>
   );

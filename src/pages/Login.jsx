@@ -18,8 +18,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const token = await keycloakLogin(username, password);
-      login(token);
+      const { access_token, refresh_token } = await keycloakLogin(username, password);
+      login(access_token, refresh_token);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
