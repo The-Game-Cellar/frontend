@@ -59,7 +59,7 @@ export default function Layout() {
       {/* Body */}
       <div className="flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 ml-0 md:ml-56 pt-16 p-4 md:p-6">
+        <main className="flex-1 ml-0 md:ml-56 pt-16 px-4 pb-4 md:px-6 md:pb-6">
           <Outlet />
         </main>
       </div>

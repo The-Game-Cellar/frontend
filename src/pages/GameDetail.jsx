@@ -219,16 +219,26 @@ export default function GameDetail() {
                     {!showRemoveConfirm ? (
                       <button
                         onClick={() => setShowRemoveConfirm(true)}
-                        className="text-xs text-[#4a5068] hover:text-[#ef4444] transition-colors"
+                        className="px-3 py-1.5 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444425] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-all duration-200"
                       >
                         Remove
                       </button>
                     ) : (
-                      <span className="flex items-center gap-2 text-xs">
-                        <span className="text-[#8891a8]">Remove?</span>
-                        <button onClick={handleRemove} className="text-[#ef4444] hover:underline">Yes</button>
-                        <button onClick={() => setShowRemoveConfirm(false)} className="text-[#4a5068] hover:underline">No</button>
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[#8891a8]">Remove from library?</span>
+                        <button
+                          onClick={handleRemove}
+                          className="px-3 py-1.5 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-xs rounded hover:bg-[#ef444425] transition-all duration-200"
+                        >
+                          Remove
+                        </button>
+                        <button
+                          onClick={() => setShowRemoveConfirm(false)}
+                          className="px-3 py-1.5 border border-[#1e2035] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     )}
                   </>
                 )}
