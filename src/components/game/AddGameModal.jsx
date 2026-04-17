@@ -6,7 +6,7 @@ const STATUSES = ['BACKLOG', 'PLAYING', 'COMPLETED', 'WISHLIST', 'DROPPED'];
 
 const statusStyles = {
   PLAYING:   'bg-[#22c55e20] text-[#22c55e] border-[#22c55e40]',
-  BACKLOG:   'bg-[#8891a820] text-[#8891a8] border-[#8891a840]',
+  BACKLOG:   'bg-[#2563eb20] text-[#2563eb] border-[#2563eb40]',
   COMPLETED: 'bg-[#a855f720] text-[#a855f7] border-[#a855f740]',
   DROPPED:   'bg-[#ef444420] text-[#ef4444] border-[#ef444440]',
   WISHLIST:  'bg-[#f59e0b20] text-[#f59e0b] border-[#f59e0b40]',
@@ -85,7 +85,7 @@ export default function AddGameModal({ game, onClose, onAdded }) {
                 className={`text-xs px-2 py-1 rounded border font-medium transition-all duration-150 ${
                   status === s
                     ? statusStyles[s]
-                    : 'bg-transparent border-[#1e2035] text-[#8891a8] hover:border-[#2a2d45] hover:text-[#e8e4dc]'
+                    : 'bg-transparent border-[#2a2d45] text-[#8891a8] hover:border-[#3a3d58] hover:text-[#e8e4dc]'
                 }`}
               >
                 {s}
@@ -101,7 +101,7 @@ export default function AddGameModal({ game, onClose, onAdded }) {
             <select
               value={platform}
               onChange={e => setPlatform(e.target.value)}
-              className="w-full bg-[#0a0b14] border border-[#1e2035] rounded px-3 py-2 text-sm text-[#e8e4dc] focus:border-[#f72585] focus:outline-none transition-colors"
+              className="w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] focus:border-[#f72585] focus:outline-none transition-colors"
             >
               {platforms.map((p, i) => {
                 const name = p.platformName ?? p.platform_name ?? p.name ?? p;
@@ -114,7 +114,7 @@ export default function AddGameModal({ game, onClose, onAdded }) {
               value={platform}
               onChange={e => setPlatform(e.target.value)}
               placeholder="e.g. PC, PlayStation 5"
-              className="w-full bg-[#0a0b14] border border-[#1e2035] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none transition-colors"
+              className="w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none transition-colors"
             />
           )}
         </div>
@@ -140,7 +140,7 @@ export default function AddGameModal({ game, onClose, onAdded }) {
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-[#1e2035] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+            className="px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
           >
             Cancel
           </button>

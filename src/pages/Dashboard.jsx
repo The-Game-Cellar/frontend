@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import GameCard from '../components/common/GameCard';
 import { getDashboard } from '../services/recommendationService';
-import { getBacklog, getForgottenGames } from '../services/libraryService';
+import { getBacklog, getDustyGames } from '../services/libraryService';
 
 
 function SectionHeader({ title, linkText, linkTo }) {
@@ -18,11 +18,37 @@ function SectionHeader({ title, linkText, linkTo }) {
   );
 }
 
+const CARD_WIDTH = 176; // w-44
+const GAP = 12;        // gap-3
+
 function GameScroll({ games, getKey, onClick }) {
+  const ref = useRef(null);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [cardWidth, setCardWidth] = useState(CARD_WIDTH);
+
+  useEffect(() => {
+    const update = () => {
+      if (!ref.current) return;
+      const w = ref.current.offsetWidth;
+      const count = Math.max(1, Math.floor((w + GAP) / (CARD_WIDTH + GAP)));
+      setVisibleCount(count);
+      setCardWidth(Math.floor((w - (count - 1) * GAP) / count));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2">
-      {games.map(game => (
-        <GameCard key={getKey(game)} game={game} onClick={() => onClick(game)} />
+    <div ref={ref} className="flex gap-3">
+      {games.slice(0, visibleCount).map(game => (
+        <GameCard
+          key={getKey(game)}
+          game={game}
+          onClick={() => onClick(game)}
+          style={{ width: cardWidth }}
+        />
       ))}
     </div>
   );
@@ -41,7 +67,7 @@ export default function Dashboard() {
     Promise.allSettled([
       getDashboard(),
       getBacklog(),
-      getForgottenGames(),
+      getDustyGames(),
     ]).then(([dashRes, backlogRes, dustyRes]) => {
       if (dashRes.status === 'fulfilled') {
         const data = dashRes.value.data;
@@ -121,7 +147,7 @@ export default function Dashboard() {
       {/* Dusty games */}
       {dusty.length > 0 && (
         <section>
-          <SectionHeader title="Dusty games" linkText="View all" linkTo="/library" />
+          <SectionHeader title="Dusty games" linkText="View all" linkTo="/library?filter=dusty" />
           <GameScroll
             games={dusty}
             getKey={g => g.id}

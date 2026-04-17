@@ -30,8 +30,8 @@ export const getCompleted = () =>
 export const getStats = () =>
   api.get('/api/v1/library/stats');
 
-export const getForgottenGames = (days = 90) =>
-  api.get('/api/v1/library/forgotten', { params: { days } });
+export const getDustyGames = (days = 90) =>
+  api.get('/api/v1/library/dusty', { params: { days } });
 
 // Platforms (used in onboarding + recommendations)
 export const getUserPlatforms = () =>
