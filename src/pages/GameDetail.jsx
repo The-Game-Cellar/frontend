@@ -9,13 +9,32 @@ import RatingWidget from '../components/game/RatingWidget';
 
 const statusStyles = {
   PLAYING:   'bg-[#22c55e20] text-[#22c55e] border-[#22c55e40]',
-  BACKLOG:   'bg-[#8891a820] text-[#8891a8] border-[#8891a840]',
+  BACKLOG:   'bg-[#2563eb20] text-[#2563eb] border-[#2563eb40]',
   COMPLETED: 'bg-[#a855f720] text-[#a855f7] border-[#a855f740]',
   DROPPED:   'bg-[#ef444420] text-[#ef4444] border-[#ef444440]',
   WISHLIST:  'bg-[#f59e0b20] text-[#f59e0b] border-[#f59e0b40]',
+  DUSTY:     'bg-[#8891a820] text-[#8891a8] border-[#8891a840]',
 };
 
-const ALL_STATUSES = ['PLAYING', 'BACKLOG', 'COMPLETED', 'DROPPED', 'WISHLIST'];
+const statusGlowShadow = {
+  PLAYING:   '0 0 8px #22c55e60',
+  BACKLOG:   '0 0 8px #2563eb60',
+  COMPLETED: '0 0 8px #a855f760',
+  DROPPED:   '0 0 8px #ef444460',
+  WISHLIST:  '0 0 8px #f59e0b60',
+  DUSTY:     '0 0 8px #8891a860',
+};
+
+const statusInsetGlow = {
+  PLAYING:   'inset 0 0 12px #22c55e30',
+  BACKLOG:   'inset 0 0 12px #2563eb30',
+  COMPLETED: 'inset 0 0 12px #a855f730',
+  DROPPED:   'inset 0 0 12px #ef444430',
+  WISHLIST:  'inset 0 0 12px #f59e0b30',
+  DUSTY:     'inset 0 0 12px #8891a830',
+};
+
+const ALL_STATUSES = ['PLAYING', 'BACKLOG', 'WISHLIST', 'COMPLETED', 'DROPPED'];
 
 function stripHtml(html) {
   if (!html) return '';
@@ -41,6 +60,7 @@ export default function GameDetail() {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const fetchLibraryEntry = () =>
     getUserGames()
@@ -142,27 +162,29 @@ export default function GameDetail() {
 
       <div className="space-y-8">
         {/* Hero */}
-        <div className="relative rounded-lg overflow-hidden bg-[#111220] border border-[#1e2035]">
-          {/* Blurred bg */}
+        <div className="relative rounded-lg bg-[#111220] border border-[#1e2035]">
+          {/* Blurred bg — clipped inside its own wrapper so absolute children aren't affected */}
           {game.backgroundImage && (
-            <div
-              className="absolute inset-0 bg-cover bg-center scale-110 opacity-15 blur-sm"
-              style={{ backgroundImage: `url(${game.backgroundImage})` }}
-            />
+            <div className="absolute inset-0 rounded-lg overflow-hidden">
+              <div
+                className="absolute inset-0 bg-cover bg-center scale-110 opacity-15 blur-sm"
+                style={{ backgroundImage: `url(${game.backgroundImage})` }}
+              />
+            </div>
           )}
 
           <div className="relative flex flex-col-reverse md:grid md:grid-cols-3 gap-8 p-6">
             {/* Info — below cover on mobile, left 2/3 on desktop */}
-            <div className="md:col-span-2 space-y-5">
+            <div className="md:col-span-2 flex flex-col gap-5">
               {/* Title + meta */}
               <div className="space-y-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">{game.name}</h1>
                 <div className="flex flex-wrap items-center gap-2">
                   {game.rating != null && (
-                    <span className="text-xs text-[#8891a8]">★ {Number(game.rating).toFixed(1)}</span>
+                    <span className="text-xs text-[#f59e0b] [text-shadow:0_0_6px_#f59e0b60]">★ {Number(game.rating).toFixed(1)}</span>
                   )}
                   {game.genres?.map(g => (
-                    <span key={g} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#2a2d45]">
+                    <span key={g} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
                       {g}
                     </span>
                   ))}
@@ -170,14 +192,14 @@ export default function GameDetail() {
                 {game.platforms?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {game.platforms.map(p => (
-                      <span key={p} className="text-xs text-[#4a5068]">{p}</span>
+                      <span key={p} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">{p}</span>
                     ))}
                   </div>
                 )}
               </div>
 
               {/* Library actions */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="relative z-30 flex flex-wrap items-center gap-3">
                 {!libraryEntry ? (
                   <button
                     onClick={() => setShowModal(true)}
@@ -187,26 +209,28 @@ export default function GameDetail() {
                   </button>
                 ) : (
                   <>
-                    <span className={`text-xs px-2 py-0.5 rounded border font-medium ${statusStyles[libraryEntry.status]}`}>
-                      {libraryEntry.status}
-                    </span>
-
-                    {/* Change status dropdown */}
+                    {/* Status badge — dropdown opens below */}
                     <div className="relative z-20">
                       <button
                         onClick={() => setShowStatusMenu(v => !v)}
-                        className="px-3 py-1.5 border border-[#1e2035] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+                        disabled={updating}
+                        className={`text-xs px-2 py-0.5 rounded border font-medium transition-all duration-200 disabled:opacity-40 ${statusStyles[libraryEntry.status]}`}
+                        onMouseEnter={e => { e.currentTarget.style.boxShadow = statusGlowShadow[libraryEntry.status]; }}
+                        onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; }}
                       >
-                        Change Status ▾
+                        {libraryEntry.status} ▾
                       </button>
+
                       {showStatusMenu && (
-                        <div className="absolute top-full left-0 mt-1 bg-[#111220] border border-[#1e2035] rounded shadow-xl min-w-[140px]">
+                        <div className="absolute top-full left-0 mt-1 flex flex-col gap-1 z-20">
                           {ALL_STATUSES.filter(s => s !== libraryEntry.status).map(s => (
                             <button
                               key={s}
                               onClick={() => handleStatusChange(s)}
                               disabled={updating}
-                              className="w-full text-left px-3 py-2 text-xs text-[#8891a8] hover:text-[#e8e4dc] hover:bg-[#181a2e] transition-colors disabled:opacity-40"
+                              className={`text-xs px-2 py-0.5 rounded border font-medium transition-all duration-200 disabled:opacity-40 ${statusStyles[s]}`}
+                              onMouseEnter={e => { e.currentTarget.style.boxShadow = statusGlowShadow[s]; }}
+                              onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; }}
                             >
                               {s}
                             </button>
@@ -234,7 +258,7 @@ export default function GameDetail() {
                         </button>
                         <button
                           onClick={() => setShowRemoveConfirm(false)}
-                          className="px-3 py-1.5 border border-[#1e2035] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+                          className="px-3 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
                         >
                           Cancel
                         </button>
@@ -246,8 +270,8 @@ export default function GameDetail() {
 
               {/* Rating */}
               {showRating && (
-                <div className="space-y-1.5">
-                  <p className="text-xs text-[#4a5068] uppercase tracking-wider">Your Rating</p>
+                <div className="mt-auto space-y-1.5">
+                  <p className="text-xs text-[#8891a8] uppercase tracking-wider">Your Rating</p>
                   <RatingWidget value={libraryEntry.rating} onChange={handleRatingChange} />
                 </div>
               )}
@@ -270,11 +294,25 @@ export default function GameDetail() {
           </div>
         </div>
 
-        {/* Description */}
+        {/* About */}
         {description && (
-          <section className="space-y-2">
+          <section
+            onClick={() => description.length > 300 && setDescExpanded(v => !v)}
+            className={`bg-[#111220] border rounded-lg p-5 space-y-3 max-w-3xl transition-all duration-200 ${
+              description.length > 300 ? 'cursor-pointer' : ''
+            } ${
+              descExpanded
+                ? 'border-[#f72585] [box-shadow:0_0_15px_#f7258530]'
+                : 'border-[#1e2035] hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530]'
+            }`}
+          >
             <h2 className="text-lg font-medium text-[#e8e4dc]">About</h2>
-            <p className="text-sm text-[#8891a8] leading-relaxed max-w-3xl">{description}</p>
+            <p className={descExpanded
+              ? 'text-sm text-[#8891a8] leading-relaxed'
+              : 'text-sm text-[#8891a8] leading-relaxed line-clamp-4'
+            }>
+              {description}
+            </p>
           </section>
         )}
 

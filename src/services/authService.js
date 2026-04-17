@@ -30,6 +30,7 @@ export async function login(username, password) {
   const body = new URLSearchParams({
     grant_type: 'password',
     client_id: CLIENT_ID,
+    scope: 'openid',
     username,
     password,
   });
@@ -46,7 +47,7 @@ export async function login(username, password) {
   }
 
   const data = await res.json();
-  return { access_token: data.access_token, refresh_token: data.refresh_token };
+  return { access_token: data.access_token, refresh_token: data.refresh_token, id_token: data.id_token };
 }
 
 /**
@@ -72,7 +73,7 @@ export async function refreshAccessToken(refreshToken) {
   }
 
   const data = await res.json();
-  return { access_token: data.access_token, refresh_token: data.refresh_token };
+  return { access_token: data.access_token, refresh_token: data.refresh_token, id_token: data.id_token };
 }
 
 /**
@@ -123,15 +124,17 @@ export async function exchangeAuthorizationCode(code) {
   }
 
   const data = await res.json();
-  return { access_token: data.access_token, refresh_token: data.refresh_token };
+  return { access_token: data.access_token, refresh_token: data.refresh_token, id_token: data.id_token };
 }
 
 /**
  * Log out from Keycloak and redirect back to /login.
+ * Requires id_token_hint so Keycloak skips its own confirmation dialog.
  */
-export function keycloakLogout() {
-  const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
+export function keycloakLogout(idToken) {
+  const postLogoutUri = encodeURIComponent(`${window.location.origin}/login`);
   window.location.href =
     `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/logout` +
-    `?redirect_uri=${redirectUri}`;
+    `?post_logout_redirect_uri=${postLogoutUri}` +
+    `&id_token_hint=${idToken}`;
 }

@@ -2,10 +2,20 @@ import { useNavigate } from 'react-router-dom';
 
 const statusStyles = {
   PLAYING:   'bg-[#22c55e20] text-[#22c55e] border-[#22c55e40]',
-  BACKLOG:   'bg-[#8891a820] text-[#8891a8] border-[#8891a840]',
+  BACKLOG:   'bg-[#2563eb20] text-[#2563eb] border-[#2563eb40]',
   COMPLETED: 'bg-[#a855f720] text-[#a855f7] border-[#a855f740]',
   DROPPED:   'bg-[#ef444420] text-[#ef4444] border-[#ef444440]',
   WISHLIST:  'bg-[#f59e0b20] text-[#f59e0b] border-[#f59e0b40]',
+  DUSTY:     'bg-[#8891a820] text-[#8891a8] border-[#8891a840]',
+};
+
+const rowHoverStyles = {
+  PLAYING:   'hover:border-[#22c55e] hover:[box-shadow:0_0_15px_#22c55e30]',
+  BACKLOG:   'hover:border-[#2563eb] hover:[box-shadow:0_0_15px_#2563eb30]',
+  COMPLETED: 'hover:border-[#a855f7] hover:[box-shadow:0_0_15px_#a855f730]',
+  DROPPED:   'hover:border-[#ef4444] hover:[box-shadow:0_0_15px_#ef444430]',
+  WISHLIST:  'hover:border-[#f59e0b] hover:[box-shadow:0_0_15px_#f59e0b30]',
+  DUSTY:     'hover:border-[#8891a8] hover:[box-shadow:0_0_15px_#8891a830]',
 };
 
 export default function GameListItem({ entry, onRemove }) {
@@ -21,7 +31,7 @@ export default function GameListItem({ entry, onRemove }) {
 
   return (
     <div
-      className="bg-[#111220] border border-[#1e2035] rounded-lg flex items-center gap-4 px-4 py-3 hover:border-[#2a2d45] hover:bg-[#141525] transition-all duration-150 cursor-pointer"
+      className={`bg-[#111220] border border-[#2a2d45] rounded-lg flex items-center gap-4 px-4 py-3 transition-all duration-150 cursor-pointer ${rowHoverStyles[entry.status] ?? 'hover:border-[#3a3d58]'}`}
       onClick={() => navigate(`/games/${entry.rawgGameId}`)}
     >
       {/* Thumbnail */}
@@ -42,7 +52,7 @@ export default function GameListItem({ entry, onRemove }) {
 
       {/* Name + meta */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[#e8e4dc] truncate">{entry.gameName}</p>
+        <p className="text-sm text-[#e8e4dc] truncate" title={entry.gameName}>{entry.gameName}</p>
         <div className="flex items-center gap-3 mt-0.5">
           {entry.platform && (
             <span className="text-xs text-[#4a5068]">{entry.platform}</span>

@@ -5,12 +5,13 @@ import useAuth from '../../hooks/useAuth';
 import { keycloakLogout } from '../../services/authService';
 
 export default function Layout() {
-  const { logout } = useAuth();
+  const { logout, idToken } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function handleLogout() {
     logout();
-    keycloakLogout();
+    keycloakLogout(idToken);
   }
 
   return (
@@ -37,12 +38,12 @@ export default function Layout() {
         {/* Search — hidden on small screens */}
         <input
           placeholder="Search games..."
-          className="hidden sm:block bg-[#111220] border border-[#1e2035] rounded px-3 py-1.5 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none w-48 md:w-64 transition-colors"
+          className="hidden sm:block bg-[#111220] border border-[#1e2035] rounded px-3 py-1.5 text-sm text-[#e8e4dc] placeholder:text-[#8891a8] focus:border-[#f72585] focus:outline-none w-48 md:w-64 transition-colors"
         />
 
         <button
-          onClick={handleLogout}
-          className="text-xs text-[#4a5068] hover:text-[#8891a8] transition-colors"
+          onClick={() => setConfirmOpen(true)}
+          className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors"
         >
           Sign out
         </button>
@@ -59,10 +60,42 @@ export default function Layout() {
       {/* Body */}
       <div className="flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 ml-0 md:ml-56 pt-16 px-4 pb-4 md:px-6 md:pb-6">
+        <main className="flex-1 min-w-0 ml-0 md:ml-56 pt-24 px-4 pb-8 md:px-8 md:pb-10">
           <Outlet />
         </main>
       </div>
+
+      {/* Logout confirm modal */}
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center"
+          onClick={() => setConfirmOpen(false)}
+        >
+          <div
+            className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-[#e8e4dc]">Sign out?</p>
+              <p className="text-xs text-[#4a5068]">You will be returned to the login page.</p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-1.5 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-all duration-200"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

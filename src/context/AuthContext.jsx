@@ -20,6 +20,7 @@ export const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [idToken, setIdToken] = useState(() => localStorage.getItem('idToken'));
   const [user, setUser] = useState(null);
   const refreshTimerRef = useRef(null);
 
@@ -79,13 +80,19 @@ export default function AuthProvider({ children }) {
   function clearAll() {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('idToken');
     setToken(null);
+    setIdToken(null);
     setUser(null);
   }
 
-  const login = useCallback((accessToken, refreshToken) => {
+  const login = useCallback((accessToken, refreshToken, newIdToken) => {
     localStorage.setItem('token', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
+    if (newIdToken) {
+      localStorage.setItem('idToken', newIdToken);
+      setIdToken(newIdToken);
+    }
     setToken(accessToken);
   }, []);
 
@@ -97,6 +104,7 @@ export default function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         token,
+        idToken,
         isAuthenticated: !!user,
         userId: user?.userId ?? null,
         email: user?.email ?? null,
