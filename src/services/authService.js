@@ -4,6 +4,24 @@ const CLIENT_ID = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'game-cellar-client
 
 const TOKEN_URL = `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`;
 
+function generateCodeVerifier() {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+async function generateCodeChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
 /**
  * Exchange username + password for tokens via Keycloak.
  * Returns { access_token, refresh_token } on success.
@@ -58,23 +76,54 @@ export async function refreshAccessToken(refreshToken) {
 }
 
 /**
- * Redirect to Keycloak's own registration page.
- * After registration Keycloak redirects back to /onboarding.
- *
- * TODO: Registration dead-end — needs OAuth callback implementation before shipping.
- * Problem: Keycloak returns to /onboarding with ?code=xyz but no code-exchange
- * handler exists. Onboarding then calls addPlatform() which requires a bearer
- * token → all calls fail with 401 and the registration journey dead-ends.
- * Fix: Add a /callback route (or handle in Onboarding) that exchanges the
- * authorization code for tokens via POST /token?grant_type=authorization_code,
- * stores the access_token in AuthContext, then proceeds to onboarding.
- * Alternative: redirect back to /login after registration instead of /onboarding.
+ * Redirect to Keycloak's registration page using PKCE authorization code flow.
+ * After registration Keycloak redirects to /callback which exchanges the code
+ * for tokens and then proceeds to /onboarding.
  */
-export function redirectToRegister() {
-  const redirectUri = encodeURIComponent(`${window.location.origin}/onboarding`);
+export async function redirectToRegister() {
+  const verifier = generateCodeVerifier();
+  const challenge = await generateCodeChallenge(verifier);
+  sessionStorage.setItem('pkce_verifier', verifier);
+
+  const redirectUri = encodeURIComponent(`${window.location.origin}/callback`);
   window.location.href =
     `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/registrations` +
-    `?client_id=${CLIENT_ID}&response_type=code&scope=openid&redirect_uri=${redirectUri}`;
+    `?client_id=${CLIENT_ID}&response_type=code&scope=openid` +
+    `&redirect_uri=${redirectUri}` +
+    `&code_challenge=${challenge}&code_challenge_method=S256`;
+}
+
+/**
+ * Exchange an authorization code for tokens.
+ * Reads the PKCE verifier from sessionStorage (set by redirectToRegister).
+ * Returns { access_token, refresh_token } on success.
+ */
+export async function exchangeAuthorizationCode(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  sessionStorage.removeItem('pkce_verifier');
+
+  const redirectUri = `${window.location.origin}/callback`;
+  const body = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: CLIENT_ID,
+    code,
+    redirect_uri: redirectUri,
+    ...(verifier ? { code_verifier: verifier } : {}),
+  });
+
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error_description || 'Authorization code exchange failed');
+  }
+
+  const data = await res.json();
+  return { access_token: data.access_token, refresh_token: data.refresh_token };
 }
 
 /**

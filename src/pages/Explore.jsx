@@ -35,11 +35,11 @@ export default function Explore() {
   // Load dropdown options once
   useEffect(() => {
     getGenres().then(res => {
-      const data = Array.isArray(res.data) ? res.data : [];
+      const data = Array.isArray(res.data?.genres) ? res.data.genres : [];
       setGenres(data);
     }).catch(() => {});
     getPlatforms().then(res => {
-      const data = Array.isArray(res.data) ? res.data : [];
+      const data = Array.isArray(res.data?.platforms) ? res.data.platforms : [];
       setPlatforms(data);
     }).catch(() => {});
   }, []);

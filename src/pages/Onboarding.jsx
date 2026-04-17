@@ -31,25 +31,25 @@ export default function Onboarding() {
     setLoading(true);
     setError(null);
 
-    try {
-      // TODO: Non-idempotent — partial failure leaves inconsistent platform state.
-      // If some POSTs succeed and one fails, retrying replays all requests and can
-      // create duplicate platform rows (no upsert guarantee on backend).
-      // Fix option 1 (preferred): replace with a single batch endpoint that accepts
-      // all platforms in one request with server-side upsert semantics.
-      // Fix option 2: use Promise.allSettled + retry only failed items, and add a
-      // UNIQUE constraint on (user_id, platform_name) in library_db.
-      await Promise.all(
-        selectedPlatforms.map((platform) =>
-          addPlatform({ platformName: platform, isPrimary: false })
-        )
-      );
-      navigate('/dashboard');
-    } catch {
-      setError('Failed to save platforms. Please try again.');
-    } finally {
+    const results = await Promise.allSettled(
+      selectedPlatforms.map((platform) =>
+        addPlatform({ platformName: platform, isPrimary: false })
+      )
+    );
+
+    const failed = results
+      .map((r, i) => (r.status === 'rejected' ? selectedPlatforms[i] : null))
+      .filter(Boolean);
+
+    if (failed.length > 0) {
+      setSelectedPlatforms(failed);
+      setError(`Failed to save ${failed.length} platform(s). Please try again.`);
       setLoading(false);
+      return;
     }
+
+    setLoading(false);
+    navigate('/dashboard');
   }
 
   return (
