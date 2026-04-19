@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getUserGames, removeGame, getDustyGames, getUserPlatforms } from '../services/libraryService';
+import { getUserGames, removeGame, getUserPlatforms, getLibraryGenres } from '../services/libraryService';
 import GameListItem from '../components/library/GameListItem';
 
 const STATUS_TABS = ['All', 'PLAYING', 'BACKLOG', 'WISHLIST', 'DUSTY', 'COMPLETED', 'DROPPED'];
@@ -39,16 +39,18 @@ const emptyMessages = {
 
 export default function Library() {
   const [searchParams] = useSearchParams();
-  const isDustyParam = searchParams.get('filter') === 'dusty';
-  const initialStatus = isDustyParam ? 'DUSTY' : (STATUS_TABS.includes(searchParams.get('status')) ? searchParams.get('status') : 'All');
+  const initialStatus = searchParams.get('filter') === 'dusty'
+    ? 'DUSTY'
+    : (STATUS_TABS.includes(searchParams.get('status')) ? searchParams.get('status') : 'All');
 
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeStatus, setActiveStatus] = useState(initialStatus);
-  const [isDustyView, setIsDustyView] = useState(isDustyParam);
   const [activePlatform, setActivePlatform] = useState('');
   const [platforms, setPlatforms] = useState([]);
+  const [activeGenre, setActiveGenre] = useState('');
+  const [genres, setGenres] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const debounceRef = useRef(null);
@@ -60,31 +62,28 @@ export default function Library() {
         setPlatforms(data.map(p => p.platformName ?? p));
       })
       .catch(() => {});
+    getLibraryGenres()
+      .then(res => setGenres(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
   }, []);
 
-  const fetchGames = useCallback((status, query, dusty, platform) => {
+  const fetchGames = useCallback((status, query, platform, genre) => {
     setLoading(true);
     setError(null);
-    if (dusty) {
-      getDustyGames()
-        .then(res => setGames(Array.isArray(res.data) ? res.data : []))
-        .catch(() => setError('Failed to load dusty games.'))
-        .finally(() => setLoading(false));
-    } else {
-      const params = {};
-      if (status !== 'All') params.status = status;
-      if (query) params.search = query;
-      if (platform) params.platform = platform;
-      getUserGames(params)
-        .then(res => setGames(Array.isArray(res.data) ? res.data : []))
-        .catch(() => setError('Failed to load library.'))
-        .finally(() => setLoading(false));
-    }
+    const params = {};
+    if (status !== 'All') params.status = status;
+    if (query) params.search = query;
+    if (platform) params.platform = platform;
+    if (genre) params.genre = genre;
+    getUserGames(params)
+      .then(res => setGames(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setError('Failed to load library.'))
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    fetchGames(activeStatus, searchQuery, isDustyView, activePlatform);
-  }, [activeStatus, searchQuery, fetchGames, isDustyView, activePlatform]);
+    fetchGames(activeStatus, searchQuery, activePlatform, activeGenre);
+  }, [activeStatus, searchQuery, fetchGames, activePlatform, activeGenre]);
 
   const handleSearchChange = e => {
     const val = e.target.value;
@@ -94,7 +93,6 @@ export default function Library() {
   };
 
   const handleStatusChange = tab => {
-    setIsDustyView(tab === 'DUSTY');
     setActiveStatus(tab);
   };
 
@@ -138,7 +136,7 @@ export default function Library() {
           ))}
         </div>
 
-        {/* Search + platform */}
+        {/* Search + platform + genre */}
         <div className="flex flex-wrap gap-3">
           <input
             type="text"
@@ -156,6 +154,17 @@ export default function Library() {
             <option value="">Platforms</option>
             {platforms.map(p => (
               <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+          <select
+            value={activeGenre}
+            onChange={e => setActiveGenre(e.target.value)}
+            disabled={genres.length === 0}
+            className="bg-[#111220] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] focus:border-[#f72585] focus:outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <option value="">Genres</option>
+            {genres.map(g => (
+              <option key={g} value={g}>{g}</option>
             ))}
           </select>
         </div>
