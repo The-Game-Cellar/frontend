@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import useAuth from '../../hooks/useAuth';
-import { keycloakLogout } from '../../services/authService';
 
 export default function Layout() {
-  const { logout, idToken } = useAuth();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  function handleLogout() {
-    logout();
-    keycloakLogout(idToken);
+  async function handleLogout() {
+    await logout();
+    navigate('/login');
   }
 
   return (
