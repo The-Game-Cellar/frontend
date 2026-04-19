@@ -24,8 +24,8 @@ export default function Callback() {
     }
 
     exchangeAuthorizationCode(code)
-      .then(({ access_token, refresh_token, id_token }) => {
-        login(access_token, refresh_token, id_token);
+      .then((userInfo) => {
+        login(userInfo);
         navigate('/onboarding', { replace: true });
       })
       .catch((err) => setError(err.message));

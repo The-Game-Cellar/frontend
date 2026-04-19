@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
-import { keycloakLogout } from '../services/authService';
 import { getStats, getUserPlatforms, addPlatform } from '../services/libraryService';
 
 const ALL_PLATFORMS = [
@@ -18,16 +17,16 @@ const STATUSES = [
 ];
 
 export default function Profile() {
-  const { email, idToken, logout } = useAuth();
+  const { email, logout } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [platforms, setPlatforms] = useState([]);
   const [adding, setAdding] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  function handleLogout() {
-    logout();
-    keycloakLogout(idToken);
+  async function handleLogout() {
+    await logout();
+    navigate('/login');
   }
 
   useEffect(() => {

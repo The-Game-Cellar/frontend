@@ -1,16 +1,12 @@
-import { createContext, useState, useEffect, useCallback, useRef } from 'react';
-import { refreshAccessToken } from '../services/authService';
+import { createContext, useState, useCallback } from 'react';
+import { logout as logoutApi } from '../services/authService';
 
-function parseJwt(token) {
+function readUserInfoCookie() {
+  const match = document.cookie.split(';').find(c => c.trim().startsWith('user_info='));
+  if (!match) return null;
   try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(json);
+    const encoded = match.substring(match.indexOf('=') + 1).trim();
+    return JSON.parse(atob(encoded));
   } catch {
     return null;
   }
@@ -19,99 +15,36 @@ function parseJwt(token) {
 export const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
-  const [idToken, setIdToken] = useState(() => localStorage.getItem('idToken'));
-  const [user, setUser] = useState(null);
-  const refreshTimerRef = useRef(null);
+  const [user, setUser] = useState(() => {
+    const info = readUserInfoCookie();
+    return info ? { userId: info.userId, email: info.email, roles: info.roles ?? [] } : null;
+  });
 
-  // Parse user from token and schedule proactive refresh
-  useEffect(() => {
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-      refreshTimerRef.current = null;
-    }
-
-    if (!token) {
-      setUser(null);
-      return;
-    }
-
-    const parsed = parseJwt(token);
-
-    if (!parsed || parsed.exp * 1000 <= Date.now()) {
-      // Already expired — try refresh immediately
-      doRefresh();
-      return;
-    }
-
+  const login = useCallback((userInfo) => {
     setUser({
-      userId: parsed.sub,
-      email: parsed.email ?? parsed.preferred_username ?? null,
-      roles: parsed.realm_access?.roles ?? [],
+      userId: userInfo.userId,
+      email: userInfo.email,
+      roles: userInfo.roles ?? [],
     });
-
-    // Schedule a proactive refresh 60 seconds before expiry
-    const msUntilRefresh = parsed.exp * 1000 - Date.now() - 60_000;
-    if (msUntilRefresh > 0) {
-      refreshTimerRef.current = setTimeout(doRefresh, msUntilRefresh);
-    } else {
-      // Less than 60 s left — refresh now
-      doRefresh();
-    }
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const doRefresh = useCallback(async () => {
-    const storedRefresh = localStorage.getItem('refreshToken');
-    if (!storedRefresh) {
-      clearAll();
-      return;
-    }
-    try {
-      const { access_token, refresh_token } = await refreshAccessToken(storedRefresh);
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('refreshToken', refresh_token);
-      setToken(access_token);
-    } catch {
-      // Refresh token expired — force logout
-      clearAll();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function clearAll() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('idToken');
-    setToken(null);
-    setIdToken(null);
-    setUser(null);
-  }
-
-  const login = useCallback((accessToken, refreshToken, newIdToken) => {
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    if (newIdToken) {
-      localStorage.setItem('idToken', newIdToken);
-      setIdToken(newIdToken);
-    }
-    setToken(accessToken);
   }, []);
 
-  const logout = useCallback(() => {
-    clearAll();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const logout = useCallback(async () => {
+    try {
+      await logoutApi();
+    } finally {
+      setUser(null);
+    }
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
-        token,
-        idToken,
         isAuthenticated: !!user,
         userId: user?.userId ?? null,
         email: user?.email ?? null,
         roles: user?.roles ?? [],
         login,
         logout,
-        doRefresh,
       }}
     >
       {children}
