@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const statusStyles = {
@@ -20,6 +21,7 @@ const rowHoverStyles = {
 
 export default function GameListItem({ entry, onRemove }) {
   const navigate = useNavigate();
+  const [confirming, setConfirming] = useState(false);
 
   const dateAdded = entry.dateAdded
     ? new Date(entry.dateAdded).toLocaleDateString('en-SE', {
@@ -32,7 +34,7 @@ export default function GameListItem({ entry, onRemove }) {
   return (
     <div
       className={`bg-[#111220] border border-[#2a2d45] rounded-lg flex items-center gap-4 px-4 py-3 transition-all duration-150 cursor-pointer ${rowHoverStyles[entry.status] ?? 'hover:border-[#3a3d58]'}`}
-      onClick={() => navigate(`/games/${entry.rawgGameId}`)}
+      onClick={() => { if (!confirming) navigate(`/games/${entry.rawgGameId}`); }}
     >
       {/* Thumbnail */}
       <div className="w-8 flex-shrink-0 aspect-[3/4] bg-[#1e2035] rounded overflow-hidden">
@@ -78,15 +80,35 @@ export default function GameListItem({ entry, onRemove }) {
         {entry.status}
       </span>
 
-      {/* Remove button */}
-      <button
-        type="button"
-        onClick={e => { e.stopPropagation(); onRemove(entry.id); }}
-        className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-[#4a5068] hover:text-[#ef4444] transition-colors text-xl leading-none"
-        title="Remove from library"
-      >
-        ×
-      </button>
+      {/* Remove / confirm */}
+      {confirming ? (
+        <div className="flex-shrink-0 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+          <span className="text-xs text-[#8891a8]">Remove?</span>
+          <button
+            type="button"
+            onClick={() => onRemove(entry.id)}
+            className="text-xs px-2 py-0.5 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="text-xs px-2 py-0.5 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
+          >
+            No
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); setConfirming(true); }}
+          className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-[#4a5068] hover:text-[#ef4444] transition-colors text-xl leading-none"
+          title="Remove from library"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }
