@@ -48,7 +48,7 @@ function stripHtml(html) {
 }
 
 export default function GameDetail() {
-  const { rawgId } = useParams();
+  const { igdbId } = useParams();
   const navigate = useNavigate();
 
   const [game, setGame] = useState(null);
@@ -66,7 +66,7 @@ export default function GameDetail() {
     getUserGames()
       .then(res => {
         const entries = Array.isArray(res.data) ? res.data : [];
-        const match = entries.find(e => String(e.rawgGameId) === String(rawgId));
+        const match = entries.find(e => String(e.igdbGameId) === String(igdbId));
         setLibraryEntry(match ?? null);
       })
       .catch(() => {});
@@ -76,20 +76,20 @@ export default function GameDetail() {
     setError(null);
 
     Promise.all([
-      getGameById(rawgId),
+      getGameById(igdbId),
       getUserGames(),
-      getSimilar(rawgId, 8),
+      getSimilar(igdbId, 8),
     ])
       .then(([gameRes, libraryRes, similarRes]) => {
         setGame(gameRes.data);
         const entries = Array.isArray(libraryRes.data) ? libraryRes.data : [];
-        const match = entries.find(e => String(e.rawgGameId) === String(rawgId));
+        const match = entries.find(e => String(e.igdbGameId) === String(igdbId));
         setLibraryEntry(match ?? null);
         setSimilar(Array.isArray(similarRes.data) ? similarRes.data : []);
       })
       .catch(() => setError('Failed to load game.'))
       .finally(() => setLoading(false));
-  }, [rawgId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [igdbId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStatusChange = async newStatus => {
     if (!libraryEntry) return;
@@ -323,9 +323,9 @@ export default function GameDetail() {
             <div className="flex gap-3 overflow-x-auto pb-2">
               {similar.map(g => (
                 <GameCard
-                  key={g.rawgId}
+                  key={g.igdbId}
                   game={g}
-                  onClick={() => navigate(`/games/${g.rawgId}`)}
+                  onClick={() => navigate(`/games/${g.igdbId}`)}
                 />
               ))}
             </div>

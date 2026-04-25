@@ -102,20 +102,20 @@ export default function Dashboard() {
         ) : (
           <GameScroll
             games={recommendations}
-            getKey={g => g.rawgId}
-            onClick={g => navigate(`/games/${g.rawgId}`)}
+            getKey={g => g.igdbId}
+            onClick={g => navigate(`/games/${g.igdbId}`)}
           />
         )}
       </section>
 
       {/* Because you liked... */}
       {becauseYouLiked.map(section => (
-        <section key={section.basedOnRawgId}>
+        <section key={section.basedOnIgdbId}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-[#e8e4dc]">
               Because you liked{' '}
               <Link
-                to={`/games/${section.basedOnRawgId}`}
+                to={`/games/${section.basedOnIgdbId}`}
                 className="text-[#f72585] [text-shadow:0_0_8px_#f72585] hover:underline"
               >
                 {section.basedOnGame}
@@ -124,8 +124,8 @@ export default function Dashboard() {
           </div>
           <GameScroll
             games={section.recommendations}
-            getKey={g => g.rawgId}
-            onClick={g => navigate(`/games/${g.rawgId}`)}
+            getKey={g => g.igdbId}
+            onClick={g => navigate(`/games/${g.igdbId}`)}
           />
         </section>
       ))}
@@ -139,7 +139,7 @@ export default function Dashboard() {
           <GameScroll
             games={backlog}
             getKey={g => g.id}
-            onClick={g => navigate(`/games/${g.rawgGameId}`)}
+            onClick={g => navigate(`/games/${g.igdbGameId}`)}
           />
         )}
       </section>
@@ -151,7 +151,7 @@ export default function Dashboard() {
           <GameScroll
             games={dusty}
             getKey={g => g.id}
-            onClick={g => navigate(`/games/${g.rawgGameId}`)}
+            onClick={g => navigate(`/games/${g.igdbGameId}`)}
           />
         </section>
       )}
@@ -162,8 +162,8 @@ export default function Dashboard() {
           <SectionHeader title="Wild Card" linkText="More →" linkTo="/wildcard" />
           <GameScroll
             games={wildcard}
-            getKey={g => g.rawgId}
-            onClick={g => navigate(`/games/${g.rawgId}`)}
+            getKey={g => g.igdbId}
+            onClick={g => navigate(`/games/${g.igdbId}`)}
           />
         </section>
       )}

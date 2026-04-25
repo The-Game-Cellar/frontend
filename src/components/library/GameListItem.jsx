@@ -34,7 +34,7 @@ export default function GameListItem({ entry, onRemove }) {
   return (
     <div
       className={`bg-[#111220] border border-[#2a2d45] rounded-lg flex items-center gap-4 px-4 py-3 transition-all duration-150 cursor-pointer ${rowHoverStyles[entry.status] ?? 'hover:border-[#3a3d58]'}`}
-      onClick={() => { if (!confirming) navigate(`/games/${entry.rawgGameId}`); }}
+      onClick={() => { if (!confirming) navigate(`/games/${entry.igdbGameId}`); }}
     >
       {/* Thumbnail */}
       <div className="w-8 flex-shrink-0 aspect-[3/4] bg-[#1e2035] rounded overflow-hidden">
