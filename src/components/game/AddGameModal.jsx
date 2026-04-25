@@ -41,7 +41,7 @@ export default function AddGameModal({ game, onClose, onAdded }) {
     setError(null);
     try {
       await addGame({
-        rawgGameId: game.rawgId,
+        igdbGameId: game.igdbId,
         gameName: game.name,
         status,
         platform,

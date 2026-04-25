@@ -56,9 +56,9 @@ export default function WildCard() {
         <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4">
           {games.map(game => (
             <GameCard
-              key={game.rawgId}
+              key={game.igdbId}
               game={game}
-              onClick={() => navigate(`/games/${game.rawgId}`)}
+              onClick={() => navigate(`/games/${game.igdbId}`)}
             />
           ))}
         </div>

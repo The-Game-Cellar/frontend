@@ -60,8 +60,8 @@ export default function Recommendations() {
       .then(res => {
         const incoming = Array.isArray(res.data) ? res.data : [];
         setGames(prev => {
-          const seen = new Set(prev.map(g => g.rawgId));
-          const fresh = incoming.filter(g => !seen.has(g.rawgId));
+          const seen = new Set(prev.map(g => g.igdbId));
+          const fresh = incoming.filter(g => !seen.has(g.igdbId));
           return [...prev, ...fresh];
         });
       })
@@ -103,9 +103,9 @@ export default function Recommendations() {
         <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4">
           {paged.map(game => (
             <GameCard
-              key={game.rawgId}
+              key={game.igdbId}
               game={game}
-              onClick={() => navigate(`/games/${game.rawgId}`)}
+              onClick={() => navigate(`/games/${game.igdbId}`)}
             />
           ))}
         </div>

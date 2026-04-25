@@ -35,12 +35,6 @@ export default function Layout() {
           </span>
         </div>
 
-        {/* Search — hidden on small screens */}
-        <input
-          placeholder="Search games..."
-          className="hidden sm:block bg-[#111220] border border-[#1e2035] rounded px-3 py-1.5 text-sm text-[#e8e4dc] placeholder:text-[#8891a8] focus:border-[#f72585] focus:outline-none w-48 md:w-64 transition-colors"
-        />
-
         <button
           onClick={() => setConfirmOpen(true)}
           className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors"

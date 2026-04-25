@@ -36,7 +36,7 @@ export default function App() {
               <Route path="/explore" element={<Explore />} />
               <Route path="/wildcard" element={<WildCard />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/games/:rawgId" element={<GameDetail />} />
+              <Route path="/games/:igdbId" element={<GameDetail />} />
             </Route>
           </Route>
 

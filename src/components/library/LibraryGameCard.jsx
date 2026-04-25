@@ -17,7 +17,7 @@ export default function LibraryGameCard({ entry, onRemove }) {
   return (
     <div
       className="bg-[#111220] border border-[#1e2035] rounded-lg overflow-hidden cursor-pointer hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530] transition-all duration-200 group"
-      onClick={() => { if (!confirming) navigate(`/games/${entry.rawgGameId}`); }}
+      onClick={() => { if (!confirming) navigate(`/games/${entry.igdbGameId}`); }}
     >
       {/* Cover */}
       <div className="aspect-[3/4] bg-[#1e2035] overflow-hidden relative">

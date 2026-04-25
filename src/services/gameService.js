@@ -3,8 +3,8 @@ import api from './api';
 export const searchGames = (params) =>
   api.get('/api/v1/games/search', { params });
 
-export const getGameById = (rawgId) =>
-  api.get(`/api/v1/games/${rawgId}`);
+export const getGameById = (igdbId) =>
+  api.get(`/api/v1/games/${igdbId}`);
 
 export const getPopularGames = (params) =>
   api.get('/api/v1/games/popular', { params });
