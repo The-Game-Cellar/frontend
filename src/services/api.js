@@ -10,11 +10,12 @@ let isRefreshing = false;
 let failedQueue = [];
 
 function processQueue(error) {
-  failedQueue.forEach(({ resolve, reject }) => {
+  const queue = failedQueue;
+  failedQueue = [];
+  queue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
     else resolve();
   });
-  failedQueue = [];
 }
 
 api.interceptors.response.use(
@@ -29,7 +30,10 @@ api.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      }).then(() => api(original)).catch((e) => Promise.reject(e));
+      }).then(() => {
+        original._retry = true;
+        return api(original);
+      }).catch((e) => Promise.reject(e));
     }
 
     original._retry = true;
