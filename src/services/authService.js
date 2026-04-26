@@ -51,6 +51,28 @@ export async function logout() {
   });
 }
 
+export async function getMe() {
+  const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Not authenticated');
+  return res.json();
+}
+
+export async function register(username, email, password) {
+  const res = await fetch(`${API_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Registration failed');
+  }
+  return res.json();
+}
+
 export async function redirectToRegister() {
   const verifier = generateCodeVerifier();
   const challenge = await generateCodeChallenge(verifier);

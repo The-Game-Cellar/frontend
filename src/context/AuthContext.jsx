@@ -1,24 +1,30 @@
-import { createContext, useState, useCallback } from 'react';
-import { logout as logoutApi } from '../services/authService';
-
-function readUserInfoCookie() {
-  const match = document.cookie.split(';').find(c => c.trim().startsWith('user_info='));
-  if (!match) return null;
-  try {
-    const encoded = match.substring(match.indexOf('=') + 1).trim();
-    return JSON.parse(atob(encoded));
-  } catch {
-    return null;
-  }
-}
+import { createContext, useState, useEffect, useCallback } from 'react';
+import { logout as logoutApi, getMe, refreshAccessToken } from '../services/authService';
 
 export const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const info = readUserInfoCookie();
-    return info ? { userId: info.userId, email: info.email, roles: info.roles ?? [] } : null;
-  });
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function bootstrap() {
+      try {
+        const userInfo = await getMe();
+        setUser({ userId: userInfo.userId, email: userInfo.email, roles: userInfo.roles ?? [] });
+      } catch {
+        try {
+          const userInfo = await refreshAccessToken();
+          setUser({ userId: userInfo.userId, email: userInfo.email, roles: userInfo.roles ?? [] });
+        } catch {
+          setUser(null);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    bootstrap();
+  }, []);
 
   const login = useCallback((userInfo) => {
     setUser({
@@ -40,6 +46,7 @@ export default function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         isAuthenticated: !!user,
+        isLoading,
         userId: user?.userId ?? null,
         email: user?.email ?? null,
         roles: user?.roles ?? [],
