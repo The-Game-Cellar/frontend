@@ -10,7 +10,7 @@ export const getSimilar = (gameId, limit = 10) =>
   api.get(`/api/v1/recommendations/similar/${gameId}`, { params: { limit } });
 
 export const getBasedOn = (gameId, limit = 10) =>
-  api.get(`/api/v1/recommendations/based-on/${gameId}`, { params: { limit } });
+  api.get(`/api/v1/recommendations/because-you-liked/${gameId}`, { params: { limit } });
 
 export const getDashboard = () =>
   api.get('/api/v1/recommendations/dashboard');

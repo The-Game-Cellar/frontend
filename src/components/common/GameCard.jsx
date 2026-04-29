@@ -1,7 +1,7 @@
 export default function GameCard({ game, onClick, style }) {
   return (
     <div
-      className="bg-[#111220] border border-[#1e2035] rounded-lg overflow-hidden w-44 flex-shrink-0 cursor-pointer hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530] transition-all duration-200 group"
+      className="bg-[#111220] border border-[#1e2035] rounded-lg overflow-hidden w-44 flex-shrink-0 cursor-pointer neon-card group"
       style={style}
       onClick={onClick}
     >
@@ -10,7 +10,7 @@ export default function GameCard({ game, onClick, style }) {
           <img
             src={game.backgroundImage}
             alt={game.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             loading="lazy"
           />
         ) : (

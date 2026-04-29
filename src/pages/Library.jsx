@@ -125,6 +125,7 @@ export default function Library() {
   const [activeTag, setActiveTag] = useState('');
   const [activeMood, setActiveMood] = useState('');
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('library_view') || 'list');
+  const [removeError, setRemoveError] = useState(null);
 
   useEffect(() => {
     getUserPlatforms()
@@ -165,7 +166,8 @@ export default function Library() {
       await removeGame(id);
       setGames(prev => prev.filter(g => g.id !== id));
     } catch {
-      // silent — game stays visible; user can retry
+      setRemoveError('Failed to remove game. Please try again.');
+      setTimeout(() => setRemoveError(null), 3000);
     }
   };
 
@@ -204,8 +206,8 @@ export default function Library() {
 
   const viewBtnClass = active =>
     active
-      ? 'p-1.5 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-all duration-150'
-      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-all duration-150';
+      ? 'p-1.5 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-[border-color,color,background-color,box-shadow] duration-150'
+      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow] duration-150';
 
   return (
     <div className="space-y-6">
@@ -240,7 +242,7 @@ export default function Library() {
             <button
               key={tab}
               onClick={() => setActiveStatus(tab)}
-              className={`text-xs px-3 py-1.5 rounded border transition-all duration-150 ${
+              className={`text-xs px-3 py-1.5 rounded border transition-[border-color,color,background-color,box-shadow] duration-150 ${
                 activeStatus === tab
                   ? tabActiveStyles[tab]
                   : `border-[#2a2d45] text-[#4a5068] ${tabHoverStyles[tab]}`
@@ -346,13 +348,20 @@ export default function Library() {
           {isFiltered && (
             <button
               onClick={resetFilters}
-              className="ml-auto self-end text-xs px-3 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-all duration-150"
+              className="ml-auto self-end text-xs px-3 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color] duration-150"
             >
               Reset filter
             </button>
           )}
         </div>
       </div>
+
+      {/* Remove error */}
+      {removeError && (
+        <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          {removeError}
+        </p>
+      )}
 
       {/* States */}
       {loading && (
@@ -364,14 +373,14 @@ export default function Library() {
       )}
 
       {!loading && !error && displayedGames.length === 0 && (
-        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg">
+        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
           <p className="text-sm text-[#8891a8]">{emptyMessages[activeStatus] ?? 'No games match your filters.'}</p>
         </div>
       )}
 
       {!loading && !error && displayedGames.length > 0 && (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 animate-enter">
             {displayedGames.map(entry => (
               <LibraryGameCard
                 key={entry.id}
@@ -381,7 +390,7 @@ export default function Library() {
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 animate-enter">
             {displayedGames.map(entry => (
               <GameListItem
                 key={entry.id}

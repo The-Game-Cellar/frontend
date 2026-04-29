@@ -42,3 +42,6 @@ export const getUserPlatforms = () =>
 
 export const addPlatform = (data) =>
   api.post('/api/v1/library/platforms', data);
+
+export const removePlatform = (platformId) =>
+  api.delete(`/api/v1/library/platforms/${platformId}`);

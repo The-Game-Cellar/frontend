@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import GameCard from '../components/common/GameCard';
 import { getDashboard } from '../services/recommendationService';
@@ -18,10 +18,40 @@ function SectionHeader({ title, linkText, linkTo }) {
   );
 }
 
+function ErrorBanner({ message, onRetry }) {
+  return (
+    <div className="inline-flex items-center gap-3 px-4 py-2 rounded-lg border border-[#1e2035] bg-[#12152a] text-sm">
+      <span className="text-[#8891a8]">{message}</span>
+      <button
+        onClick={onRetry}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[#4a5068] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+        Retry
+      </button>
+    </div>
+  );
+}
+
 const CARD_WIDTH = 176; // w-44
 const GAP = 12;        // gap-3
 
-function GameScroll({ games, getKey, onClick }) {
+function GameCardSkeleton({ style }) {
+  return (
+    <div style={style} className="flex-shrink-0 rounded-lg overflow-hidden bg-[#12152a] animate-pulse">
+      <div className="w-full aspect-[3/4] bg-[#1e2035]" />
+      <div className="p-2 space-y-1.5">
+        <div className="h-2.5 bg-[#1e2035] rounded w-3/4" />
+        <div className="h-2 bg-[#1e2035] rounded w-1/2" />
+      </div>
+    </div>
+  );
+}
+
+function GameScroll({ games, getKey, onClick, loading = false }) {
   const ref = useRef(null);
   const [visibleCount, setVisibleCount] = useState(6);
   const [cardWidth, setCardWidth] = useState(CARD_WIDTH);
@@ -39,6 +69,16 @@ function GameScroll({ games, getKey, onClick }) {
     if (ref.current) ro.observe(ref.current);
     return () => ro.disconnect();
   }, []);
+
+  if (loading) {
+    return (
+      <div ref={ref} className="flex gap-3">
+        {Array.from({ length: visibleCount }).map((_, i) => (
+          <GameCardSkeleton key={i} style={{ width: cardWidth }} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="flex gap-3">
@@ -61,55 +101,80 @@ export default function Dashboard() {
   const [wildcard, setWildcard] = useState([]);
   const [backlog, setBacklog] = useState([]);
   const [dusty, setDusty] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [dashLoading, setDashLoading] = useState(true);
+  const [recsError, setRecsError] = useState(false);
+  const [backlogError, setBacklogError] = useState(false);
+  const [dustyError, setDustyError] = useState(false);
 
-  useEffect(() => {
-    Promise.allSettled([
-      getDashboard(),
-      getBacklog(),
-      getDustyGames(),
-    ]).then(([dashRes, backlogRes, dustyRes]) => {
-      if (dashRes.status === 'fulfilled') {
-        const data = dashRes.value.data;
+  const loadBacklog = useCallback(() => {
+    setBacklogError(false);
+    getBacklog()
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data : [];
+        setBacklog(data.map(g => ({ ...g, name: g.gameName })));
+      })
+      .catch(() => setBacklogError(true));
+  }, []);
+
+  const loadDusty = useCallback(() => {
+    setDustyError(false);
+    getDustyGames()
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data : [];
+        setDusty(data.map(g => ({ ...g, name: g.gameName })));
+      })
+      .catch(() => setDustyError(true));
+  }, []);
+
+  const loadDashboard = useCallback(() => {
+    setRecsError(false);
+    setDashLoading(true);
+    getDashboard()
+      .then(res => {
+        const data = res.data;
         setRecommendations(data?.recommendations ?? []);
         setBecauseYouLiked(data?.becauseYouLiked ?? []);
         setWildcard(data?.wildcard ?? []);
-      }
-      if (backlogRes.status === 'fulfilled') {
-        const data = Array.isArray(backlogRes.value.data) ? backlogRes.value.data : [];
-        setBacklog(data.map(g => ({ ...g, name: g.gameName })));
-      }
-      if (dustyRes.status === 'fulfilled') {
-        const data = Array.isArray(dustyRes.value.data) ? dustyRes.value.data : [];
-        setDusty(data.map(g => ({ ...g, name: g.gameName })));
-      }
-      setLoading(false);
-    });
+      })
+      .catch(() => setRecsError(true))
+      .finally(() => setDashLoading(false));
   }, []);
 
-  if (loading) {
-    return <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>;
-  }
+  useEffect(() => {
+    loadBacklog();
+    loadDusty();
+    loadDashboard();
+  }, [loadBacklog, loadDusty, loadDashboard]);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 animate-enter">
 
       {/* Recommendations for you */}
       <section>
         <SectionHeader title="Recommendations for you" linkText="View all" linkTo="/recommendations" />
-        {recommendations.length === 0 ? (
-          <p className="text-sm text-[#8891a8]">Add games to your library to get recommendations.</p>
+        {recsError ? (
+          <ErrorBanner message="Could not load recommendations." onRetry={loadDashboard} />
+        ) : !dashLoading && recommendations.length === 0 ? (
+          <p className="text-sm text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
         ) : (
-          <GameScroll
-            games={recommendations}
-            getKey={g => g.igdbId}
-            onClick={g => navigate(`/games/${g.igdbId}`)}
-          />
+          <>
+            {!dashLoading && recommendations.length > 0 && recommendations[0].tier === 3 && (
+              <div className="inline-flex mb-3 px-4 py-2 rounded-lg border border-[#2a2d45] bg-[#12152a] text-xs text-[#8891a8]">
+                Popular on your platforms. Rate games in your library to personalize.
+              </div>
+            )}
+            <GameScroll
+              games={recommendations}
+              getKey={g => g.igdbId}
+              onClick={g => navigate(`/games/${g.igdbId}`)}
+              loading={dashLoading}
+            />
+          </>
         )}
       </section>
 
       {/* Because you liked... */}
-      {becauseYouLiked.map(section => (
+      {!recsError && !dashLoading && becauseYouLiked.map(section => (
         <section key={section.basedOnIgdbId}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-[#e8e4dc]">
@@ -133,7 +198,9 @@ export default function Dashboard() {
       {/* Backlog */}
       <section>
         <SectionHeader title="Your backlog" linkText="View all" linkTo="/library" />
-        {backlog.length === 0 ? (
+        {backlogError ? (
+          <ErrorBanner message="Could not load your backlog." onRetry={loadBacklog} />
+        ) : backlog.length === 0 ? (
           <p className="text-sm text-[#8891a8]">Your backlog is empty.</p>
         ) : (
           <GameScroll
@@ -145,7 +212,12 @@ export default function Dashboard() {
       </section>
 
       {/* Dusty games */}
-      {dusty.length > 0 && (
+      {dustyError ? (
+        <section>
+          <SectionHeader title="Dusty games" linkText="View all" linkTo="/library?filter=dusty" />
+          <ErrorBanner message="Could not load dusty games." onRetry={loadDusty} />
+        </section>
+      ) : dusty.length > 0 && (
         <section>
           <SectionHeader title="Dusty games" linkText="View all" linkTo="/library?filter=dusty" />
           <GameScroll
@@ -157,7 +229,7 @@ export default function Dashboard() {
       )}
 
       {/* Wild Card */}
-      {wildcard.length > 0 && (
+      {!recsError && !dashLoading && wildcard.length > 0 && (
         <section>
           <SectionHeader title="Wild Card" linkText="More →" linkTo="/wildcard" />
           <GameScroll

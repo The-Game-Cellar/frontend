@@ -16,7 +16,7 @@ function Pagination({ page, totalPages, onPageChange }) {
     return pages;
   };
 
-  const btnBase = 'px-3 py-1.5 text-xs rounded border transition-all duration-150';
+  const btnBase = 'px-3 py-1.5 text-xs rounded border transition-[border-color,color,background-color,box-shadow] duration-150';
   const inactive = `${btnBase} border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]`;
   const active = `${btnBase} border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258560]`;
   const nav = `${btnBase} border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 disabled:cursor-not-allowed`;
@@ -94,13 +94,19 @@ export default function Recommendations() {
       )}
 
       {!loading && !error && games.length === 0 && (
-        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg">
-          <p className="text-sm text-[#8891a8]">No recommendations yet. Add some games to your library first.</p>
+        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
+          <p className="text-sm text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
+        </div>
+      )}
+
+      {!loading && !error && games.length > 0 && games[0].tier === 3 && (
+        <div className="inline-flex px-4 py-2 rounded-lg border border-[#2a2d45] bg-[#12152a] text-xs text-[#8891a8] animate-enter">
+          Showing popular games on your platforms. Rate games in your library to unlock personalized recommendations.
         </div>
       )}
 
       {!loading && !error && games.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4 animate-enter">
           {paged.map(game => (
             <GameCard
               key={game.igdbId}

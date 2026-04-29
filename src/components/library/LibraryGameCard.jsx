@@ -16,7 +16,7 @@ export default function LibraryGameCard({ entry, onRemove }) {
 
   return (
     <div
-      className="bg-[#111220] border border-[#1e2035] rounded-lg overflow-hidden cursor-pointer hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530] transition-all duration-200 group"
+      className="bg-[#111220] border border-[#1e2035] rounded-lg overflow-hidden cursor-pointer neon-card group"
       onClick={() => { if (!confirming) navigate(`/games/${entry.igdbGameId}`); }}
     >
       {/* Cover */}
@@ -25,7 +25,7 @@ export default function LibraryGameCard({ entry, onRemove }) {
           <img
             src={entry.backgroundImage}
             alt={entry.gameName}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             loading="lazy"
           />
         ) : (
@@ -39,43 +39,39 @@ export default function LibraryGameCard({ entry, onRemove }) {
           {entry.status}
         </span>
 
-        {/* Confirm overlay */}
-        {confirming && (
-          <div
-            className="absolute inset-0 bg-[#0a0b14cc] flex flex-col items-center justify-center gap-2"
-            onClick={e => e.stopPropagation()}
-          >
-            <p className="text-xs text-[#e8e4dc]">Remove?</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => onRemove(entry.id)}
-                className="text-xs px-2.5 py-1 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
-              >
-                No
-              </button>
-            </div>
+        {/* Confirm overlay — cross-fades with default state */}
+        <div
+          className={`absolute inset-0 bg-[#0a0b14cc] flex flex-col items-center justify-center gap-2 transition-opacity duration-200 ${confirming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          onClick={e => e.stopPropagation()}
+        >
+          <p className="text-xs text-[#e8e4dc]">Remove?</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onRemove(entry.id)}
+              className="text-xs px-2.5 py-1 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
+            >
+              No
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* Remove button — top right, visible on hover */}
-        {!confirming && (
-          <button
-            type="button"
-            onClick={e => { e.stopPropagation(); setConfirming(true); }}
-            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-[#0a0b14cc] rounded text-[#4a5068] hover:text-[#ef4444] opacity-0 group-hover:opacity-100 transition-all duration-150 text-base leading-none"
-            title="Remove from library"
-          >
-            ×
-          </button>
-        )}
+        {/* Remove button — top right, visible on hover, hides when confirming */}
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); setConfirming(true); }}
+          className={`absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-[#0a0b14cc] rounded text-[#4a5068] hover:text-[#ef4444] transition-[opacity,color] duration-200 text-base leading-none ${confirming ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
+          title="Remove from library"
+        >
+          ×
+        </button>
       </div>
 
       {/* Info */}

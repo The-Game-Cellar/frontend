@@ -73,6 +73,59 @@ export async function register(username, email, password) {
   return res.json();
 }
 
+export async function changePassword(currentPassword, newPassword) {
+  const res = await fetch(`${API_URL}/api/v1/auth/change-password`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Password update failed');
+  }
+  return res.json();
+}
+
+export async function changeEmail(currentPassword, newEmail) {
+  const res = await fetch(`${API_URL}/api/v1/auth/change-email`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword, newEmail }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Email update failed');
+  }
+  return res.json();
+}
+
+export async function deleteAccount(currentPassword) {
+  const res = await fetch(`${API_URL}/api/v1/auth/account`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Account deletion failed');
+  }
+  return res.json();
+}
+
+export async function exportAccountData() {
+  const res = await fetch(`${API_URL}/api/v1/library/account/export`, {
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Data export failed');
+  }
+  return res.json();
+}
+
 export async function redirectToRegister() {
   const verifier = generateCodeVerifier();
   const challenge = await generateCodeChallenge(verifier);

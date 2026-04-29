@@ -15,7 +15,7 @@ export default function RatingWidget({ value, onChange, readonly = false }) {
           onClick={() => !readonly && onChange(n)}
           onMouseEnter={() => !readonly && setHovered(n)}
           onMouseLeave={() => !readonly && setHovered(null)}
-          className={`w-5 h-5 rounded-sm border transition-all duration-100 ${
+          className={`w-5 h-5 rounded-sm border transition-[border-color,background-color,box-shadow] duration-100 ${
             display >= n
               ? 'bg-[#f7258530] border-[#f72585] [box-shadow:0_0_4px_#f7258580]'
               : 'bg-[#1e2035] border-[#2a2d45]'

@@ -8,12 +8,16 @@ export default function WildCard() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [rollCount, setRollCount] = useState(0);
 
   const roll = () => {
     setLoading(true);
     setError(null);
     getWildCard(12)
-      .then(res => setGames(Array.isArray(res.data) ? res.data : []))
+      .then(res => {
+        setGames(Array.isArray(res.data) ? res.data : []);
+        setRollCount(c => c + 1);
+      })
       .catch(() => setError('Failed to load Wild Card.'))
       .finally(() => setLoading(false));
   };
@@ -32,7 +36,7 @@ export default function WildCard() {
         <button
           onClick={roll}
           disabled={loading}
-          className="px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+          className="px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200"
         >
           ↺ Roll Again
         </button>
@@ -47,13 +51,16 @@ export default function WildCard() {
       )}
 
       {!loading && !error && games.length === 0 && (
-        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg">
+        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
           <p className="text-sm text-[#8891a8]">No games found. Try rolling again.</p>
         </div>
       )}
 
       {!loading && !error && games.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4">
+        <div
+          key={rollCount}
+          className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4 animate-wildcard"
+        >
           {games.map(game => (
             <GameCard
               key={game.igdbId}
