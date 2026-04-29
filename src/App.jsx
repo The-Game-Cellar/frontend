@@ -15,6 +15,7 @@ import Explore from './pages/Explore';
 import WildCard from './pages/WildCard';
 import Profile from './pages/Profile';
 import GameDetail from './pages/GameDetail';
+import About from './pages/About';
 
 export default function App() {
   return (
@@ -25,10 +26,10 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/callback" element={<Callback />} />
-          <Route path="/onboarding" element={<Onboarding />} />
 
           {/* Protected routes — redirect to /login if not authenticated */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/library" element={<Library />} />
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/explore" element={<Explore />} />
               <Route path="/wildcard" element={<WildCard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/about" element={<About />} />
               <Route path="/games/:igdbId" element={<GameDetail />} />
             </Route>
           </Route>

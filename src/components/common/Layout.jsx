@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import AttributionFooter from './AttributionFooter';
 import useAuth from '../../hooks/useAuth';
 
 export default function Layout() {
@@ -37,7 +38,7 @@ export default function Layout() {
 
         <button
           onClick={() => setConfirmOpen(true)}
-          className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+          className="text-xs text-[#8891a8] border border-[#4a5068] rounded px-3 py-1 hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_12px_#f72585,0_0_24px_#f7258540] transition-[border-color,box-shadow,color] duration-200"
         >
           Sign out
         </button>
@@ -54,19 +55,22 @@ export default function Layout() {
       {/* Body */}
       <div className="flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 min-w-0 ml-0 md:ml-56 pt-24 px-4 pb-8 md:px-8 md:pb-10">
-          <Outlet />
+        <main className="flex-1 min-w-0 ml-0 md:ml-56 pt-24 px-4 pb-4 md:px-8 md:pb-6 flex flex-col">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <AttributionFooter />
         </main>
       </div>
 
       {/* Logout confirm modal */}
       {confirmOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center animate-enter"
           onClick={() => setConfirmOpen(false)}
         >
           <div
-            className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4"
+            className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
             onClick={e => e.stopPropagation()}
           >
             <div className="space-y-1">
@@ -82,7 +86,7 @@ export default function Layout() {
               </button>
               <button
                 onClick={handleLogout}
-                className="px-4 py-1.5 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-all duration-200"
+                className="px-4 py-1.5 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow] duration-200"
               >
                 Sign out
               </button>

@@ -20,7 +20,7 @@ const ORDERINGS = [
 
 const PAGE_SIZE = 20;
 
-const selectClass = 'bg-[#111220] border border-[#2a2d45] rounded px-3 py-1.5 text-xs text-[#8891a8] focus:border-[#f72585] focus:outline-none transition-colors';
+const selectClass = 'w-36 bg-[#111220] border border-[#2a2d45] rounded px-3 py-1.5 text-xs text-[#8891a8] focus:border-[#f72585] focus:outline-none transition-colors';
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -146,7 +146,7 @@ export default function Explore() {
         </select>
 
         {isFiltered && (
-          <button onClick={handleReset} className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-all duration-150">
+          <button onClick={handleReset} className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color] duration-150">
             Reset filter
           </button>
         )}
@@ -162,13 +162,13 @@ export default function Explore() {
       )}
 
       {!loading && !error && games.length === 0 && (
-        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg">
+        <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
           <p className="text-sm text-[#8891a8]">No games found.</p>
         </div>
       )}
 
       {games.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4 animate-enter">
           {games.map(game => (
             <GameCard
               key={game.igdbId}
@@ -185,7 +185,7 @@ export default function Explore() {
           <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 0}
-            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color] duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Prev
           </button>
@@ -196,7 +196,7 @@ export default function Explore() {
               <button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
-                className={`px-3 py-1.5 text-xs rounded border transition-all duration-150 ${
+                className={`px-3 py-1.5 text-xs rounded border transition-[border-color,box-shadow,color,background-color] duration-150 ${
                   pageNum === page
                     ? 'border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258560]'
                     : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -209,7 +209,7 @@ export default function Explore() {
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page === totalPages - 1}
-            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color] duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next →
           </button>

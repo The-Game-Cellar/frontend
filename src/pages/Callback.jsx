@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exchangeAuthorizationCode } from '../services/authService';
+import { getUserPlatforms } from '../services/libraryService';
 import useAuth from '../hooks/useAuth';
 
 export default function Callback() {
@@ -24,9 +25,14 @@ export default function Callback() {
     }
 
     exchangeAuthorizationCode(code)
-      .then((userInfo) => {
+      .then(async (userInfo) => {
         login(userInfo);
-        navigate('/onboarding', { replace: true });
+        try {
+          const { data: platforms } = await getUserPlatforms();
+          navigate(platforms.length > 0 ? '/dashboard' : '/onboarding', { replace: true });
+        } catch {
+          navigate('/onboarding', { replace: true });
+        }
       })
       .catch((err) => setError(err.message));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

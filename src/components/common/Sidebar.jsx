@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-  { label: 'Dashboard', to: '/' },
+  { label: 'Dashboard', to: '/dashboard' },
   { label: 'Library', to: '/library' },
   { label: 'Recommend', to: '/recommendations' },
   { label: 'Explore', to: '/explore' },
@@ -37,12 +37,12 @@ export default function Sidebar({ open, onClose }) {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end
             onClick={onClose}
             className={({ isActive }) =>
               isActive
-                ? 'flex items-center gap-3 px-3 py-2 rounded text-sm text-[#f72585] bg-[#f7258510] [text-shadow:0_0_8px_#f72585] transition-colors'
-                : 'flex items-center gap-3 px-3 py-2 rounded text-sm text-[#8891a8] hover:text-[#e8e4dc] hover:bg-[#181a2e] transition-colors'
+                ? 'flex items-center gap-3 px-3 py-2 rounded text-sm text-[#f72585] bg-[#f7258510] [text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[colors,transform] duration-150'
+                : 'flex items-center gap-3 px-3 py-2 rounded text-sm text-[#8891a8] hover:text-[#e8e4dc] hover:bg-[#181a2e] active:scale-[0.97] transition-[colors,transform] duration-150'
             }
           >
             {label}
