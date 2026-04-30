@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGameById } from '../services/gameService';
+import { getGameById, getByFranchise, getByCollection } from '../services/gameService';
 import { getUserGames, updateGame, removeGame } from '../services/libraryService';
 import { getSimilar } from '../services/recommendationService';
 import GameCard from '../components/common/GameCard';
@@ -43,6 +43,19 @@ function formatReleaseDate(iso) {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function pickBestSeries(gameName, franchises, collections) {
+  const fr = (Array.isArray(franchises) ? franchises : []).filter(Boolean).map(n => ({ name: n, kind: 'franchise' }));
+  const co = (Array.isArray(collections) ? collections : []).filter(Boolean).map(n => ({ name: n, kind: 'collection' }));
+  const all = [...fr, ...co];
+  if (all.length === 0) return null;
+  const fallback = fr[0] || co[0];
+  if (!gameName) return fallback;
+  const lower = gameName.toLowerCase();
+  const matches = all.filter(c => lower.includes(c.name.toLowerCase()));
+  if (matches.length === 0) return fallback;
+  return matches.slice().sort((a, b) => b.name.length - a.name.length)[0];
+}
+
 function stripHtml(html) {
   if (!html) return '';
   return html
@@ -69,6 +82,18 @@ export default function GameDetail() {
   const [updating, setUpdating] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [showAddons, setShowAddons] = useState(false);
+  const [addons, setAddons] = useState(null);
+  const [addonsLoading, setAddonsLoading] = useState(false);
+  const [addonPreviews, setAddonPreviews] = useState([]);
+  const [hoveredAddon, setHoveredAddon] = useState(null);
+  const [franchiseGames, setFranchiseGames] = useState([]);
+  const [showFranchiseModal, setShowFranchiseModal] = useState(false);
+  const [franchiseRowWidth, setFranchiseRowWidth] = useState(0);
+  const franchiseRowRef = useRef(null);
+  const [similarRowWidth, setSimilarRowWidth] = useState(0);
+  const similarRowRef = useRef(null);
 
   const showActionError = msg => {
     setActionError(msg);
@@ -93,11 +118,18 @@ export default function GameDetail() {
 
     setLoading(true);
     setError(null);
+    setAddons(null);
+    setShowAddons(false);
+    setAddonsLoading(false);
+    setAddonPreviews([]);
+    setHoveredAddon(null);
+    setFranchiseGames([]);
+    setShowFranchiseModal(false);
 
     Promise.all([
       getGameById(igdbId),
       getUserGames(),
-      getSimilar(igdbId, 8),
+      getSimilar(igdbId, 50),
     ])
       .then(([gameRes, libraryRes, similarRes]) => {
         setGame(gameRes.data);
@@ -105,6 +137,28 @@ export default function GameDetail() {
         const match = entries.find(e => String(e.igdbGameId) === String(igdbId));
         setLibraryEntry(match ?? null);
         setSimilar(Array.isArray(similarRes.data) ? similarRes.data : []);
+
+        const previewTagged = [
+          ...(Array.isArray(gameRes.data.expansionIds) ? gameRes.data.expansionIds : []).map(id => ({ id, kind: 'EXPANSION' })),
+          ...(Array.isArray(gameRes.data.dlcIds) ? gameRes.data.dlcIds : []).map(id => ({ id, kind: 'DLC' })),
+        ];
+        if (previewTagged.length > 0) {
+          Promise.allSettled(previewTagged.map(t => getGameById(t.id))).then(rs => {
+            setAddonPreviews(
+              rs
+                .map((r, idx) => r.status === 'fulfilled' ? { ...r.value.data, _kind: previewTagged[idx].kind } : null)
+                .filter(Boolean)
+            );
+          });
+        }
+
+        const series = pickBestSeries(gameRes.data.name, gameRes.data.franchises, gameRes.data.collections);
+        if (series) {
+          const fetcher = series.kind === 'collection' ? getByCollection : getByFranchise;
+          fetcher(series.name, 50, Number(igdbId))
+            .then(res => setFranchiseGames(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {});
+        }
       })
       .catch(() => setError('Failed to load game.'))
       .finally(() => setLoading(false));
@@ -133,6 +187,84 @@ export default function GameDetail() {
       showActionError('Failed to save rating. Please try again.');
     }
   };
+
+  const screenshots = Array.isArray(game?.screenshotUrls) ? game.screenshotUrls : [];
+  const videos = Array.isArray(game?.videoIds) ? game.videoIds : [];
+  const dlcIds = Array.isArray(game?.dlcIds) ? game.dlcIds : [];
+  const expansionIds = Array.isArray(game?.expansionIds) ? game.expansionIds : [];
+  const addonCount = dlcIds.length + expansionIds.length;
+
+  const handleOpenAddons = async () => {
+    setShowAddons(true);
+    if (addons !== null) return;
+    setAddonsLoading(true);
+    const tagged = [
+      ...dlcIds.map(id => ({ id, kind: 'DLC' })),
+      ...expansionIds.map(id => ({ id, kind: 'EXPANSION' })),
+    ];
+    const results = await Promise.allSettled(
+      tagged.map(({ id }) => getGameById(id))
+    );
+    const resolved = results
+      .map((r, i) => (r.status === 'fulfilled' ? { ...r.value.data, _kind: tagged[i].kind } : null))
+      .filter(Boolean)
+      .sort((a, b) => {
+        const da = a.released ? Date.parse(a.released) : -Infinity;
+        const db = b.released ? Date.parse(b.released) : -Infinity;
+        return db - da;
+      });
+    setAddons(resolved);
+    setAddonsLoading(false);
+  };
+
+  useEffect(() => {
+    if (!showAddons) return;
+    const onKey = e => { if (e.key === 'Escape') setShowAddons(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showAddons]);
+
+  useEffect(() => {
+    if (!showFranchiseModal) return;
+    const onKey = e => { if (e.key === 'Escape') setShowFranchiseModal(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showFranchiseModal]);
+
+  useEffect(() => {
+    const el = franchiseRowRef.current;
+    if (!el) return;
+    setFranchiseRowWidth(el.clientWidth);
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect?.width;
+      if (w) setFranchiseRowWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [franchiseGames.length]);
+
+  useEffect(() => {
+    const el = similarRowRef.current;
+    if (!el) return;
+    setSimilarRowWidth(el.clientWidth);
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect?.width;
+      if (w) setSimilarRowWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [similar.length]);
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const onKey = e => {
+      if (e.key === 'Escape') setLightboxIndex(null);
+      else if (e.key === 'ArrowLeft') setLightboxIndex(i => (i > 0 ? i - 1 : screenshots.length - 1));
+      else if (e.key === 'ArrowRight') setLightboxIndex(i => (i < screenshots.length - 1 ? i + 1 : 0));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxIndex, screenshots.length]);
 
   const handleRemove = async () => {
     if (!libraryEntry) return;
@@ -164,6 +296,7 @@ export default function GameDetail() {
 
   const showRating = libraryEntry && libraryEntry.status !== 'WISHLIST';
   const description = stripHtml(game.description);
+  const hasMedia = screenshots.length > 0 || videos.length > 0;
 
   return (
     <>
@@ -178,6 +311,143 @@ export default function GameDetail() {
       {/* Close status menu on outside click */}
       {showStatusMenu && (
         <div className="fixed inset-0 z-10" onClick={() => setShowStatusMenu(false)} />
+      )}
+
+      {/* Screenshot lightbox */}
+      {lightboxIndex !== null && screenshots[lightboxIndex] && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-enter"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <button
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-2xl leading-none transition-[color,text-shadow] duration-200"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+          {screenshots.length > 1 && (
+            <>
+              <button
+                onClick={e => { e.stopPropagation(); setLightboxIndex(i => (i > 0 ? i - 1 : screenshots.length - 1)); }}
+                className="absolute left-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,text-shadow] duration-200"
+                aria-label="Previous screenshot"
+              >
+                ‹
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setLightboxIndex(i => (i < screenshots.length - 1 ? i + 1 : 0)); }}
+                className="absolute right-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,text-shadow] duration-200"
+                aria-label="Next screenshot"
+              >
+                ›
+              </button>
+            </>
+          )}
+          <img
+            src={screenshots[lightboxIndex]}
+            alt={`${game.name} screenshot ${lightboxIndex + 1}`}
+            className="max-h-[90vh] max-w-[90vw] rounded-lg border border-[#1e2035]"
+            onClick={e => e.stopPropagation()}
+          />
+          {screenshots.length > 1 && (
+            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-[#8891a8] bg-[#111220cc] px-2 py-1 rounded">
+              {lightboxIndex + 1} / {screenshots.length}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* DLC & Expansions modal */}
+      {showAddons && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-enter"
+          onClick={() => setShowAddons(false)}
+        >
+          <div
+            className="bg-[#111220] border border-[#1e2035] rounded-lg w-fit max-w-5xl max-h-[85vh] flex flex-col animate-enter"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
+              <div className="space-y-0.5">
+                <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
+                <p className="text-xs text-[#4a5068] truncate" title={game.name}>{game.name}</p>
+              </div>
+              <button
+                onClick={() => setShowAddons(false)}
+                className="text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-xl leading-none transition-[color,text-shadow] duration-200"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5">
+              {addonsLoading && (
+                <div className="flex items-center justify-center h-32">
+                  <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+                </div>
+              )}
+              {!addonsLoading && addons && addons.length === 0 && (
+                <p className="text-sm text-[#8891a8] text-center py-8">No add-ons available in cache.</p>
+              )}
+              {!addonsLoading && addons && addons.length > 0 && (
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {addons.map(a => (
+                    <div key={a.igdbId} className="relative">
+                      <span
+                        className="absolute top-2 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded font-medium tracking-wider bg-[#111220] text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]"
+                      >
+                        {a._kind}
+                      </span>
+                      <GameCard
+                        game={a}
+                        onClick={() => { setShowAddons(false); navigate(`/games/${a.igdbId}`); }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Franchise modal */}
+      {showFranchiseModal && pickBestSeries(game.name, game.franchises, game.collections) && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-enter"
+          onClick={() => setShowFranchiseModal(false)}
+        >
+          <div
+            className="bg-[#111220] border border-[#1e2035] rounded-lg w-fit max-w-5xl max-h-[85vh] flex flex-col animate-enter"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
+              <div className="space-y-0.5">
+                <h2 className="text-lg font-medium text-[#e8e4dc]">{pickBestSeries(game.name, game.franchises, game.collections)?.name} series</h2>
+                <p className="text-xs text-[#4a5068]">{franchiseGames.length} games</p>
+              </div>
+              <button
+                onClick={() => setShowFranchiseModal(false)}
+                className="text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-xl leading-none transition-[color,text-shadow] duration-200"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5">
+              <div className="flex flex-wrap gap-4 justify-center">
+                {franchiseGames.map(g => (
+                  <GameCard
+                    key={g.igdbId}
+                    game={g}
+                    onClick={() => { setShowFranchiseModal(false); navigate(`/games/${g.igdbId}`); }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Remove confirm modal */}
@@ -308,42 +578,12 @@ export default function GameDetail() {
                     </button>
                   </>
                 )}
+
               </div>
 
               {/* Rating cluster — IGDB scores + user's rating */}
               {(game.rating != null || game.totalRating != null || showRating) && (
                 <div className="mt-auto space-y-3">
-                  {/* TEMP: critic icon picker — remove after user picks */}
-                  {game.rating != null && (
-                    <div className="space-y-1.5 border border-dashed border-[#3a3d58] rounded p-2">
-                      <p className="text-[10px] text-[#8891a8] uppercase tracking-wider">Pick critic icon (1–8)</p>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { n: 1, label: 'Medal', svg: <><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></> },
-                          { n: 2, label: 'Trophy', svg: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></> },
-                          { n: 3, label: 'Crown', svg: <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" /> },
-                          { n: 4, label: 'Shield', svg: <><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></> },
-                          { n: 5, label: 'Gavel', svg: <><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L11 10" /><path d="m16 16 6-6" /><path d="m8 8 6-6" /><path d="m9 7 8 8" /><path d="m21 11-8-8" /></> },
-                          { n: 6, label: 'Newspaper', svg: <><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /><path d="M18 14h-8" /><path d="M15 18h-5" /><path d="M10 6h8v4h-8V6Z" /></> },
-                          { n: 7, label: 'Quill', svg: <><path d="M12 19c0-7 7-11 9-11-2 7-7 11-9 11Z" /><path d="M12 19c0-7-7-11-9-11 2 7 7 11 9 11Z" /><path d="M12 19v3" /></> },
-                          { n: 8, label: 'Sparkle', svg: <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /> },
-                        ].map(opt => (
-                          <span
-                            key={opt.n}
-                            title={opt.label}
-                            className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-[#f59e0b] bg-[#f59e0b30] [box-shadow:0_0_4px_#f59e0b80] text-[#f59e0b] [text-shadow:0_0_6px_#f59e0b]"
-                          >
-                            <span className="text-[10px] text-[#8891a8] [text-shadow:none]">{opt.n}</span>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                              {opt.svg}
-                            </svg>
-                            <span className="font-medium">★ {Number(game.rating).toFixed(1)}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {(game.rating != null || game.totalRating != null) && (
                     <div className="flex flex-wrap gap-2">
                       {game.rating != null && (
@@ -401,43 +641,227 @@ export default function GameDetail() {
           </div>
         </div>
 
-        {/* About */}
-        {description && (
-          <section
-            onClick={() => description.length > 300 && setDescExpanded(v => !v)}
-            className={`bg-[#111220] border rounded-lg p-5 space-y-3 max-w-3xl transition-[border-color,box-shadow] duration-200 ${
-              description.length > 300 ? 'cursor-pointer' : ''
-            } ${
-              descExpanded
-                ? 'border-[#f72585] [box-shadow:0_0_15px_#f7258530]'
-                : 'border-[#1e2035] hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530]'
-            }`}
-          >
-            <h2 className="text-lg font-medium text-[#e8e4dc]">About</h2>
-            <p className={descExpanded
-              ? 'text-sm text-[#8891a8] leading-relaxed'
-              : 'text-sm text-[#8891a8] leading-relaxed line-clamp-4'
-            }>
-              {description}
-            </p>
+        {/* About + media row — about | screenshot | trailer (each 1/3). About expands to span row when clicked. */}
+        {(description || hasMedia) && (
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {description && (
+              <div
+                onClick={() => description.length > 300 && setDescExpanded(v => !v)}
+                className={`md:row-start-1 md:col-start-1 md:col-span-1 self-start bg-[#111220] border rounded-lg p-5 space-y-3 transition-[border-color,box-shadow] duration-200 ${
+                  description.length > 300 ? 'cursor-pointer' : ''
+                } ${
+                  descExpanded
+                    ? 'border-[#f72585] [box-shadow:0_0_15px_#f7258530]'
+                    : 'border-[#1e2035] hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530]'
+                }`}
+              >
+                <h2 className="text-lg font-medium text-[#e8e4dc]">About</h2>
+                <p className={`text-sm text-[#8891a8] leading-relaxed ${descExpanded ? '' : 'line-clamp-[8]'}`}>
+                  {description}
+                </p>
+              </div>
+            )}
+            {screenshots.length > 0 && (
+              <div className="order-2 md:order-none md:row-start-1 md:col-start-2 md:col-span-1">
+                <button
+                  onClick={() => setLightboxIndex(0)}
+                  className="group relative w-full aspect-video rounded-lg overflow-hidden border border-[#1e2035] hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530] active:scale-[0.98] transition-[border-color,box-shadow,transform] duration-200"
+                  aria-label={screenshots.length > 1 ? `View ${screenshots.length} screenshots` : 'View screenshot'}
+                >
+                  <img
+                    src={screenshots[0]}
+                    alt={`${game.name} screenshot 1`}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <span className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-sm text-[#e8e4dc] bg-[#111220cc] backdrop-blur-sm border border-[#f72585] [box-shadow:0_0_12px_#f7258540] px-3 py-1.5 rounded">
+                      {screenshots.length > 1 ? `View all ${screenshots.length} screenshots` : 'View screenshot'}
+                    </span>
+                  </span>
+                  {screenshots.length > 1 && (
+                    <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 text-xs text-[#e8e4dc] bg-[#111220cc] backdrop-blur-sm border border-[#3a3d58] px-2.5 py-1 rounded group-hover:opacity-0 transition-opacity duration-200">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>
+                      <span className="font-medium">1 / {screenshots.length}</span>
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+            {videos[0] && (
+              <div className="order-1 md:order-none md:row-start-1 md:col-start-3 md:col-span-1">
+                <div className="relative aspect-video rounded-lg overflow-hidden border border-[#1e2035] bg-[#111220]">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${videos[0]}`}
+                    title={`${game.name} trailer`}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
           </section>
         )}
 
-        {/* Similar games */}
-        {similar.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-[#e8e4dc]">Similar Games</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {similar.map(g => (
-                <GameCard
-                  key={g.igdbId}
-                  game={g}
-                  onClick={() => navigate(`/games/${g.igdbId}`)}
-                />
-              ))}
+        {/* DLC & Expansions */}
+        {addonCount > 0 && addonPreviews.length > 0 && (
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-1 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
+                <button
+                  onClick={handleOpenAddons}
+                  className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
+                >
+                  View all {addonCount} →
+                </button>
+              </div>
+              <div className={`relative rounded-lg border border-[#1e2035] bg-[#111220] ${
+                addonPreviews.length === 1 ? 'w-[42.1875%] aspect-[3/4]' :
+                addonPreviews.length === 2 ? 'w-[84.375%] aspect-[3/2]' :
+                'w-full aspect-video'
+              }`}>
+                {(() => {
+                  const stack = addonPreviews;
+                  const n = stack.length;
+                  const CARD_FRAC = n === 1 ? 1 : n === 2 ? 0.5 : 27 / 64;
+                  return stack.map((p, i) => {
+                    const isTop = i === 0;
+                    const isHovered = hoveredAddon === i;
+                    const isBright = isHovered || (hoveredAddon === null && isTop);
+                    const leftPct = n === 1
+                      ? ((1 - CARD_FRAC) / 2) * 100
+                      : (i * (1 - CARD_FRAC) / (n - 1)) * 100;
+                    const zIndex = isHovered
+                      ? 100
+                      : hoveredAddon !== null
+                        ? n - Math.abs(i - hoveredAddon)
+                        : n - i;
+                    const isFirst = i === 0;
+                    const isLast = i === n - 1;
+                    return (
+                      <button
+                        key={p.igdbId}
+                        onClick={() => navigate(`/games/${p.igdbId}`)}
+                        onMouseEnter={() => setHoveredAddon(i)}
+                        title={p.name}
+                        aria-label={p.name}
+                        style={{
+                          left: `${leftPct}%`,
+                          zIndex,
+                        }}
+                        className={`absolute top-0 h-full aspect-[3/4] border-l border-r border-[#0a0b14] bg-[#1e2035] overflow-hidden cursor-pointer transition-[transform,filter,box-shadow] duration-200 ${
+                          isFirst ? 'rounded-l-lg' : ''
+                        } ${
+                          isLast ? 'rounded-r-lg' : ''
+                        } ${
+                          isBright ? '' : 'brightness-50'
+                        } ${
+                          isHovered ? 'scale-[1.04] [box-shadow:0_0_18px_#f7258560,0_0_2px_#f72585]' : ''
+                        }`}
+                      >
+                        {(p.coverImageUrl || p.backgroundImage) ? (
+                          <img
+                            src={p.coverImageUrl || p.backgroundImage}
+                            alt={p.name}
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-[#4a5068] text-xs">No cover</span>
+                          </div>
+                        )}
+                        {p._kind && (
+                          <span className="absolute top-1.5 left-1.5 text-[9px] px-1 py-0.5 rounded font-medium tracking-wider bg-[#111220cc] backdrop-blur-sm text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]">
+                            {p._kind}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
             </div>
           </section>
         )}
+
+        {/* More from franchise */}
+        {franchiseGames.length > 0 && pickBestSeries(game.name, game.franchises, game.collections) && (() => {
+          const CARD_W = 176; // w-44
+          const GAP = 12;     // gap-3
+          const SLOT = CARD_W + GAP;
+          const fits = Math.max(1, Math.floor((franchiseRowWidth + GAP) / SLOT));
+          const needViewAll = franchiseGames.length > fits;
+          const visible = needViewAll ? franchiseGames.slice(0, fits) : franchiseGames;
+          const dynamicGap = fits > 1 && franchiseRowWidth > 0
+            ? Math.max(GAP, (franchiseRowWidth - fits * CARD_W) / (fits - 1))
+            : GAP;
+          return (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-medium text-[#e8e4dc]">{pickBestSeries(game.name, game.franchises, game.collections)?.name} series</h2>
+                {needViewAll && (
+                  <button
+                    onClick={() => setShowFranchiseModal(true)}
+                    className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
+                  >
+                    View all {franchiseGames.length} →
+                  </button>
+                )}
+              </div>
+              <div
+                ref={franchiseRowRef}
+                className="flex overflow-hidden"
+                style={{ gap: `${dynamicGap}px` }}
+              >
+                {visible.map(g => (
+                  <GameCard
+                    key={g.igdbId}
+                    game={g}
+                    onClick={() => navigate(`/games/${g.igdbId}`)}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
+        {/* Similar games */}
+        {similar.length > 0 && (() => {
+          const CARD_W = 176;
+          const GAP = 12;
+          const SLOT = CARD_W + GAP;
+          const fits = Math.max(1, Math.floor((similarRowWidth + GAP) / SLOT));
+          const visible = similar.slice(0, fits);
+          const dynamicGap = fits > 1 && similarRowWidth > 0
+            ? Math.max(GAP, (similarRowWidth - fits * CARD_W) / (fits - 1))
+            : GAP;
+          return (
+            <section className="space-y-3">
+              <h2 className="text-lg font-medium text-[#e8e4dc]">Similar Games</h2>
+              <div
+                ref={similarRowRef}
+                className="flex overflow-hidden"
+                style={{ gap: `${dynamicGap}px` }}
+              >
+                {visible.map(g => (
+                  <GameCard
+                    key={g.igdbId}
+                    game={g}
+                    onClick={() => navigate(`/games/${g.igdbId}`)}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })()}
       </div>
     </>
   );
