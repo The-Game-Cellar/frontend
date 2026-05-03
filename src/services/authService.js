@@ -45,6 +45,10 @@ export async function refreshAccessToken() {
 }
 
 export async function logout() {
+  const { invalidatePrefetchedPersonalized, invalidateDashboard, clearRecentlyShownIds } = await import('./recommendationService');
+  invalidatePrefetchedPersonalized();
+  invalidateDashboard();
+  clearRecentlyShownIds();
   await fetch(`${API_URL}/api/v1/auth/logout`, {
     method: 'POST',
     credentials: 'include',
@@ -102,6 +106,10 @@ export async function changeEmail(currentPassword, newEmail) {
 }
 
 export async function deleteAccount(currentPassword) {
+  const { invalidatePrefetchedPersonalized, invalidateDashboard, clearRecentlyShownIds } = await import('./recommendationService');
+  invalidatePrefetchedPersonalized();
+  invalidateDashboard();
+  clearRecentlyShownIds();
   const res = await fetch(`${API_URL}/api/v1/auth/account`, {
     method: 'DELETE',
     credentials: 'include',

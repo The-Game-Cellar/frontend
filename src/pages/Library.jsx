@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getUserGames, removeGame, getUserPlatforms, getLibraryGenres } from '../services/libraryService';
 import GameListItem from '../components/library/GameListItem';
 import LibraryGameCard from '../components/library/LibraryGameCard';
+import StyledSelect from '../components/common/StyledSelect';
 
 const GENRE_TO_MOODS = {
   // RAWG genre names (backward compat for cached library games)
@@ -11,7 +12,7 @@ const GENRE_TO_MOODS = {
   'Adventure':                      ['Story-driven', 'Exploration', 'Atmospheric'],
   'Shooter':                        ['Intense', 'Fast-paced', 'Competitive'],
   'Strategy':                       ['Tactical', 'Competitive'],
-  'Simulation':                     ['Chill', 'Cozy', 'Creative'],
+  'Simulation':                     ['Chill', 'Cozy', 'Creative', 'Sandbox'],
   'Puzzle':                         ['Chill', 'Meditative'],
   'Platformer':                     ['Fast-paced', 'Nostalgic'],
   'Racing':                         ['Fast-paced', 'Competitive'],
@@ -28,7 +29,7 @@ const GENRE_TO_MOODS = {
   // IGDB genre names
   'Role-playing (RPG)':             ['Story-driven', 'Exploration', 'Epic'],
   'Platform':                       ['Fast-paced', 'Nostalgic'],
-  'Simulator':                      ['Chill', 'Cozy', 'Creative'],
+  'Simulator':                      ['Chill', 'Cozy', 'Creative', 'Sandbox'],
   'Real Time Strategy (RTS)':       ['Tactical', 'Competitive'],
   'Turn-based strategy (TBS)':      ['Tactical'],
   'Tactical':                       ['Tactical'],
@@ -79,8 +80,6 @@ const emptyMessages = {
   WISHLIST:  'Wishlist is empty.',
   DUSTY:     'No dusty games — everything has been played recently.',
 };
-
-const selectClass = 'bg-[#111220] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] focus:border-[#f72585] focus:outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 
 function ListIcon() {
   return (
@@ -257,92 +256,68 @@ export default function Library() {
         <div className="flex flex-wrap gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Platform</label>
-            <select
+            <StyledSelect
               value={activePlatform}
-              onChange={e => setActivePlatform(e.target.value)}
+              onChange={setActivePlatform}
               disabled={platforms.length === 0}
-              className={selectClass}
-            >
-              <option value="">All</option>
-              {platforms.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+              options={[{ value: '', label: 'All' }, ...platforms.map(p => ({ value: p, label: p }))]}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Genre</label>
-            <select
+            <StyledSelect
               value={activeGenre}
-              onChange={e => setActiveGenre(e.target.value)}
+              onChange={setActiveGenre}
               disabled={genres.length === 0}
-              className={selectClass}
-            >
-              <option value="">All</option>
-              {genres.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
+              options={[{ value: '', label: 'All' }, ...genres.map(g => ({ value: g, label: g }))]}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Tags</label>
-            <select
+            <StyledSelect
               value={activeTag}
-              onChange={e => setActiveTag(e.target.value)}
+              onChange={setActiveTag}
               disabled={allTags.length === 0}
-              className={selectClass}
-            >
-              <option value="">All</option>
-              {allTags.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+              options={[{ value: '', label: 'All' }, ...allTags.map(t => ({ value: t, label: t }))]}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Mood</label>
-            <select
+            <StyledSelect
               value={activeMood}
-              onChange={e => setActiveMood(e.target.value)}
+              onChange={setActiveMood}
               disabled={allMoods.length === 0}
-              className={selectClass}
-            >
-              <option value="">All</option>
-              {allMoods.map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+              options={[{ value: '', label: 'All' }, ...allMoods.map(m => ({ value: m, label: m }))]}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Rating</label>
-            <select
+            <StyledSelect
               value={activeRating}
-              onChange={e => setActiveRating(e.target.value)}
-              className={selectClass}
-            >
-              <option value="">All</option>
-              {[9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
-                <option key={n} value={n}>{n}+</option>
-              ))}
-            </select>
+              onChange={setActiveRating}
+              options={[{ value: '', label: 'All' }, ...[9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => ({ value: String(n), label: `${n}+` }))]}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Order By</label>
-            <select
+            <StyledSelect
+              alwaysActive
               value={activeSort}
-              onChange={e => setActiveSort(e.target.value)}
-              className={selectClass}
-            >
-              <option value="status">Status</option>
-              <option value="latest">Latest</option>
-              <option value="oldest">Oldest</option>
-              <option value="rating">Rating</option>
-              <option value="az">A → Z</option>
-              <option value="za">Z → A</option>
-            </select>
+              onChange={setActiveSort}
+              options={[
+                { value: 'status', label: 'Status' },
+                { value: 'latest', label: 'Latest' },
+                { value: 'oldest', label: 'Oldest' },
+                { value: 'rating', label: 'Rating' },
+                { value: 'az', label: 'A → Z' },
+                { value: 'za', label: 'Z → A' },
+              ]}
+            />
           </div>
 
           {isFiltered && (

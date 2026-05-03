@@ -1,17 +1,42 @@
 import api from './api';
+import {
+  invalidatePrefetchedPersonalized,
+  prefetchPersonalized,
+  invalidateDashboard,
+  prefetchDashboard,
+} from './recommendationService';
+
+const refreshRecsCache = () => {
+  invalidatePrefetchedPersonalized();
+  prefetchPersonalized(100);
+  invalidateDashboard();
+  prefetchDashboard();
+};
 
 // Collection
 export const getUserGames = (params) =>
   api.get('/api/v1/library/games', { params });
 
+export const getOwnedIgdbIds = () =>
+  api.get('/api/v1/library/igdb-ids');
+
 export const addGame = (data) =>
-  api.post('/api/v1/library/games', data);
+  api.post('/api/v1/library/games', data).then(res => {
+    refreshRecsCache();
+    return res;
+  });
 
 export const updateGame = (gameId, data) =>
-  api.put(`/api/v1/library/games/${gameId}`, data);
+  api.put(`/api/v1/library/games/${gameId}`, data).then(res => {
+    refreshRecsCache();
+    return res;
+  });
 
 export const removeGame = (gameId) =>
-  api.delete(`/api/v1/library/games/${gameId}`);
+  api.delete(`/api/v1/library/games/${gameId}`).then(res => {
+    refreshRecsCache();
+    return res;
+  });
 
 // Filtered views
 export const getBacklog = () =>

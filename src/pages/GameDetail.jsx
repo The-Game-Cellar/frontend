@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGameById, getByFranchise, getByCollection } from '../services/gameService';
+import { getGameById, getByFranchise, getByCollection, getEditions } from '../services/gameService';
 import { getUserGames, updateGame, removeGame } from '../services/libraryService';
 import { getSimilar } from '../services/recommendationService';
 import GameCard from '../components/common/GameCard';
+import CoverFallback from '../components/common/CoverFallback';
+import TruncatedText from '../components/common/TruncatedText';
 import AddGameModal from '../components/game/AddGameModal';
 import RatingWidget from '../components/game/RatingWidget';
 
@@ -56,6 +58,118 @@ function pickBestSeries(gameName, franchises, collections) {
   return matches.slice().sort((a, b) => b.name.length - a.name.length)[0];
 }
 
+// IGDB category → "X of [Parent]" label. DLC/expansion (1, 2) are intentionally omitted
+// because the parent's DLC stack rail already surfaces them in context. Bundle (3), Mod (5),
+// and Update (14) are included because they cover Complete/GOTY editions, modded re-releases,
+// and patch-style updates respectively. Category 0 surfaces only when a derived parent is
+// inferred server-side from name pattern.
+const CATEGORY_LABELS = {
+  0:  'Edition of',
+  3:  'Edition of',
+  4:  'Standalone Expansion of',
+  5:  'Modded version of',
+  8:  'Remake of',
+  9:  'Remaster of',
+  10: 'Complete Edition of',
+  14: 'Update for',
+};
+
+// IGDB category → noun used in the editions disclosure list ("Remake: ...", "Edition: ...").
+// Falls back to "Edition" for null/0 so IGDB-miscategorized "Complete Edition" / "GOTY Edition"
+// entries (which routinely come back as category 0) still get a sensible prefix.
+const CATEGORY_NOUNS = {
+  0:  'Edition',
+  4:  'Standalone Expansion',
+  5:  'Mod',
+  6:  'Episode',
+  7:  'Season',
+  8:  'Remake',
+  9:  'Remaster',
+  10: 'Complete Edition',
+  11: 'Port',
+  12: 'Fork',
+  13: 'Pack',
+  14: 'Update',
+};
+
+function categoryLabel(category) {
+  return CATEGORY_LABELS[category] ?? null;
+}
+
+function categoryNoun(category) {
+  return CATEGORY_NOUNS[category] ?? 'Edition';
+}
+
+// Pick the highest-priority age rating: PEGI > ESRB > others. Skips entries without a
+// translated body/label (backend mapper only handles ESRB + PEGI today).
+function pickAgeRating(ageRatings) {
+  if (!Array.isArray(ageRatings) || ageRatings.length === 0) return null;
+  const labeled = ageRatings.filter(r => r?.body && r?.label);
+  if (labeled.length === 0) return null;
+  const pegi = labeled.find(r => r.body === 'PEGI');
+  if (pegi) return pegi;
+  const esrb = labeled.find(r => r.body === 'ESRB');
+  if (esrb) return esrb;
+  return labeled[0];
+}
+
+// Aggregate per-platform multiplayerModes into a chip list. The badges describe the
+// title's overall multiplayer envelope, not per-platform — taking the max of online/offline
+// player counts and the OR of the boolean flags across all platform entries. Falls back to
+// a "Single-player" chip when multiplayerModes is empty BUT gameModes explicitly lists
+// single-player only (avoids false-labeling games whose multiplayer data IGDB has not yet
+// cached).
+function summarizeModes(gameModes, multiplayerModes) {
+  if (Array.isArray(multiplayerModes) && multiplayerModes.length > 0) {
+    const max = (a, b) => Math.max(a ?? 0, b ?? 0);
+    const agg = multiplayerModes.reduce(
+      (acc, m) => ({
+        onlineMax: max(acc.onlineMax, m.onlineMax),
+        offlineMax: max(acc.offlineMax, m.offlineMax),
+        onlineCoopMax: max(acc.onlineCoopMax, m.onlineCoopMax),
+        offlineCoopMax: max(acc.offlineCoopMax, m.offlineCoopMax),
+        lan: acc.lan || !!m.lanCoop,
+        splitscreen: acc.splitscreen || !!m.splitscreen,
+        campaignCoop: acc.campaignCoop || !!m.campaignCoop,
+        dropIn: acc.dropIn || !!m.dropIn,
+      }),
+      { onlineMax: 0, offlineMax: 0, onlineCoopMax: 0, offlineCoopMax: 0, lan: false, splitscreen: false, campaignCoop: false, dropIn: false },
+    );
+    const chips = [];
+    if (agg.onlineMax > 1) chips.push(`Up to ${agg.onlineMax} online`);
+    if (agg.offlineMax > 1) chips.push(`Up to ${agg.offlineMax} local`);
+    if (agg.splitscreen) chips.push('Split-screen');
+    if (agg.campaignCoop) chips.push('Co-op campaign');
+    if (agg.dropIn) chips.push('Drop-in co-op');
+    if (agg.lan) chips.push('LAN');
+    if (chips.length === 0) return [];
+    if (chips.length <= 4) return chips;
+    return [...chips.slice(0, 3), `+${chips.length - 3} more`];
+  }
+  const gm = Array.isArray(gameModes) ? gameModes.map(s => String(s).toLowerCase()) : [];
+  if (gm.length === 0) return [];
+  const hasSingle = gm.some(m => m.includes('single'));
+  const hasMulti = gm.some(m =>
+    m.includes('multiplayer') || m.includes('co-op') || m.includes('cooperative') ||
+    m.includes('split screen') || m.includes('battle royale') || m.includes('mmo')
+  );
+  if (hasSingle && !hasMulti) return ['Single-player'];
+  return [];
+}
+
+function formatReleaseDateRow(rd) {
+  if (rd?.human) return rd.human;
+  return formatReleaseDate(rd?.date) ?? 'TBA';
+}
+
+// True when the game has more than one distinct release date across platforms — gates
+// whether the disclosure caret renders.
+function hasVariedReleaseDates(releaseDates) {
+  if (!Array.isArray(releaseDates) || releaseDates.length < 2) return false;
+  const distinct = new Set(releaseDates.map(r => r?.date ?? r?.human ?? ''));
+  return distinct.size > 1;
+}
+
 function stripHtml(html) {
   if (!html) return '';
   return html
@@ -94,6 +208,9 @@ export default function GameDetail() {
   const franchiseRowRef = useRef(null);
   const [similarRowWidth, setSimilarRowWidth] = useState(0);
   const similarRowRef = useRef(null);
+  const [releaseExpanded, setReleaseExpanded] = useState(false);
+  const [editions, setEditions] = useState([]);
+  const [editionsExpanded, setEditionsExpanded] = useState(false);
 
   const showActionError = msg => {
     setActionError(msg);
@@ -124,6 +241,9 @@ export default function GameDetail() {
     setAddonPreviews([]);
     setHoveredAddon(null);
     setFranchiseGames([]);
+    setReleaseExpanded(false);
+    setEditions([]);
+    setEditionsExpanded(false);
     setShowFranchiseModal(false);
 
     Promise.all([
@@ -157,6 +277,14 @@ export default function GameDetail() {
           const fetcher = series.kind === 'collection' ? getByCollection : getByFranchise;
           fetcher(series.name, 50, Number(igdbId))
             .then(res => setFranchiseGames(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {});
+        }
+
+        // Editions of this game (only meaningful when the current page IS the main game).
+        // Backend filters by parent_game_id + edition categories, returns empty for variants.
+        if (gameRes.data.category === 0 || gameRes.data.category == null) {
+          getEditions(Number(igdbId))
+            .then(res => setEditions(Array.isArray(res.data) ? res.data : []))
             .catch(() => {});
         }
       })
@@ -371,7 +499,7 @@ export default function GameDetail() {
             <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
               <div className="space-y-0.5">
                 <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
-                <p className="text-xs text-[#4a5068] truncate" title={game.name}>{game.name}</p>
+                <TruncatedText as="p" text={game.name} className="text-xs text-[#4a5068]" />
               </div>
               <button
                 onClick={() => setShowAddons(false)}
@@ -507,9 +635,105 @@ export default function GameDetail() {
               {/* Title + meta */}
               <div className="space-y-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">{game.name}</h1>
-                {formatReleaseDate(game.released) && (
-                  <p className="text-xs text-[#8891a8]">{formatReleaseDate(game.released)}</p>
+
+                {/* Category subtitle — renders when category implies a derivative AND a parent
+                    is known (either IGDB-linked or server-inferred from name prefix). */}
+                {categoryLabel(game.category) && (game.parentGameId || game.parentGameName) && (
+                  <p className="text-xs text-[#8891a8]">
+                    {categoryLabel(game.category)}{' '}
+                    {game.parentGameId ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/games/${game.parentGameId}`)}
+                        className="text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
+                      >
+                        {game.parentGameName ?? 'Unknown game'}
+                      </button>
+                    ) : (
+                      <span>{game.parentGameName ?? 'Unknown game'}</span>
+                    )}
+                  </p>
                 )}
+
+                {/* Release date — clickable disclosure when distinct per-platform dates exist */}
+                {(() => {
+                  const baseLine = formatReleaseDate(game.released);
+                  const expandable = hasVariedReleaseDates(game.releaseDates);
+                  if (!baseLine && !expandable) return null;
+                  if (!expandable) {
+                    return baseLine ? <p className="text-xs text-[#8891a8]">Released {baseLine}</p> : null;
+                  }
+                  return (
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => setReleaseExpanded(v => !v)}
+                        className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
+                        aria-expanded={releaseExpanded}
+                      >
+                        Released {baseLine ?? formatReleaseDateRow(game.releaseDates?.[0])}
+                        <span
+                          className={`inline-block transition-transform duration-200 motion-reduce:transition-none ${releaseExpanded ? 'rotate-90' : ''}`}
+                          aria-hidden="true"
+                        >
+                          ▸
+                        </span>
+                      </button>
+                      {releaseExpanded && (
+                        <ul className="text-xs text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
+                          {[...game.releaseDates]
+                            .sort((a, b) => (a?.date ?? '').localeCompare(b?.date ?? ''))
+                            .map((rd, i) => (
+                              <li key={`${rd.platform}-${i}`} className="flex gap-2">
+                                <span className="text-[#4a5068] min-w-[8rem]">{rd.platform ?? 'Unknown'}</span>
+                                <span>{formatReleaseDateRow(rd)}</span>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Editions disclosure — only renders on a main game when derivative editions exist */}
+                {editions.length > 0 && (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditionsExpanded(v => !v)}
+                      className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
+                      aria-expanded={editionsExpanded}
+                    >
+                      {editions.length} {editions.length === 1 ? 'edition' : 'editions'}
+                      <span
+                        className={`inline-block transition-transform duration-200 motion-reduce:transition-none ${editionsExpanded ? 'rotate-90' : ''}`}
+                        aria-hidden="true"
+                      >
+                        ▸
+                      </span>
+                    </button>
+                    {editionsExpanded && (
+                      <ul className="text-xs text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
+                        {editions.map(e => (
+                          <li key={e.igdbId}>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/games/${e.igdbId}`)}
+                              className="text-left hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
+                            >
+                              <span className="text-[#4a5068]">{categoryNoun(e.category)}:</span>{' '}
+                              <span>{e.name}</span>
+                              {formatReleaseDate(e.released) && (
+                                <span className="text-[#4a5068]"> · {formatReleaseDate(e.released)}</span>
+                              )}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {game.genres?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {game.genres.map(g => (
@@ -526,6 +750,22 @@ export default function GameDetail() {
                     ))}
                   </div>
                 )}
+
+                {/* Mode chips — multiplayer envelope when data exists, else "Single-player"
+                    when gameModes confirms it. */}
+                {(() => {
+                  const chips = summarizeModes(game.gameModes, game.multiplayerModes);
+                  if (chips.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap gap-1.5">
+                      {chips.map(c => (
+                        <span key={c} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Library actions */}
@@ -581,11 +821,24 @@ export default function GameDetail() {
 
               </div>
 
-              {/* Rating cluster — IGDB scores + user's rating */}
-              {(game.rating != null || game.totalRating != null || showRating) && (
+              {/* Rating cluster — age rating + IGDB scores + user's rating */}
+              {(() => {
+                const ageRating = pickAgeRating(game.ageRatings);
+                const hasPills = ageRating || game.rating != null || game.totalRating != null;
+                if (!hasPills && !showRating) return null;
+                return (
                 <div className="mt-auto space-y-3">
-                  {(game.rating != null || game.totalRating != null) && (
+                  {hasPills && (
                     <div className="flex flex-wrap gap-2">
+                      {ageRating && (
+                        <span
+                          title={ageRating.body === 'PEGI' ? 'Pan European Game Information rating' : 'Entertainment Software Rating Board rating'}
+                          className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]"
+                        >
+                          <span className="font-medium text-[#e8e4dc]">{ageRating.body}</span>
+                          <span>{ageRating.label}</span>
+                        </span>
+                      )}
                       {game.rating != null && (
                         <span
                           title="Critic score"
@@ -621,7 +874,8 @@ export default function GameDetail() {
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Cover — top on mobile, right 1/3 on desktop */}
@@ -633,8 +887,8 @@ export default function GameDetail() {
                   className="w-full rounded-lg border border-[#1e2035]"
                 />
               ) : (
-                <div className="w-full aspect-[3/4] bg-[#1e2035] rounded-lg flex items-center justify-center">
-                  <span className="text-[#4a5068] text-xs">No cover</span>
+                <div className="w-full aspect-[3/4] rounded-lg overflow-hidden border border-[#1e2035]">
+                  <CoverFallback platforms={game.platforms} />
                 </div>
               )}
             </div>
