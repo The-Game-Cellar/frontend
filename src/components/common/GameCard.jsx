@@ -1,4 +1,8 @@
-export default function GameCard({ game, onClick, style }) {
+import CoverFallback from './CoverFallback';
+import TruncatedText from './TruncatedText';
+
+export default function GameCard({ game, onClick, style, subtitle }) {
+  const subtitleText = subtitle ?? (game.genres?.length > 0 ? game.genres[0] : '');
   return (
     <div
       className="bg-[#111220] border border-[#1e2035] rounded-lg overflow-hidden w-44 flex-shrink-0 cursor-pointer neon-card group"
@@ -14,16 +18,12 @@ export default function GameCard({ game, onClick, style }) {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-[#4a5068] text-xs text-center px-2">No cover</span>
-          </div>
+          <CoverFallback platforms={game.platforms} />
         )}
       </div>
       <div className="p-2">
-        <p className="text-xs font-medium text-[#e8e4dc] truncate" title={game.name}>{game.name}</p>
-        <p className="text-xs text-[#8891a8] truncate">
-          {game.genres?.length > 0 ? game.genres[0] : ''}
-        </p>
+        <TruncatedText as="p" text={game.name} className="text-xs font-medium text-[#e8e4dc]" />
+        <p className="text-xs text-[#8891a8] truncate">{subtitleText}</p>
       </div>
     </div>
   );

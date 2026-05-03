@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CoverFallback from '../common/CoverFallback';
+import TruncatedText from '../common/TruncatedText';
 
 const statusStyles = {
   PLAYING:   'bg-[#0a0b14cc] text-[#22c55e] border-[#22c55e]',
@@ -29,9 +31,7 @@ export default function LibraryGameCard({ entry, onRemove }) {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-[#4a5068] text-xs text-center px-2">No cover</span>
-          </div>
+          <CoverFallback platforms={entry.platform ? [entry.platform] : []} />
         )}
 
         {/* Status badge — bottom left */}
@@ -76,9 +76,7 @@ export default function LibraryGameCard({ entry, onRemove }) {
 
       {/* Info */}
       <div className="p-2 space-y-0.5">
-        <p className="text-xs font-medium text-[#e8e4dc] truncate" title={entry.gameName}>
-          {entry.gameName}
-        </p>
+        <TruncatedText as="p" text={entry.gameName} className="text-xs font-medium text-[#e8e4dc]" />
         {entry.rating != null ? (
           <p className="text-xs">
             <span className="text-[#f72585] [text-shadow:0_0_6px_#f72585]">{entry.rating}</span>

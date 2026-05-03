@@ -2,7 +2,16 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { login as keycloakLogin } from '../services/authService';
+import { prefetchDashboard, prefetchPersonalized } from '../services/recommendationService';
 import AttributionFooter from '../components/common/AttributionFooter';
+import LoginTransition from '../components/common/LoginTransition';
+import {
+  MIN_FIRST_MS,
+  MIN_REPEAT_MS,
+  MAX_MS,
+  isFirstLogin,
+  markFirstLoginDone,
+} from '../config/loginTransition';
 
 export default function Login() {
   const { login } = useAuth();
@@ -12,6 +21,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [transitionState, setTransitionState] = useState('idle'); // idle | entering | leaving
+  const [transitionFloor, setTransitionFloor] = useState(MIN_FIRST_MS);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,10 +32,31 @@ export default function Login() {
     try {
       const userInfo = await keycloakLogin(username, password);
       login(userInfo);
-      navigate('/dashboard');
+
+      const dashboardPromise = prefetchDashboard();
+      const personalizedPromise = prefetchPersonalized(100);
+
+      const minFloor = isFirstLogin() ? MIN_FIRST_MS : MIN_REPEAT_MS;
+      const startedAt = Date.now();
+
+      setTransitionFloor(minFloor);
+      setTransitionState('entering');
+
+      const gated = Promise.allSettled([dashboardPromise, personalizedPromise]);
+      const cap = new Promise(resolve => setTimeout(resolve, MAX_MS));
+      await Promise.race([gated, cap]);
+
+      const elapsed = Date.now() - startedAt;
+      const remainder = Math.max(0, minFloor - elapsed);
+      if (remainder > 0) await new Promise(resolve => setTimeout(resolve, remainder));
+
+      markFirstLoginDone();
+      setTransitionState('leaving');
+      // Match LoginTransition's fade-out duration so the cross-fade reads.
+      setTimeout(() => navigate('/dashboard'), 250);
     } catch (err) {
       setError(err.message);
-    } finally {
+      setTransitionState('idle');
       setLoading(false);
     }
   }
@@ -98,6 +130,9 @@ export default function Login() {
       <div className="mt-6">
         <AttributionFooter />
       </div>
+      {transitionState !== 'idle' && (
+        <LoginTransition leaving={transitionState === 'leaving'} durationMs={transitionFloor} />
+      )}
     </div>
   );
 }

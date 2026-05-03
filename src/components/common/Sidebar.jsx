@@ -21,17 +21,6 @@ export default function Sidebar({ open, onClose }) {
         md:translate-x-0
       `}
     >
-      {/* Close button — mobile only */}
-      <div className="md:hidden flex justify-end px-3 mb-2">
-        <button
-          onClick={onClose}
-          className="text-[#4a5068] hover:text-[#e8e4dc] transition-colors text-xl leading-none"
-          aria-label="Close menu"
-        >
-          ×
-        </button>
-      </div>
-
       <nav className="flex-1 px-3 space-y-1">
         {navItems.map(({ label, to }) => (
           <NavLink

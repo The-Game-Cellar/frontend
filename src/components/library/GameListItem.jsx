@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TruncatedText from '../common/TruncatedText';
 
 const statusStyles = {
   PLAYING:   'bg-[#22c55e20] text-[#22c55e] border-[#22c55e40]',
@@ -54,7 +55,7 @@ export default function GameListItem({ entry, onRemove }) {
 
       {/* Name + meta */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[#e8e4dc] truncate" title={entry.gameName}>{entry.gameName}</p>
+        <TruncatedText as="p" text={entry.gameName} className="text-sm text-[#e8e4dc]" />
         <div className="flex items-center gap-3 mt-0.5">
           {entry.platform && (
             <span className="text-xs text-[#4a5068]">{entry.platform}</span>

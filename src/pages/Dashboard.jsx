@@ -1,8 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import GameCard from '../components/common/GameCard';
-import { getDashboard } from '../services/recommendationService';
-import { getBacklog, getDustyGames } from '../services/libraryService';
+import {
+  getDashboard,
+  prefetchPersonalized,
+  prefetchDashboard,
+  consumePrefetchedDashboard,
+  getLoadedDashboard,
+  setLoadedDashboard,
+  invalidateDashboard,
+} from '../services/recommendationService';
+import { getBacklog, getDustyGames, getUserPlatforms, getOwnedIgdbIds } from '../services/libraryService';
+import { getUpcomingGames } from '../services/gameService';
 
 
 function SectionHeader({ title, linkText, linkTo }) {
@@ -51,7 +60,18 @@ function GameCardSkeleton({ style }) {
   );
 }
 
-function GameScroll({ games, getKey, onClick, loading = false }) {
+const RELEASE_DATE_FORMAT = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+function formatReleaseDate(epochSeconds) {
+  if (!epochSeconds) return '';
+  return `Releases ${RELEASE_DATE_FORMAT.format(new Date(epochSeconds * 1000))}`;
+}
+
+function GameScroll({ games, getKey, onClick, loading = false, getSubtitle }) {
   const ref = useRef(null);
   const [visibleCount, setVisibleCount] = useState(6);
   const [cardWidth, setCardWidth] = useState(CARD_WIDTH);
@@ -88,6 +108,7 @@ function GameScroll({ games, getKey, onClick, loading = false }) {
           game={game}
           onClick={() => onClick(game)}
           style={{ width: cardWidth }}
+          subtitle={getSubtitle ? getSubtitle(game) : undefined}
         />
       ))}
     </div>
@@ -101,6 +122,9 @@ export default function Dashboard() {
   const [wildcard, setWildcard] = useState([]);
   const [backlog, setBacklog] = useState([]);
   const [dusty, setDusty] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [upcomingLoading, setUpcomingLoading] = useState(true);
+  const [upcomingError, setUpcomingError] = useState(false);
   const [dashLoading, setDashLoading] = useState(true);
   const [recsError, setRecsError] = useState(false);
   const [backlogError, setBacklogError] = useState(false);
@@ -126,32 +150,98 @@ export default function Dashboard() {
       .catch(() => setDustyError(true));
   }, []);
 
+  const loadUpcoming = useCallback(() => {
+    setUpcomingError(false);
+    setUpcomingLoading(true);
+    Promise.all([getUserPlatforms(), getOwnedIgdbIds()])
+      .then(([platformsRes, ownedRes]) => {
+        const platformList = Array.isArray(platformsRes.data) ? platformsRes.data : [];
+        const platformNames = platformList
+          .map(p => p?.platformName ?? p?.name ?? p)
+          .filter(p => typeof p === 'string' && p.length > 0);
+        const ownedIds = Array.isArray(ownedRes.data) ? ownedRes.data : [];
+        return getUpcomingGames({ platforms: platformNames, windowDays: 90, limit: 20, excludeIds: ownedIds });
+      })
+      .then(res => {
+        const data = Array.isArray(res.data?.games) ? res.data.games : [];
+        setUpcoming(data);
+      })
+      .catch(() => setUpcomingError(true))
+      .finally(() => setUpcomingLoading(false));
+  }, []);
+
+  const applyDashboardPayload = useCallback((data) => {
+    setRecommendations(data?.recommendations ?? []);
+    setBecauseYouLiked(data?.becauseYouLiked ?? []);
+    setWildcard(data?.wildcard ?? []);
+  }, []);
+
   const loadDashboard = useCallback(() => {
     setRecsError(false);
+
+    const cached = getLoadedDashboard();
+    if (cached) {
+      applyDashboardPayload(cached);
+      setDashLoading(false);
+      return;
+    }
+
+    const prefetched = consumePrefetchedDashboard();
+    if (prefetched) {
+      setDashLoading(true);
+      prefetched
+        .then(data => {
+          if (!data) {
+            setRecsError(true);
+            return;
+          }
+          applyDashboardPayload(data);
+          setLoadedDashboard(data);
+        })
+        .catch(() => setRecsError(true))
+        .finally(() => setDashLoading(false));
+      return;
+    }
+
     setDashLoading(true);
     getDashboard()
       .then(res => {
         const data = res.data;
-        setRecommendations(data?.recommendations ?? []);
-        setBecauseYouLiked(data?.becauseYouLiked ?? []);
-        setWildcard(data?.wildcard ?? []);
+        applyDashboardPayload(data);
+        setLoadedDashboard(data);
       })
       .catch(() => setRecsError(true))
       .finally(() => setDashLoading(false));
-  }, []);
+  }, [applyDashboardPayload]);
 
   useEffect(() => {
     loadBacklog();
     loadDusty();
     loadDashboard();
-  }, [loadBacklog, loadDusty, loadDashboard]);
+    loadUpcoming();
+    prefetchPersonalized(100);
+  }, [loadBacklog, loadDusty, loadDashboard, loadUpcoming]);
 
   return (
     <div className="space-y-10 animate-enter">
 
       {/* Recommendations for you */}
       <section>
-        <SectionHeader title="Recommendations for you" linkText="View all" linkTo="/recommendations" />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-[#e8e4dc]">Recommendations for you</h2>
+          <div className="flex items-center gap-3">
+            <Link to="/recommendations" className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+              View all →
+            </Link>
+            <button
+              onClick={() => { invalidateDashboard(); loadDashboard(); }}
+              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
+              title="Re-shuffle"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
         {recsError ? (
           <ErrorBanner message="Could not load recommendations." onRetry={loadDashboard} />
         ) : !dashLoading && recommendations.length === 0 ? (
@@ -170,6 +260,38 @@ export default function Dashboard() {
               loading={dashLoading}
             />
           </>
+        )}
+      </section>
+
+      {/* Coming Soon — platform-filtered to user's owned platforms, default 90-day window. */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-[#e8e4dc]">Coming soon</h2>
+          <div className="flex items-center gap-3">
+            <Link to="/explore?view=upcoming" className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+              View all →
+            </Link>
+            <button
+              onClick={loadUpcoming}
+              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
+              title="Re-shuffle"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+        {upcomingError ? (
+          <ErrorBanner message="Could not load upcoming releases." onRetry={loadUpcoming} />
+        ) : !upcomingLoading && upcoming.length === 0 ? (
+          <p className="text-sm text-[#8891a8]">No upcoming releases on your platforms in the next 90 days.</p>
+        ) : (
+          <GameScroll
+            games={upcoming}
+            getKey={g => g.igdbId}
+            onClick={g => navigate(`/games/${g.igdbId}`)}
+            loading={upcomingLoading}
+            getSubtitle={g => formatReleaseDate(g.firstReleaseDate)}
+          />
         )}
       </section>
 

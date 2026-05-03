@@ -20,15 +20,32 @@ export default function Layout() {
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0a0b14]/90 backdrop-blur-sm border-b border-[#1e2035] flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          {/* Hamburger — mobile only */}
+          {/* Hamburger — mobile only. Toggles open/close on the same button so the user
+              never has to dig for the close affordance. The three bars morph to an × when
+              open: top bar rotates 45°, bottom bar rotates -45°, middle bar fades. The bars
+              live in a fixed-height column so the morph happens in place rather than nudging
+              the navbar layout. */}
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="md:hidden flex flex-col gap-1.5 p-1 text-[#8891a8] hover:text-[#e8e4dc] transition-colors"
-            aria-label="Open menu"
+            onClick={() => setSidebarOpen(o => !o)}
+            className="md:hidden relative w-5 h-5 p-1 text-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={sidebarOpen}
           >
-            <span className="block w-5 h-px bg-current" />
-            <span className="block w-5 h-px bg-current" />
-            <span className="block w-5 h-px bg-current" />
+            <span
+              className={`absolute left-1 right-1 h-px bg-current transition-transform duration-200 ${
+                sidebarOpen ? 'top-1/2 rotate-45' : 'top-[6px]'
+              }`}
+            />
+            <span
+              className={`absolute left-1 right-1 top-1/2 h-px bg-current transition-opacity duration-200 ${
+                sidebarOpen ? 'opacity-0' : 'opacity-100'
+              }`}
+            />
+            <span
+              className={`absolute left-1 right-1 h-px bg-current transition-transform duration-200 ${
+                sidebarOpen ? 'top-1/2 -rotate-45' : 'top-[14px]'
+              }`}
+            />
           </button>
 
           <span className="text-base md:text-lg font-semibold text-[#e8e4dc] tracking-wider">
@@ -44,13 +61,16 @@ export default function Layout() {
         </button>
       </nav>
 
-      {/* Mobile backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/60 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Mobile backdrop — always mounted, fades via opacity so it animates in sync with the
+          sidebar's translate-x transition. pointer-events toggle keeps the layer click-through
+          when hidden. */}
+      <div
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden={!sidebarOpen}
+        className={`fixed inset-0 z-30 bg-black/60 md:hidden transition-opacity duration-200 ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      />
 
       {/* Body */}
       <div className="flex">
