@@ -23,13 +23,6 @@ function formatReleaseDate(epochSeconds) {
   return `Releases ${UPCOMING_DATE_FORMAT.format(new Date(epochSeconds * 1000))}`;
 }
 
-const MOODS = [
-  { value: '',             label: 'All' },
-  { value: 'chill',        label: 'Chill' },
-  { value: 'intense',      label: 'Intense' },
-  { value: 'story-driven', label: 'Story-Driven' },
-];
-
 const GAME_MODES = [
   { value: '',                          label: 'All' },
   { value: 'Single player',             label: 'Single-player' },
@@ -86,7 +79,6 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState('');
   const [genre, setGenre] = useState(searchParams.get('genre') ?? '');
   const [platform, setPlatform] = useState('');
-  const [mood, setMood] = useState('');
   const [gameMode, setGameMode] = useState('');
   const [perspective, setPerspective] = useState('');
   const [gameType, setGameType] = useState('main');
@@ -115,8 +107,8 @@ export default function Explore() {
   useEffect(() => {
     if (view !== 'browse') return;
     setPage(0);
-    doFetch(0, searchQuery, genre, platform, mood, gameMode, perspective, gameType, ordering);
-  }, [view, searchQuery, genre, platform, mood, gameMode, perspective, gameType, ordering]); // eslint-disable-line react-hooks/exhaustive-deps
+    doFetch(0, searchQuery, genre, platform, gameMode, perspective, gameType, ordering);
+  }, [view, searchQuery, genre, platform, gameMode, perspective, gameType, ordering]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadUpcoming = useCallback(() => {
     setUpcomingLoading(true);
@@ -168,13 +160,13 @@ export default function Explore() {
     ? platformOthers.filter(p => upcomingPlatformSet.has(String(p).toLowerCase()))
     : platformOthers;
 
-  const doFetch = async (pageNum, q, g, p, m, gm, pv, gt, ord) => {
+  const doFetch = async (pageNum, q, g, p, gm, pv, gt, ord) => {
     const id = ++fetchIdRef.current;
     setLoading(true);
     setError(null);
     try {
       const res = await searchGames({
-        query: q, genre: g, platform: p, mood: m,
+        query: q, genre: g, platform: p,
         gameMode: gm, perspective: pv, gameType: gt,
         ordering: ord, page: pageNum, pageSize: PAGE_SIZE,
       });
@@ -193,7 +185,7 @@ export default function Explore() {
 
   const handlePageChange = p => {
     setPage(p);
-    doFetch(p, searchQuery, genre, platform, mood, gameMode, perspective, gameType, ordering);
+    doFetch(p, searchQuery, genre, platform, gameMode, perspective, gameType, ordering);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -209,14 +201,13 @@ export default function Explore() {
     return item.name ?? item.genre ?? item.platform ?? '';
   };
 
-  const isFiltered = searchQuery || genre || platform || mood || gameMode || perspective || gameType !== 'main' || ordering !== '-rating';
+  const isFiltered = searchQuery || genre || platform || gameMode || perspective || gameType !== 'main' || ordering !== '-rating';
 
   const handleReset = () => {
     setSearchInput('');
     setSearchQuery('');
     setGenre('');
     setPlatform('');
-    setMood('');
     setGameMode('');
     setPerspective('');
     setGameType('main');
@@ -303,7 +294,6 @@ export default function Explore() {
           genre={genre} setGenre={setGenre} genres={genres} resolveLabel={resolveLabel}
           platform={platform} setPlatform={setPlatform}
           platformGroups={platformGroups} platformOthers={platformOthers}
-          mood={mood} setMood={setMood}
           gameMode={gameMode} setGameMode={setGameMode}
           perspective={perspective} setPerspective={setPerspective}
           gameType={gameType} setGameType={setGameType}
@@ -321,7 +311,7 @@ function BrowseView({
   searchInput, handleSearchChange,
   genre, setGenre, genres, resolveLabel,
   platform, setPlatform, platformGroups, platformOthers,
-  mood, setMood, gameMode, setGameMode, perspective, setPerspective,
+  gameMode, setGameMode, perspective, setPerspective,
   gameType, setGameType, ordering, setOrdering,
   isFiltered, handleReset,
   loading, error, games, navigate,
@@ -359,11 +349,6 @@ function BrowseView({
             others={platformOthers}
             onChange={setPlatform}
           />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Mood</label>
-          <StyledSelect value={mood} onChange={setMood} options={MOODS} />
         </div>
 
         <div className="flex flex-col gap-1">
