@@ -5,48 +5,6 @@ import GameListItem from '../components/library/GameListItem';
 import LibraryGameCard from '../components/library/LibraryGameCard';
 import StyledSelect from '../components/common/StyledSelect';
 
-const GENRE_TO_MOODS = {
-  // RAWG genre names (backward compat for cached library games)
-  'Action':                         ['Intense', 'Fast-paced'],
-  'RPG':                            ['Story-driven', 'Exploration', 'Epic'],
-  'Adventure':                      ['Story-driven', 'Exploration', 'Atmospheric'],
-  'Shooter':                        ['Intense', 'Fast-paced', 'Competitive'],
-  'Strategy':                       ['Tactical', 'Competitive'],
-  'Simulation':                     ['Chill', 'Cozy', 'Creative', 'Sandbox'],
-  'Puzzle':                         ['Chill', 'Meditative'],
-  'Platformer':                     ['Fast-paced', 'Nostalgic'],
-  'Racing':                         ['Fast-paced', 'Competitive'],
-  'Sports':                         ['Competitive', 'Social'],
-  'Fighting':                       ['Intense', 'Competitive'],
-  'Indie':                          ['Atmospheric', 'Creative'],
-  'Casual':                         ['Chill', 'Humorous'],
-  'Arcade':                         ['Fast-paced', 'Nostalgic'],
-  'Massively Multiplayer':          ['Social', 'Epic', 'Competitive'],
-  'Family':                         ['Cozy', 'Humorous', 'Social'],
-  'Board Games':                    ['Chill', 'Tactical', 'Social'],
-  'Card':                           ['Tactical', 'Chill'],
-  'Educational':                    ['Meditative', 'Creative'],
-  // IGDB genre names
-  'Role-playing (RPG)':             ['Story-driven', 'Exploration', 'Epic'],
-  'Platform':                       ['Fast-paced', 'Nostalgic'],
-  'Simulator':                      ['Chill', 'Cozy', 'Creative', 'Sandbox'],
-  'Real Time Strategy (RTS)':       ['Tactical', 'Competitive'],
-  'Turn-based strategy (TBS)':      ['Tactical'],
-  'Tactical':                       ['Tactical'],
-  "Hack and slash/Beat 'em up":     ['Intense', 'Fast-paced'],
-  'Music':                          ['Meditative', 'Chill'],
-  'Visual Novel':                   ['Story-driven', 'Atmospheric'],
-  'Card & Board Game':              ['Chill', 'Tactical', 'Social'],
-  'MOBA':                           ['Competitive', 'Social'],
-  'Point-and-click':                ['Story-driven', 'Atmospheric'],
-  'Quiz/Trivia':                    ['Chill', 'Social'],
-  'Sport':                          ['Competitive', 'Social'],
-  'Pinball':                        ['Nostalgic', 'Fast-paced'],
-};
-
-const getMoodsFromGenres = genres =>
-  [...new Set((genres ?? []).flatMap(g => GENRE_TO_MOODS[g] ?? []))];
-
 const STATUS_TABS = ['All', 'PLAYING', 'BACKLOG', 'WISHLIST', 'DUSTY', 'COMPLETED', 'DROPPED'];
 
 const STATUS_ORDER = { PLAYING: 0, BACKLOG: 1, WISHLIST: 2, DUSTY: 3, COMPLETED: 4, DROPPED: 5 };
@@ -122,7 +80,6 @@ export default function Library() {
   const [activeRating, setActiveRating] = useState('');
   const [activeSort, setActiveSort] = useState('status');
   const [activeTag, setActiveTag] = useState('');
-  const [activeMood, setActiveMood] = useState('');
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('library_view') || 'list');
   const [removeError, setRemoveError] = useState(null);
 
@@ -171,9 +128,8 @@ export default function Library() {
   };
 
   const allTags = [...new Set(games.flatMap(g => g.tags ?? []))].sort();
-  const allMoods = [...new Set(games.flatMap(g => getMoodsFromGenres(g.genres)))].sort();
 
-  const isFiltered = activeStatus !== 'All' || activePlatform || activeGenre || activeRating || activeSort !== 'status' || activeTag || activeMood;
+  const isFiltered = activeStatus !== 'All' || activePlatform || activeGenre || activeRating || activeSort !== 'status' || activeTag;
 
   const resetFilters = () => {
     setActiveStatus('All');
@@ -182,14 +138,12 @@ export default function Library() {
     setActiveRating('');
     setActiveSort('status');
     setActiveTag('');
-    setActiveMood('');
   };
 
   const displayedGames = [...games]
     .filter(g => {
       if (activeRating && (g.rating == null || g.rating < Number(activeRating))) return false;
       if (activeTag && !(g.tags ?? []).includes(activeTag)) return false;
-      if (activeMood && !getMoodsFromGenres(g.genres).includes(activeMood)) return false;
       return true;
     })
     .sort((a, b) => {
@@ -281,16 +235,6 @@ export default function Library() {
               onChange={setActiveTag}
               disabled={allTags.length === 0}
               options={[{ value: '', label: 'All' }, ...allTags.map(t => ({ value: t, label: t }))]}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-[#4a5068] uppercase tracking-wider">Mood</label>
-            <StyledSelect
-              value={activeMood}
-              onChange={setActiveMood}
-              disabled={allMoods.length === 0}
-              options={[{ value: '', label: 'All' }, ...allMoods.map(m => ({ value: m, label: m }))]}
             />
           </div>
 
