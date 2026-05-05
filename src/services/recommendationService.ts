@@ -1,4 +1,5 @@
 import type { AxiosResponse } from 'axios'
+import { useQuery } from '@tanstack/react-query'
 import api from './api'
 import type {
   DashboardDTO,
@@ -157,3 +158,55 @@ export const invalidatePrefetchedPersonalized = (): void => {
   loadedGames = null
   nextBatchPromise = null
 }
+
+// ─── TanStack Query hooks ───────────────────────────────────────────────────
+
+export const recommendationKeys = {
+  all: ['recommendations'] as const,
+  // Note: recentlyShownIds intentionally excluded from grouped() — it's tracking
+  // state, not query identity. Including it would invalidate cache on every refresh.
+  grouped: () => [...recommendationKeys.all, 'grouped'] as const,
+  wildcard: (limit: number) => [...recommendationKeys.all, 'wildcard', limit] as const,
+  similar: (gameId: number, limit: number) => [...recommendationKeys.all, 'similar', gameId, limit] as const,
+  basedOn: (gameId: number, limit: number) => [...recommendationKeys.all, 'basedOn', gameId, limit] as const,
+  dashboard: () => [...recommendationKeys.all, 'dashboard'] as const,
+}
+
+export const useDashboard = () =>
+  useQuery({
+    queryKey: recommendationKeys.dashboard(),
+    queryFn: () => getDashboard().then((r) => r.data),
+  })
+
+export const usePersonalizedGrouped = () =>
+  useQuery({
+    queryKey: recommendationKeys.grouped(),
+    queryFn: () =>
+      getPersonalizedGrouped().then((res) => {
+        const payload: GroupedRecommendationsResponse = res.data ?? { rows: [], tier: 3 }
+        const allIds = (payload.rows ?? [])
+          .flatMap((r) => (r.games ?? []).map((g) => g.igdbId).filter((id): id is number => id != null))
+        addRecentlyShownIds(allIds)
+        return payload
+      }),
+  })
+
+export const useWildCard = (limit = 10) =>
+  useQuery({
+    queryKey: recommendationKeys.wildcard(limit),
+    queryFn: () => getWildCard(limit).then((r) => (Array.isArray(r.data) ? r.data : [])),
+  })
+
+export const useSimilar = (gameId: number, limit = 10, enabled = true) =>
+  useQuery({
+    queryKey: recommendationKeys.similar(gameId, limit),
+    queryFn: () => getSimilar(gameId, limit).then((r) => (Array.isArray(r.data) ? r.data : [])),
+    enabled: enabled && Number.isFinite(gameId),
+  })
+
+export const useBasedOn = (gameId: number, limit = 10, enabled = true) =>
+  useQuery({
+    queryKey: recommendationKeys.basedOn(gameId, limit),
+    queryFn: () => getBasedOn(gameId, limit).then((r) => (Array.isArray(r.data) ? r.data : [])),
+    enabled: enabled && Number.isFinite(gameId),
+  })

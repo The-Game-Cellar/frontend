@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AccountExportDTO } from '../types/api'
 
 const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'
@@ -177,3 +178,51 @@ export async function exchangeAuthorizationCode(code: string): Promise<UserInfo>
   }
   return res.json() as Promise<UserInfo>
 }
+
+// ─── TanStack Query mutation hooks ──────────────────────────────────────────
+// Auth bootstrap (getMe / refreshAccessToken) stays imperative inside AuthProvider —
+// see TanStackQueryAdoption design doc, Decision 5. Only write-operations are mutations.
+
+export const useLogin = () =>
+  useMutation({
+    mutationFn: ({ username, password }: { username: string; password: string }) =>
+      login(username, password),
+  })
+
+export const useRegister = () =>
+  useMutation({
+    mutationFn: ({ username, email, password }: { username: string; email: string; password: string }) =>
+      register(username, email, password),
+  })
+
+export const useExchangeAuthorizationCode = () =>
+  useMutation({
+    mutationFn: (code: string) => exchangeAuthorizationCode(code),
+  })
+
+export const useChangeEmail = () =>
+  useMutation({
+    mutationFn: ({ currentPassword, newEmail }: { currentPassword: string; newEmail: string }) =>
+      changeEmail(currentPassword, newEmail),
+  })
+
+export const useChangePassword = () =>
+  useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      changePassword(currentPassword, newPassword),
+  })
+
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (currentPassword: string) => deleteAccount(currentPassword),
+    onSuccess: () => {
+      queryClient.clear()
+    },
+  })
+}
+
+export const useExportAccountData = () =>
+  useMutation({
+    mutationFn: () => exportAccountData(),
+  })

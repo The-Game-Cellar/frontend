@@ -1,4 +1,5 @@
 import type { AxiosResponse } from 'axios'
+import { useQuery } from '@tanstack/react-query'
 import api from './api'
 import type { GameResponse, GameSearchResponse, PlatformsResponse } from '../types/api'
 
@@ -80,3 +81,87 @@ export const getByCollection = (
 
 export const getEditions = (igdbId: number): Promise<AxiosResponse<GameResponse[]>> =>
   api.get(`/api/v1/games/${igdbId}/editions`)
+
+// ─── TanStack Query hooks ───────────────────────────────────────────────────
+
+export const gameKeys = {
+  all: ['games'] as const,
+  search: (params: SearchGamesParams) => [...gameKeys.all, 'search', params] as const,
+  byId: (igdbId: number) => [...gameKeys.all, 'byId', igdbId] as const,
+  popular: (params: PopularGamesParams) => [...gameKeys.all, 'popular', params] as const,
+  upcoming: (params: UpcomingGamesParams) => [...gameKeys.all, 'upcoming', params] as const,
+  upcomingPlatforms: () => [...gameKeys.all, 'upcoming', 'platforms'] as const,
+  genres: () => [...gameKeys.all, 'genres'] as const,
+  platforms: () => [...gameKeys.all, 'platforms'] as const,
+  byFranchise: (name: string, limit: number, excludeIgdbId?: number) =>
+    [...gameKeys.all, 'byFranchise', name, limit, excludeIgdbId] as const,
+  byCollection: (name: string, limit: number, excludeIgdbId?: number) =>
+    [...gameKeys.all, 'byCollection', name, limit, excludeIgdbId] as const,
+  editions: (igdbId: number) => [...gameKeys.all, 'editions', igdbId] as const,
+}
+
+export const useSearchGames = (params: SearchGamesParams, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.search(params),
+    queryFn: () => searchGames(params).then((r) => r.data),
+    enabled,
+  })
+
+export const useGameById = (igdbId: number, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.byId(igdbId),
+    queryFn: () => getGameById(igdbId).then((r) => r.data),
+    enabled: enabled && Number.isFinite(igdbId),
+  })
+
+export const usePopularGames = (params: PopularGamesParams) =>
+  useQuery({
+    queryKey: gameKeys.popular(params),
+    queryFn: () => getPopularGames(params).then((r) => r.data),
+  })
+
+export const useUpcomingGames = (params: UpcomingGamesParams = {}, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.upcoming(params),
+    queryFn: () => getUpcomingGames(params).then((r) => r.data),
+    enabled,
+  })
+
+export const useUpcomingPlatforms = () =>
+  useQuery({
+    queryKey: gameKeys.upcomingPlatforms(),
+    queryFn: () => getUpcomingPlatforms().then((r) => r.data),
+  })
+
+export const useGenres = () =>
+  useQuery({
+    queryKey: gameKeys.genres(),
+    queryFn: () => getGenres().then((r) => r.data),
+  })
+
+export const useGamePlatforms = () =>
+  useQuery({
+    queryKey: gameKeys.platforms(),
+    queryFn: () => getPlatforms().then((r) => r.data),
+  })
+
+export const useByFranchise = (name: string, limit = 20, excludeIgdbId?: number, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.byFranchise(name, limit, excludeIgdbId),
+    queryFn: () => getByFranchise(name, limit, excludeIgdbId).then((r) => r.data),
+    enabled: enabled && name.length > 0,
+  })
+
+export const useByCollection = (name: string, limit = 20, excludeIgdbId?: number, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.byCollection(name, limit, excludeIgdbId),
+    queryFn: () => getByCollection(name, limit, excludeIgdbId).then((r) => r.data),
+    enabled: enabled && name.length > 0,
+  })
+
+export const useEditions = (igdbId: number, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.editions(igdbId),
+    queryFn: () => getEditions(igdbId).then((r) => r.data),
+    enabled: enabled && Number.isFinite(igdbId),
+  })
