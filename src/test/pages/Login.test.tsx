@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
-import AuthProvider from '../../context/AuthContext'
+import AuthProvider from '../../context/AuthProvider'
 import Login from '../../pages/Login'
 
 const API = 'http://api.test'
