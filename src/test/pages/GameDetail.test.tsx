@@ -1,19 +1,28 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
+import AuthProvider from '../../context/AuthProvider'
 import GameDetail from '../../pages/GameDetail'
 
 const API = 'http://api.test'
 
 function renderGameDetail(igdbId: number) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 }, mutations: { retry: false } },
+  })
   return render(
-    <MemoryRouter initialEntries={[`/games/${igdbId}`]}>
-      <Routes>
-        <Route path="/games/:igdbId" element={<GameDetail />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[`/games/${igdbId}`]}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/games/:igdbId" element={<GameDetail />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 }
 

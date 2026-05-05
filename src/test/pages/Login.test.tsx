@@ -1,22 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
-import AuthProvider from '../../context/AuthProvider'
+import { renderWithProviders } from '../test-utils'
 import Login from '../../pages/Login'
 
 const API = 'http://api.test'
 
 function renderLogin() {
-  return render(
-    <MemoryRouter>
-      <AuthProvider>
-        <Login />
-      </AuthProvider>
-    </MemoryRouter>
-  )
+  return render(renderWithProviders(<Login />))
 }
 
 describe('Login page', () => {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
-import { register as registerUser } from '../services/authService'
+import { useRegister } from '../services/authService'
 import AttributionFooter from '../components/common/AttributionFooter'
 
 const inputClass =
@@ -12,13 +12,13 @@ const labelClass = 'block text-xs text-[#4a5068] uppercase tracking-wider'
 export default function Register() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const registerMutation = useRegister()
 
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -33,15 +33,12 @@ export default function Register() {
       return
     }
 
-    setLoading(true)
     try {
-      const userInfo = await registerUser(username, email, password)
+      const userInfo = await registerMutation.mutateAsync({ username, email, password })
       login(userInfo)
       navigate('/onboarding')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -116,10 +113,10 @@ export default function Register() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={registerMutation.isPending}
             className="w-full px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
           >
-            {loading ? '[ CREATING ACCOUNT... ]' : 'Create account'}
+            {registerMutation.isPending ? '[ CREATING ACCOUNT... ]' : 'Create account'}
           </button>
         </form>
 

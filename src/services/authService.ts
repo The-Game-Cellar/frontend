@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryClient } from './queryClient'
+import { clearRecentlyShownIds } from './recommendationService'
 import type { AccountExportDTO } from '../types/api'
 
 const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'
@@ -62,9 +64,7 @@ export async function refreshAccessToken(): Promise<UserInfo> {
 }
 
 export async function logout(): Promise<void> {
-  const { invalidatePrefetchedPersonalized, invalidateDashboard, clearRecentlyShownIds } = await import('./recommendationService')
-  invalidatePrefetchedPersonalized()
-  invalidateDashboard()
+  queryClient.clear()
   clearRecentlyShownIds()
   await fetch(`${API_URL}/api/v1/auth/logout`, {
     method: 'POST',
@@ -120,9 +120,7 @@ export async function changeEmail(currentPassword: string, newEmail: string): Pr
 }
 
 export async function deleteAccount(currentPassword: string): Promise<Record<string, unknown>> {
-  const { invalidatePrefetchedPersonalized, invalidateDashboard, clearRecentlyShownIds } = await import('./recommendationService')
-  invalidatePrefetchedPersonalized()
-  invalidateDashboard()
+  queryClient.clear()
   clearRecentlyShownIds()
   const res = await fetch(`${API_URL}/api/v1/auth/account`, {
     method: 'DELETE',

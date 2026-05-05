@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
+import { renderWithProviders } from '../test-utils'
 import Recommendations from '../../pages/Recommendations'
 
 const API = 'http://api.test'
 
 describe('Recommendations page', () => {
   it('shows the tier-3 cold-start message when the user has no ratings', async () => {
-    render(<MemoryRouter><Recommendations /></MemoryRouter>)
+    render(renderWithProviders(<Recommendations />))
     await waitFor(() =>
       expect(screen.getByText(/rate games in your library to unlock personalized recommendations/i)).toBeInTheDocument()
     )
@@ -29,7 +29,7 @@ describe('Recommendations page', () => {
         })
       ),
     )
-    render(<MemoryRouter><Recommendations /></MemoryRouter>)
+    render(renderWithProviders(<Recommendations />))
     await waitFor(() => expect(screen.getByText(/more like hollow knight/i)).toBeInTheDocument())
   })
 })

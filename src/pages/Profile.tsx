@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
-import { getStats, getUserPlatforms, addPlatform, removePlatform } from '../services/libraryService'
-import { changeEmail, changePassword, deleteAccount, exportAccountData } from '../services/authService'
+import { useStats, useUserPlatforms, useAddPlatform, useRemovePlatform } from '../services/libraryService'
+import {
+  useChangeEmail,
+  useChangePassword,
+  useDeleteAccount,
+  useExportAccountData,
+} from '../services/authService'
 import type { UserInfo } from '../services/authService'
-import type { GameStatus, UserPlatformDTO, UserStatsDTO } from '../types/api'
+import type { GameStatus } from '../types/api'
 
 const inputClass =
   'w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none focus:[box-shadow:0_0_8px_#f7258540] transition-[border-color,box-shadow] duration-200'
@@ -44,10 +49,18 @@ function asUserInfo(value: unknown): UserInfo | null {
 export default function Profile() {
   const { email, logout, login } = useAuth()
   const navigate = useNavigate()
-  const [stats, setStats] = useState<UserStatsDTO | null>(null)
-  const [statsError, setStatsError] = useState(false)
-  const [platforms, setPlatforms] = useState<UserPlatformDTO[]>([])
-  const [platformsError, setPlatformsError] = useState(false)
+
+  const { data: stats, isError: statsError } = useStats()
+  const { data: platformsData, isError: platformsError } = useUserPlatforms()
+  const platforms = platformsData ?? []
+
+  const addPlatformMutation = useAddPlatform()
+  const removePlatformMutation = useRemovePlatform()
+  const changeEmailMutation = useChangeEmail()
+  const changePasswordMutation = useChangePassword()
+  const deleteAccountMutation = useDeleteAccount()
+  const exportAccountDataMutation = useExportAccountData()
+
   const [adding, setAdding] = useState(false)
   const [addPlatformError, setAddPlatformError] = useState(false)
   const [removePlatformError, setRemovePlatformError] = useState(false)
@@ -58,7 +71,6 @@ export default function Profile() {
   const [deleteForm, setDeleteForm] = useState({ currentPassword: '' })
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleteSaving, setDeleteSaving] = useState(false)
-  const [exportLoading, setExportLoading] = useState(false)
   const [exportError, setExportError] = useState(false)
 
   const [emailForm, setEmailForm] = useState<EmailFormState>({ newEmail: '', currentPassword: '' })
@@ -109,7 +121,7 @@ export default function Profile() {
     setDeleteError(null)
     setDeleteSaving(true)
     try {
-      await deleteAccount(deleteForm.currentPassword)
+      await deleteAccountMutation.mutateAsync(deleteForm.currentPassword)
       navigate('/login', { replace: true })
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Account deletion failed')
@@ -119,9 +131,8 @@ export default function Profile() {
 
   async function handleExportData() {
     setExportError(false)
-    setExportLoading(true)
     try {
-      const data = await exportAccountData()
+      const data = await exportAccountDataMutation.mutateAsync()
       const json = JSON.stringify(data, null, 2)
       const blob = new Blob([json], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
@@ -136,8 +147,6 @@ export default function Profile() {
     } catch {
       setExportError(true)
       setTimeout(() => setExportError(false), 3000)
-    } finally {
-      setExportLoading(false)
     }
   }
 
@@ -151,7 +160,10 @@ export default function Profile() {
     }
     setEmailSaving(true)
     try {
-      const result = await changeEmail(emailForm.currentPassword, emailForm.newEmail)
+      const result = await changeEmailMutation.mutateAsync({
+        currentPassword: emailForm.currentPassword,
+        newEmail: emailForm.newEmail,
+      })
       const userInfo = asUserInfo(result)
       if (userInfo) login(userInfo)
       setEmailForm({ newEmail: '', currentPassword: '' })
@@ -189,7 +201,10 @@ export default function Profile() {
     }
     setPwSaving(true)
     try {
-      await changePassword(pwForm.currentPassword, pwForm.newPassword)
+      await changePasswordMutation.mutateAsync({
+        currentPassword: pwForm.currentPassword,
+        newPassword: pwForm.newPassword,
+      })
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       setPwSuccess(true)
       setTimeout(() => {
@@ -208,11 +223,6 @@ export default function Profile() {
     navigate('/login')
   }
 
-  useEffect(() => {
-    getStats().then((r) => setStats(r.data)).catch(() => setStatsError(true))
-    getUserPlatforms().then((r) => setPlatforms(Array.isArray(r.data) ? r.data : [])).catch(() => setPlatformsError(true))
-  }, [])
-
   const ownedNames = platforms.map((p) => p.platformName ?? '')
   const available = ALL_PLATFORMS.filter((p) => !ownedNames.includes(p))
   const totalGames = stats
@@ -221,8 +231,7 @@ export default function Profile() {
 
   async function handleRemovePlatform(platformId: number) {
     try {
-      await removePlatform(platformId)
-      setPlatforms((prev) => prev.filter((p) => p.id !== platformId))
+      await removePlatformMutation.mutateAsync(platformId)
     } catch {
       setRemovePlatformError(true)
       setTimeout(() => setRemovePlatformError(false), 3000)
@@ -232,9 +241,7 @@ export default function Profile() {
   async function handleAddPlatform(name: string) {
     setAdding(true)
     try {
-      await addPlatform({ platformName: name, isPrimary: false })
-      const res = await getUserPlatforms()
-      setPlatforms(Array.isArray(res.data) ? res.data : [])
+      await addPlatformMutation.mutateAsync({ platformName: name, isPrimary: false })
     } catch {
       setAddPlatformError(true)
       setTimeout(() => setAddPlatformError(false), 3000)
@@ -380,10 +387,10 @@ export default function Profile() {
           <button
             type="button"
             onClick={handleExportData}
-            disabled={exportLoading}
+            disabled={exportAccountDataMutation.isPending}
             className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] disabled:opacity-40 disabled:cursor-not-allowed transition-[color,border-color,text-shadow] duration-200"
           >
-            {exportLoading ? '[ EXPORTING... ]' : 'Download my data'}
+            {exportAccountDataMutation.isPending ? '[ EXPORTING... ]' : 'Download my data'}
           </button>
           <button
             type="button"

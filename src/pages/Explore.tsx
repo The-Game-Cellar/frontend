@@ -1,10 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { searchGames, getGenres, getPlatforms, getUpcomingGames, getUpcomingPlatforms } from '../services/gameService'
+import {
+  useSearchGames,
+  useGenres,
+  useGamePlatforms,
+  useUpcomingGames,
+  useUpcomingPlatforms,
+} from '../services/gameService'
 import type { SearchGamesParams } from '../services/gameService'
-import { getOwnedIgdbIds } from '../services/libraryService'
+import { useOwnedIgdbIds } from '../services/libraryService'
 import GameCard from '../components/common/GameCard'
 import PlatformDropdown from '../components/common/PlatformDropdown'
 import StyledSelect from '../components/common/StyledSelect'
@@ -74,15 +80,6 @@ export default function Explore() {
     setSearchParams(params)
   }
 
-  const [games, setGames] = useState<GameResponse[]>([])
-  const [genres, setGenres] = useState<string[]>([])
-  const [platformGroups, setPlatformGroups] = useState<PlatformGroup[]>([])
-  const [platformOthers, setPlatformOthers] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(0)
-
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [genre, setGenre] = useState(searchParams.get('genre') ?? '')
@@ -91,109 +88,61 @@ export default function Explore() {
   const [perspective, setPerspective] = useState('')
   const [gameType, setGameType] = useState<GameTypeFilter>('main')
   const [ordering, setOrdering] = useState<OrderingFilter>('-rating')
+  const [page, setPage] = useState(0)
 
-  // Coming Soon view state
   const [upcomingHorizon, setUpcomingHorizon] = useState('90')
-  const [upcomingGames, setUpcomingGames] = useState<GameResponse[]>([])
-  const [upcomingLoading, setUpcomingLoading] = useState(false)
-  const [upcomingError, setUpcomingError] = useState<string | null>(null)
-  const [upcomingPlatformNames, setUpcomingPlatformNames] = useState<string[]>([])
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const fetchIdRef = useRef(0)
 
-  useEffect(() => {
-    getGenres()
-      .then((res) => {
-        // Backend returns Record<string, string[]>. Top-level keys are the genre names.
-        // Defensive narrowing: pre-typed JS code expected a different shape; see surfaced-bugs buffer.
-        const data = res.data
-        if (data && typeof data === 'object') {
-          setGenres(Object.keys(data))
-        } else {
-          setGenres([])
-        }
-      })
-      .catch(() => {})
-    getPlatforms()
-      .then((res) => {
-        setPlatformGroups(Array.isArray(res.data?.groups) ? res.data.groups : [])
-        setPlatformOthers(Array.isArray(res.data?.others) ? res.data.others : [])
-      })
-      .catch(() => {})
-  }, [])
+  const { data: genresData } = useGenres()
+  const genres = genresData && typeof genresData === 'object' ? Object.keys(genresData) : []
 
-  const doFetch = useCallback(async (
-    pageNum: number,
-    q: string,
-    g: string,
-    p: string,
-    gm: string,
-    pv: string,
-    gt: GameTypeFilter,
-    ord: OrderingFilter,
-  ) => {
-    const id = ++fetchIdRef.current
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await searchGames({
-        query: q, genre: g, platform: p,
-        gameMode: gm, perspective: pv, gameType: gt,
-        ordering: ord, page: pageNum, pageSize: PAGE_SIZE,
-      })
-      if (id !== fetchIdRef.current) return
-      const incoming = Array.isArray(res.data?.games) ? res.data.games : []
-      const total = res.data?.totalCount ?? 0
-      setGames(incoming)
-      setTotalPages(Math.ceil(total / PAGE_SIZE))
-    } catch {
-      if (id !== fetchIdRef.current) return
-      setError('Failed to load games.')
-    } finally {
-      if (id === fetchIdRef.current) setLoading(false)
-    }
-  }, [])
+  const { data: platformsData } = useGamePlatforms()
+  const platformGroups: PlatformGroup[] = Array.isArray(platformsData?.groups) ? platformsData.groups : []
+  const platformOthers: string[] = Array.isArray(platformsData?.others) ? platformsData.others : []
 
-  useEffect(() => {
-    if (view !== 'browse') return
-    setPage(0)
-    doFetch(0, searchQuery, genre, platform, gameMode, perspective, gameType, ordering)
-  }, [view, searchQuery, genre, platform, gameMode, perspective, gameType, ordering, doFetch])
+  // Browse view query
+  const browseParams: SearchGamesParams = {
+    query: searchQuery,
+    genre,
+    platform,
+    gameMode,
+    perspective,
+    gameType,
+    ordering,
+    page,
+    pageSize: PAGE_SIZE,
+  }
+  const {
+    data: browseData,
+    isFetching: browseLoading,
+    error: browseError,
+  } = useSearchGames(browseParams, view === 'browse')
+  const games: GameResponse[] = Array.isArray(browseData?.games) ? browseData.games : []
+  const totalPages = Math.ceil((browseData?.totalCount ?? 0) / PAGE_SIZE)
 
-  const loadUpcoming = useCallback(() => {
-    setUpcomingLoading(true)
-    setUpcomingError(null)
-    const platforms = platform ? platform.split(',').map((s) => s.trim()).filter(Boolean) : []
-    const windowDays = parseInt(upcomingHorizon, 10)
-    getOwnedIgdbIds()
-      .then((res) => {
-        const ownedIds = Array.isArray(res.data) ? res.data : []
-        return getUpcomingGames({ platforms, windowDays, limit: 60, excludeIds: ownedIds })
-      })
-      .then((res) => {
-        const data = Array.isArray(res.data?.games) ? res.data.games : []
-        setUpcomingGames(data)
-      })
-      .catch(() => setUpcomingError('Failed to load upcoming releases.'))
-      .finally(() => setUpcomingLoading(false))
-  }, [upcomingHorizon, platform])
+  // Upcoming view queries
+  const { data: ownedIdsData } = useOwnedIgdbIds()
+  const ownedIds = ownedIdsData ?? []
 
-  useEffect(() => {
-    if (view !== 'upcoming') return
-    loadUpcoming()
-  }, [view, loadUpcoming])
+  const upcomingPlatforms = platform ? platform.split(',').map((s) => s.trim()).filter(Boolean) : []
+  const upcomingWindowDays = parseInt(upcomingHorizon, 10)
+  const {
+    data: upcomingData,
+    isFetching: upcomingLoading,
+    error: upcomingError,
+    refetch: refetchUpcoming,
+  } = useUpcomingGames(
+    { platforms: upcomingPlatforms, windowDays: upcomingWindowDays, limit: 60, excludeIds: ownedIds },
+    view === 'upcoming',
+  )
+  const upcomingGames: GameResponse[] = Array.isArray(upcomingData?.games) ? upcomingData.games : []
 
-  useEffect(() => {
-    if (view !== 'upcoming') return
-    getUpcomingPlatforms()
-      .then((res) => {
-        const data = res.data as { platforms?: unknown }
-        const names = Array.isArray(data?.platforms) ? data.platforms.filter((s): s is string => typeof s === 'string') : []
-        setUpcomingPlatformNames(names)
-      })
-      .catch(() => setUpcomingPlatformNames([]))
-  }, [view])
+  const { data: upcomingPlatformsRaw } = useUpcomingPlatforms()
+  const upcomingPlatformsResponse = upcomingPlatformsRaw as { platforms?: unknown } | undefined
+  const upcomingPlatformNames: string[] = Array.isArray(upcomingPlatformsResponse?.platforms)
+    ? upcomingPlatformsResponse.platforms.filter((s): s is string => typeof s === 'string')
+    : []
 
   // Filter the full platform list to those that have at least one upcoming release.
   // PlatformDropdown's groups[].platforms and others arrays are flat strings (not objects),
@@ -216,7 +165,6 @@ export default function Explore() {
 
   const handlePageChange = (p: number) => {
     setPage(p)
-    doFetch(p, searchQuery, genre, platform, gameMode, perspective, gameType, ordering)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -224,7 +172,10 @@ export default function Explore() {
     const val = e.target.value
     setSearchInput(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => setSearchQuery(val), 300)
+    debounceRef.current = setTimeout(() => {
+      setSearchQuery(val)
+      setPage(0)
+    }, 300)
   }
 
   const isFiltered = !!(searchQuery || genre || platform || gameMode || perspective || gameType !== 'main' || ordering !== '-rating')
@@ -238,6 +189,7 @@ export default function Explore() {
     setPerspective('')
     setGameType('main')
     setOrdering('-rating')
+    setPage(0)
   }
 
   return (
@@ -281,7 +233,7 @@ export default function Explore() {
               />
             </div>
             <button
-              onClick={loadUpcoming}
+              onClick={() => refetchUpcoming()}
               className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
               title="Re-shuffle"
             >
@@ -293,7 +245,7 @@ export default function Explore() {
             <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
           )}
           {!upcomingLoading && upcomingError && (
-            <p className="text-sm text-[#ef4444]">{upcomingError}</p>
+            <p className="text-sm text-[#ef4444]">Failed to load upcoming releases.</p>
           )}
           {!upcomingLoading && !upcomingError && upcomingGames.length === 0 && (
             <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
@@ -317,15 +269,15 @@ export default function Explore() {
         <BrowseView
           searchInput={searchInput}
           handleSearchChange={handleSearchChange}
-          genre={genre} setGenre={setGenre} genres={genres}
-          platform={platform} setPlatform={setPlatform}
+          genre={genre} setGenre={(v) => { setGenre(v); setPage(0) }} genres={genres}
+          platform={platform} setPlatform={(v) => { setPlatform(v); setPage(0) }}
           platformGroups={platformGroups} platformOthers={platformOthers}
-          gameMode={gameMode} setGameMode={setGameMode}
-          perspective={perspective} setPerspective={setPerspective}
+          gameMode={gameMode} setGameMode={(v) => { setGameMode(v); setPage(0) }}
+          perspective={perspective} setPerspective={(v) => { setPerspective(v); setPage(0) }}
           gameType={gameType} setGameType={setGameType}
-          ordering={ordering} setOrdering={setOrdering}
+          ordering={ordering} setOrdering={(v) => { setOrdering(v); setPage(0) }}
           isFiltered={isFiltered} handleReset={handleReset}
-          loading={loading} error={error} games={games} navigate={navigate}
+          loading={browseLoading} error={browseError ? 'Failed to load games.' : null} games={games} navigate={navigate}
           page={page} totalPages={totalPages} handlePageChange={handlePageChange}
         />
       )}

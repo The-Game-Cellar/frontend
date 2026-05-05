@@ -1,32 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { exchangeAuthorizationCode } from '../services/authService'
+import { useExchangeAuthorizationCode } from '../services/authService'
 import { getUserPlatforms } from '../services/libraryService'
 import useAuth from '../hooks/useAuth'
 
 export default function Callback() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [error, setError] = useState<string | null>(null)
+  const exchangeMutation = useExchangeAuthorizationCode()
 
+  const params = new URLSearchParams(window.location.search)
+  const errorParam = params.get('error')
+  const initialErrorMessage = errorParam
+    ? (params.get('error_description') || 'Registration was cancelled.')
+    : null
+  const exchangeError = exchangeMutation.isError
+    ? (exchangeMutation.error instanceof Error ? exchangeMutation.error.message : 'Authentication failed')
+    : null
+  const error = initialErrorMessage ?? exchangeError
+
+  const fired = useRef(false)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
+    if (fired.current) return
+    fired.current = true
+    if (initialErrorMessage) return
     const code = params.get('code')
-    const errorParam = params.get('error')
-
-    if (errorParam) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap effect, refactor to derive state during render planned
-      setError(params.get('error_description') || 'Registration was cancelled.')
-      return
-    }
-
     if (!code) {
       navigate('/register', { replace: true })
       return
     }
-
-    exchangeAuthorizationCode(code)
-      .then(async (userInfo) => {
+    exchangeMutation.mutate(code, {
+      onSuccess: async (userInfo) => {
         login(userInfo)
         try {
           const { data: platforms } = await getUserPlatforms()
@@ -34,9 +38,10 @@ export default function Callback() {
         } catch {
           navigate('/onboarding', { replace: true })
         }
-      })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Authentication failed'))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+      },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (error) {
     return (

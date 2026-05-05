@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AxiosError } from 'axios'
-import { getUserPlatforms, addGame } from '../../services/libraryService'
+import { useUserPlatforms, useAddGame } from '../../services/libraryService'
 import RatingWidget from './RatingWidget'
-import type { GameStatus, UserPlatformDTO } from '../../types/api'
+import type { GameStatus } from '../../types/api'
 
 interface AddGameModalProps {
   game: { igdbId: number; name: string }
@@ -39,36 +39,28 @@ const statusStyles: Record<SelectableStatus, { active: string; inactive: string 
 
 export default function AddGameModal({ game, onClose, onAdded }: AddGameModalProps) {
   const [status, setStatus] = useState<SelectableStatus>('BACKLOG')
-  const [platform, setPlatform] = useState<string>('')
+  // Empty string = "use first available platform". A user-selected value overrides.
+  const [platformOverride, setPlatformOverride] = useState<string>('')
   const [rating, setRating] = useState<number | null>(null)
-  const [platforms, setPlatforms] = useState<UserPlatformDTO[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [platformLoadError, setPlatformLoadError] = useState(false)
-  const [platformsLoading, setPlatformsLoading] = useState(true)
   const [closing, setClosing] = useState(false)
+
+  const {
+    data: platformsData,
+    isPending: platformsLoading,
+    isError: platformLoadError,
+    refetch: loadPlatforms,
+  } = useUserPlatforms()
+  const platforms = platformsData ?? []
+  const addGameMutation = useAddGame()
+  const loading = addGameMutation.isPending
+
+  const platform = platformOverride || (platforms[0]?.platformName ?? '')
 
   const handleClose = () => {
     setClosing(true)
     setTimeout(onClose, 200)
   }
-
-  const loadPlatforms = () => {
-    setPlatformLoadError(false)
-    setPlatformsLoading(true)
-    getUserPlatforms()
-      .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : []
-        setPlatforms(data)
-        if (data.length > 0) {
-          setPlatform(data[0].platformName ?? '')
-        }
-      })
-      .catch(() => setPlatformLoadError(true))
-      .finally(() => setPlatformsLoading(false))
-  }
-
-  useEffect(() => { loadPlatforms() }, [])
 
   const showRating = status === 'PLAYING' || status === 'COMPLETED'
 
@@ -84,10 +76,9 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
 
   const handleSubmit = async () => {
     if (!platform) return
-    setLoading(true)
     setError(null)
     try {
-      await addGame({
+      await addGameMutation.mutateAsync({
         igdbGameId: game.igdbId,
         gameName: game.name,
         status,
@@ -98,8 +89,6 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
       handleClose()
     } catch (e) {
       setError(submitErrorMessage(e))
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -110,7 +99,7 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
   }
 
   const updatePlatform = (p: string) => {
-    setPlatform(p)
+    setPlatformOverride(p)
     if (error) setError(null)
   }
 
@@ -158,7 +147,7 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
               <p className="text-xs text-[#ef4444]">Could not load platforms.</p>
               <button
                 type="button"
-                onClick={loadPlatforms}
+                onClick={() => loadPlatforms()}
                 className="flex items-center gap-1.5 px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
