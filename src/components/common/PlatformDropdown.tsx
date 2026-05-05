@@ -1,4 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react'
+import type { MouseEvent as ReactMouseEvent } from 'react'
+import type { PlatformGroup } from '../../types/api'
+
+interface PlatformDropdownProps {
+  value: string
+  groups: PlatformGroup[]
+  others: string[]
+  onChange: (next: string) => void
+}
+
+interface FlyoutPosition {
+  top: number
+  left: number
+}
 
 /**
  * Hierarchical platform picker for the Explore page. The backend
@@ -12,79 +26,77 @@ import { useState, useEffect, useRef } from 'react';
  * panel). The flyout is rendered with {@code position: fixed} so it can escape
  * the main panel's vertical scroll area — `overflow-y` clips both axes, so an
  * absolutely-positioned flyout inside the panel would get cut off horizontally.
- *
- * Props:
- *   value     — currently selected filter (single platform name, comma-list, or "")
- *   groups    — Big-4 array from `/platforms` (PlayStation/PC/Nintendo/Xbox, in pin order)
- *   others    — alphabetical tail from `/platforms`
- *   onChange  — fired with the new filter string (or "" for All Platforms)
  */
-export default function PlatformDropdown({ value, groups, others, onChange }) {
-  const [open, setOpen] = useState(false);
-  const [hoveredUmbrella, setHoveredUmbrella] = useState(null);
-  const [flyoutPos, setFlyoutPos] = useState({ top: 0, left: 0 });
-  const rootRef = useRef(null);
-  const hoverTimerRef = useRef(null);
+export default function PlatformDropdown({ value, groups, others, onChange }: PlatformDropdownProps) {
+  const [open, setOpen] = useState(false)
+  const [hoveredUmbrella, setHoveredUmbrella] = useState<string | null>(null)
+  const [flyoutPos, setFlyoutPos] = useState<FlyoutPosition>({ top: 0, left: 0 })
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!open) return;
-    const handleClick = e => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) {
-        setOpen(false);
-        setHoveredUmbrella(null);
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setHoveredUmbrella(null)
       }
-    };
-    const handleKey = e => {
+    }
+    const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setOpen(false);
-        setHoveredUmbrella(null);
+        setOpen(false)
+        setHoveredUmbrella(null)
       }
-    };
-    window.addEventListener('mousedown', handleClick);
-    window.addEventListener('keydown', handleKey);
+    }
+    window.addEventListener('mousedown', handleClick)
+    window.addEventListener('keydown', handleKey)
     return () => {
-      window.removeEventListener('mousedown', handleClick);
-      window.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
+      window.removeEventListener('mousedown', handleClick)
+      window.removeEventListener('keydown', handleKey)
+    }
+  }, [open])
 
-  useEffect(() => () => clearTimeout(hoverTimerRef.current), []);
+  useEffect(() => () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+  }, [])
 
-  const triggerLabel = resolveTriggerLabel(value, groups, others);
+  const triggerLabel = resolveTriggerLabel(value, groups, others)
 
-  const select = (next) => {
-    onChange(next);
-    setOpen(false);
-    setHoveredUmbrella(null);
-  };
+  const select = (next: string) => {
+    onChange(next)
+    setOpen(false)
+    setHoveredUmbrella(null)
+  }
 
   const scheduleClose = () => {
-    clearTimeout(hoverTimerRef.current);
-    hoverTimerRef.current = setTimeout(() => setHoveredUmbrella(null), 120);
-  };
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = setTimeout(() => setHoveredUmbrella(null), 120)
+  }
 
-  const cancelClose = () => clearTimeout(hoverTimerRef.current);
+  const cancelClose = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+  }
 
-  const showFlyout = (label, rowEl) => {
-    cancelClose();
-    setHoveredUmbrella(label);
+  const showFlyout = (label: string, rowEl: HTMLElement | null) => {
+    cancelClose()
+    setHoveredUmbrella(label)
     if (rowEl) {
-      const rect = rowEl.getBoundingClientRect();
-      setFlyoutPos({ top: rect.top, left: rect.right + 4 });
+      const rect = rowEl.getBoundingClientRect()
+      setFlyoutPos({ top: rect.top, left: rect.right + 4 })
     }
-  };
+  }
 
-  const isPicked = (candidate) => candidate === value;
+  const isPicked = (candidate: string) => candidate === value
 
   const activeGroup = hoveredUmbrella
-    ? groups.find(g => g.label === hoveredUmbrella)
-    : null;
+    ? groups.find((g) => g.label === hoveredUmbrella)
+    : null
 
   return (
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className={`bg-[#111220] border rounded px-3 py-1.5 text-xs transition-colors flex items-center gap-2 ${
           value
             ? 'border-[#f72585] text-[#f72585]'
@@ -113,42 +125,43 @@ export default function PlatformDropdown({ value, groups, others, onChange }) {
             All
           </button>
 
-          {groups.map(group => {
-            const childrenJoined = group.platforms.join(',');
-            const umbrellaPicked = group.umbrella && isPicked(childrenJoined);
-            const isFlyoutOpen = hoveredUmbrella === group.label;
-            const showCaret = group.umbrella && group.platforms.length > 1;
-            const baseClass = 'w-full flex items-center justify-between gap-3 px-4 py-1.5 text-xs whitespace-nowrap transition-colors';
+          {groups.map((group) => {
+            const platforms = group.platforms ?? []
+            const childrenJoined = platforms.join(',')
+            const umbrellaPicked = group.umbrella === true && isPicked(childrenJoined)
+            const isFlyoutOpen = hoveredUmbrella === group.label
+            const showCaret = group.umbrella === true && platforms.length > 1
+            const baseClass = 'w-full flex items-center justify-between gap-3 px-4 py-1.5 text-xs whitespace-nowrap transition-colors'
             const activeColorClass =
-              (group.umbrella && umbrellaPicked) ||
-              (!group.umbrella && isPicked(group.platforms[0]))
+              (group.umbrella === true && umbrellaPicked) ||
+              (group.umbrella !== true && isPicked(platforms[0] ?? ''))
                 ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                 : isFlyoutOpen
                   ? 'bg-[#181a2e] text-[#e8e4dc]'
-                  : 'text-[#e8e4dc] hover:bg-[#181a2e]';
+                  : 'text-[#e8e4dc] hover:bg-[#181a2e]'
 
             return (
               <button
                 type="button"
                 key={group.label}
                 onClick={() =>
-                  group.umbrella ? select(childrenJoined) : select(group.platforms[0])
+                  group.umbrella === true ? select(childrenJoined) : select(platforms[0] ?? '')
                 }
-                onMouseEnter={(e) =>
-                  group.umbrella ? showFlyout(group.label, e.currentTarget) : scheduleClose()
+                onMouseEnter={(e: ReactMouseEvent<HTMLButtonElement>) =>
+                  group.umbrella === true ? showFlyout(group.label ?? '', e.currentTarget) : scheduleClose()
                 }
                 className={`${baseClass} ${activeColorClass}`}
               >
                 <span>{group.label}</span>
                 {showCaret && <span className="text-[10px] opacity-60">▸</span>}
               </button>
-            );
+            )
           })}
 
           {others.length > 0 && (
             <>
               <div className="my-1 border-t border-[#1e2035]" />
-              {others.map(name => (
+              {others.map((name) => (
                 <button
                   key={name}
                   type="button"
@@ -168,7 +181,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }) {
         </div>
       )}
 
-      {open && activeGroup && activeGroup.umbrella && (
+      {open && activeGroup && activeGroup.umbrella === true && (
         <div
           className="styled-scrollbar fixed z-50 max-h-80 overflow-y-auto bg-[#111220] border border-[#2a2d45] rounded shadow-[0_4px_12px_rgba(0,0,0,0.6)] py-1"
           style={{ top: flyoutPos.top, left: flyoutPos.left, width: 'max-content', maxWidth: '20rem' }}
@@ -177,9 +190,9 @@ export default function PlatformDropdown({ value, groups, others, onChange }) {
         >
           <button
             type="button"
-            onClick={() => select(activeGroup.platforms.join(','))}
+            onClick={() => select((activeGroup.platforms ?? []).join(','))}
             className={`block w-full text-left px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${
-              isPicked(activeGroup.platforms.join(','))
+              isPicked((activeGroup.platforms ?? []).join(','))
                 ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                 : 'text-[#e8e4dc] hover:bg-[#181a2e]'
             }`}
@@ -187,7 +200,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }) {
             All {activeGroup.label}
           </button>
           <div className="my-1 border-t border-[#1e2035]" />
-          {activeGroup.platforms.map(child => (
+          {(activeGroup.platforms ?? []).map((child) => (
             <button
               key={child}
               type="button"
@@ -204,18 +217,18 @@ export default function PlatformDropdown({ value, groups, others, onChange }) {
         </div>
       )}
     </div>
-  );
+  )
 }
 
-function resolveTriggerLabel(value, groups, others) {
-  if (!value) return 'All';
+function resolveTriggerLabel(value: string, groups: PlatformGroup[], others: string[]): string {
+  if (!value) return 'All'
   if (value.includes(',')) {
-    const match = groups.find(g => g.umbrella && g.platforms.join(',') === value);
-    if (match) return match.label;
+    const match = groups.find((g) => g.umbrella === true && (g.platforms ?? []).join(',') === value)
+    if (match && match.label) return match.label
   }
   for (const g of groups) {
-    if (g.platforms.includes(value)) return value;
+    if ((g.platforms ?? []).includes(value)) return value
   }
-  if (others.includes(value)) return value;
-  return value;
+  if (others.includes(value)) return value
+  return value
 }

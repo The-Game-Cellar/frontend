@@ -1,15 +1,25 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom'
 
-const navItems = [
+interface SidebarProps {
+  open: boolean
+  onClose: () => void
+}
+
+interface NavItem {
+  label: string
+  to: string
+}
+
+const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Library', to: '/library' },
   { label: 'Recommend', to: '/recommendations' },
   { label: 'Explore', to: '/explore' },
   { label: 'Wild Card', to: '/wildcard' },
   { label: 'Profile', to: '/profile' },
-];
+]
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <aside
       className={`
@@ -39,5 +49,5 @@ export default function Sidebar({ open, onClose }) {
         ))}
       </nav>
     </aside>
-  );
+  )
 }

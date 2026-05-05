@@ -1,8 +1,13 @@
-export default function LoginTransition({ leaving = false, durationMs = 700 }) {
+interface LoginTransitionProps {
+  leaving?: boolean
+  durationMs?: number
+}
+
+export default function LoginTransition({ leaving = false, durationMs = 700 }: LoginTransitionProps) {
   // Pad the bar so it visibly reaches 100% and rests there for ~120ms before
   // the leaving fade. With no padding, the cross-fade clips the final frames
   // and the bar reads as "not quite full."
-  const barMs = Math.max(durationMs - 120, 150);
+  const barMs = Math.max(durationMs - 120, 150)
   return (
     <div
       className={`fixed inset-0 z-[60] flex flex-col items-center justify-center bg-[#0a0b14] transition-opacity duration-[250ms] ease-out ${
@@ -20,5 +25,5 @@ export default function LoginTransition({ leaving = false, durationMs = 700 }) {
         />
       </div>
     </div>
-  );
+  )
 }

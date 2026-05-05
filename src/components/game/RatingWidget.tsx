@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
-export default function RatingWidget({ value, onChange, readonly = false }) {
-  const [hovered, setHovered] = useState(null);
+interface RatingWidgetProps {
+  value: number | null | undefined
+  onChange: (next: number) => void
+  readonly?: boolean
+}
 
-  const display = hovered !== null ? hovered : value;
+export default function RatingWidget({ value, onChange, readonly = false }: RatingWidgetProps) {
+  const [hovered, setHovered] = useState<number | null>(null)
+
+  const display = hovered !== null ? hovered : (value ?? 0)
 
   return (
     <div className="flex items-center gap-1">
@@ -29,5 +35,5 @@ export default function RatingWidget({ value, onChange, readonly = false }) {
         </span>
       )}
     </div>
-  );
+  )
 }

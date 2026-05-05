@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 
 /**
  * Persistent IGDB attribution. Required by the Twitch / IGDB Terms of Service —
@@ -26,5 +26,5 @@ export default function AttributionFooter() {
         About
       </Link>
     </footer>
-  );
+  )
 }

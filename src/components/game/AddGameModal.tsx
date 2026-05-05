@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
-import { getUserPlatforms, addGame } from '../../services/libraryService';
-import RatingWidget from './RatingWidget';
+import { useState, useEffect } from 'react'
+import { AxiosError } from 'axios'
+import { getUserPlatforms, addGame } from '../../services/libraryService'
+import RatingWidget from './RatingWidget'
+import type { GameStatus, UserPlatformDTO } from '../../types/api'
 
-const STATUSES = ['BACKLOG', 'PLAYING', 'COMPLETED', 'WISHLIST', 'DROPPED'];
+interface AddGameModalProps {
+  game: { igdbId: number; name: string }
+  onClose: () => void
+  onAdded?: () => void
+}
 
-const statusStyles = {
+type SelectableStatus = Exclude<GameStatus, 'DUSTY'>
+
+const STATUSES: SelectableStatus[] = ['BACKLOG', 'PLAYING', 'COMPLETED', 'WISHLIST', 'DROPPED']
+
+const statusStyles: Record<SelectableStatus, { active: string; inactive: string }> = {
   PLAYING: {
     active:   'bg-[#22c55e]/20 text-[#22c55e] border-[#22c55e] [box-shadow:0_0_10px_#22c55e60]',
     inactive: 'bg-[#22c55e]/8 text-[#22c55e]/85 border-[#22c55e]/45 hover:bg-[#22c55e]/15 hover:text-[#22c55e] hover:border-[#22c55e]/75 hover:[box-shadow:0_0_8px_#22c55e33]',
@@ -25,84 +35,84 @@ const statusStyles = {
     active:   'bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b] [box-shadow:0_0_10px_#f59e0b60]',
     inactive: 'bg-[#f59e0b]/8 text-[#f59e0b]/85 border-[#f59e0b]/45 hover:bg-[#f59e0b]/15 hover:text-[#f59e0b] hover:border-[#f59e0b]/75 hover:[box-shadow:0_0_8px_#f59e0b33]',
   },
-};
+}
 
-export default function AddGameModal({ game, onClose, onAdded }) {
-  const [status, setStatus] = useState('BACKLOG');
-  const [platform, setPlatform] = useState('');
-  const [rating, setRating] = useState(null);
-  const [platforms, setPlatforms] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [platformLoadError, setPlatformLoadError] = useState(false);
-  const [platformsLoading, setPlatformsLoading] = useState(true);
-  const [closing, setClosing] = useState(false);
+export default function AddGameModal({ game, onClose, onAdded }: AddGameModalProps) {
+  const [status, setStatus] = useState<SelectableStatus>('BACKLOG')
+  const [platform, setPlatform] = useState<string>('')
+  const [rating, setRating] = useState<number | null>(null)
+  const [platforms, setPlatforms] = useState<UserPlatformDTO[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [platformLoadError, setPlatformLoadError] = useState(false)
+  const [platformsLoading, setPlatformsLoading] = useState(true)
+  const [closing, setClosing] = useState(false)
 
   const handleClose = () => {
-    setClosing(true);
-    setTimeout(onClose, 200);
-  };
+    setClosing(true)
+    setTimeout(onClose, 200)
+  }
 
   const loadPlatforms = () => {
-    setPlatformLoadError(false);
-    setPlatformsLoading(true);
+    setPlatformLoadError(false)
+    setPlatformsLoading(true)
     getUserPlatforms()
-      .then(res => {
-        const data = Array.isArray(res.data) ? res.data : [];
-        setPlatforms(data);
+      .then((res) => {
+        const data = Array.isArray(res.data) ? res.data : []
+        setPlatforms(data)
         if (data.length > 0) {
-          const first = data[0];
-          setPlatform(first.platformName ?? first.platform_name ?? first.name ?? first);
+          setPlatform(data[0].platformName ?? '')
         }
       })
       .catch(() => setPlatformLoadError(true))
-      .finally(() => setPlatformsLoading(false));
-  };
+      .finally(() => setPlatformsLoading(false))
+  }
 
-  useEffect(() => { loadPlatforms(); }, []);
+  useEffect(() => { loadPlatforms() }, [])
 
-  const showRating = status === 'PLAYING' || status === 'COMPLETED';
+  const showRating = status === 'PLAYING' || status === 'COMPLETED'
 
-  const submitErrorMessage = (e) => {
-    const status = e?.response?.status;
-    if (status === 409) return 'This game is already in your library.';
-    if (status === 401) return 'Session expired. Please log in again.';
-    if (status === 400) return 'Invalid request. Check status and platform.';
-    if (status >= 500 || !status) return 'Service unavailable. Please try again.';
-    return 'Failed to add game. Please try again.';
-  };
+  const submitErrorMessage = (e: unknown): string => {
+    const axErr = e instanceof AxiosError ? e : null
+    const status = axErr?.response?.status
+    if (status === 409) return 'This game is already in your library.'
+    if (status === 401) return 'Session expired. Please log in again.'
+    if (status === 400) return 'Invalid request. Check status and platform.'
+    if (status == null || status >= 500) return 'Service unavailable. Please try again.'
+    return 'Failed to add game. Please try again.'
+  }
 
   const handleSubmit = async () => {
-    if (!platform) return;
-    setLoading(true);
-    setError(null);
+    if (!platform) return
+    setLoading(true)
+    setError(null)
     try {
       await addGame({
         igdbGameId: game.igdbId,
         gameName: game.name,
         status,
         platform,
-        rating: showRating ? rating : null,
-      });
-      onAdded?.();
-      handleClose();
+        rating: showRating && rating != null ? rating : undefined,
+      })
+      onAdded?.()
+      handleClose()
     } catch (e) {
-      setError(submitErrorMessage(e));
+      setError(submitErrorMessage(e))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const updateStatus = (s) => {
-    setStatus(s);
-    if (s === 'WISHLIST' || s === 'DROPPED') setRating(null);
-    if (error) setError(null);
-  };
+  const updateStatus = (s: SelectableStatus) => {
+    setStatus(s)
+    if (s === 'WISHLIST' || s === 'DROPPED') setRating(null)
+    if (error) setError(null)
+  }
 
-  const updatePlatform = (p) => {
-    setPlatform(p);
-    if (error) setError(null);
-  };
+  const updatePlatform = (p: string) => {
+    setPlatform(p)
+    if (error) setError(null)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -125,7 +135,7 @@ export default function AddGameModal({ game, onClose, onAdded }) {
         <div className="space-y-2">
           <label className="text-xs text-[#4a5068] uppercase tracking-wider">Status</label>
           <div className="flex flex-wrap gap-2">
-            {STATUSES.map(s => (
+            {STATUSES.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -163,12 +173,12 @@ export default function AddGameModal({ game, onClose, onAdded }) {
           ) : (
             <select
               value={platform}
-              onChange={e => updatePlatform(e.target.value)}
+              onChange={(e) => updatePlatform(e.target.value)}
               className="w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] focus:border-[#f72585] focus:outline-none transition-colors"
             >
               {platforms.map((p, i) => {
-                const name = p.platformName ?? p.platform_name ?? p.name ?? p;
-                return <option key={i} value={name}>{name}</option>;
+                const name = p.platformName ?? ''
+                return <option key={p.id ?? i} value={name}>{name}</option>
               })}
             </select>
           )}
@@ -213,5 +223,5 @@ export default function AddGameModal({ game, onClose, onAdded }) {
         </div>
       </div>
     </div>
-  );
+  )
 }

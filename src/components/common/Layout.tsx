@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import AttributionFooter from './AttributionFooter';
-import useAuth from '../../hooks/useAuth';
+import { useState } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
+import Sidebar from './Sidebar'
+import AttributionFooter from './AttributionFooter'
+import useAuth from '../../hooks/useAuth'
 
 export default function Layout() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   async function handleLogout() {
-    await logout();
-    navigate('/login');
+    await logout()
+    navigate('/login')
   }
 
   return (
@@ -26,7 +26,7 @@ export default function Layout() {
               live in a fixed-height column so the morph happens in place rather than nudging
               the navbar layout. */}
           <button
-            onClick={() => setSidebarOpen(o => !o)}
+            onClick={() => setSidebarOpen((o) => !o)}
             className="md:hidden relative w-5 h-5 p-1 text-[#8891a8] hover:text-[#e8e4dc] transition-colors"
             aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={sidebarOpen}
@@ -91,7 +91,7 @@ export default function Layout() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#e8e4dc]">Sign out?</p>
@@ -115,5 +115,5 @@ export default function Layout() {
         </div>
       )}
     </div>
-  );
+  )
 }
