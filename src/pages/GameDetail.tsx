@@ -295,7 +295,7 @@ export default function GameDetail() {
       })
       .catch(() => setError('Failed to load game.'))
       .finally(() => setLoading(false))
-  }, [igdbId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [igdbId])
 
   const handleStatusChange = async (newStatus: SelectableStatus) => {
     if (!libraryEntry || libraryEntry.id == null) return

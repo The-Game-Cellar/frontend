@@ -23,6 +23,7 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- exporting context + provider from one file disables HMR fast-refresh; planned split into separate files
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
 function toUserState(userInfo: UserInfo): UserState {

@@ -247,6 +247,7 @@ export default function Dashboard() {
   }, [applyDashboardPayload])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap effect kicks initial fetches; refactor to derive state during render planned
     loadBacklog()
     loadDusty()
     loadDashboard()

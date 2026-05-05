@@ -15,6 +15,7 @@ export default function Callback() {
     const errorParam = params.get('error')
 
     if (errorParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap effect, refactor to derive state during render planned
       setError(params.get('error_description') || 'Registration was cancelled.')
       return
     }

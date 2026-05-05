@@ -8,6 +8,10 @@ dist-ssr/
 # Test artifacts
 coverage/
 
+# Lint output dumps (debug artifacts)
+lint-out.json
+*.eslintcache
+
 # Logs
 logs/
 *.log

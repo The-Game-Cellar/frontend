@@ -121,6 +121,7 @@ export default function Library() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- filter-change effect re-fetches on filter deps; refactor to derive state during render planned
     fetchGames(activeStatus, activePlatform, activeGenre)
   }, [activeStatus, fetchGames, activePlatform, activeGenre])
 

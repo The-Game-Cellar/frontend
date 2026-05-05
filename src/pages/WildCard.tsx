@@ -24,8 +24,9 @@ export default function WildCard() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap effect; refactor to derive state during render planned
     roll()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="space-y-6">

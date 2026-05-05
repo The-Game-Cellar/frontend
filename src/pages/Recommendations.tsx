@@ -95,6 +95,7 @@ export default function Recommendations() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap effect; refactor to derive state during render planned
     load()
   }, [load])
 
