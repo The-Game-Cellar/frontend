@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.js'],
+    setupFiles: ['./src/test/setup.ts'],
     css: false,
     env: {
       VITE_API_URL: 'http://api.test',
@@ -20,11 +20,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       reportsDirectory: './coverage',
-      include: ['src/**/*.{js,jsx}'],
+      include: ['src/**/*.{js,jsx,ts,tsx}'],
       exclude: [
         'src/test/**',
-        'src/**/*.test.{js,jsx}',
-        'src/main.jsx',
+        'src/**/*.test.{js,jsx,ts,tsx}',
+        'src/main.tsx',
+        'src/types/api/**',
+        'src/vite-env.d.ts',
       ],
     },
   },
