@@ -41,4 +41,10 @@ export const handlers = [
   http.post(`${API}/api/v1/recommendations/personalized`, () => HttpResponse.json([])),
   http.post(`${API}/api/v1/recommendations/personalized/grouped`, () => HttpResponse.json({ rows: [], tier: 3, emptyMessage: 'Rate games in your library to unlock personalized recommendations.' })),
   http.get(`${API}/api/v1/recommendations/wildcard`, () => HttpResponse.json([])),
+
+  // Game-detail companion endpoints — empty by default so GameDetail smokes don't trip MSW unhandled-request errors
+  http.get(`${API}/api/v1/games/:id/editions`, () => HttpResponse.json([])),
+  http.get(`${API}/api/v1/recommendations/similar/:id`, () => HttpResponse.json([])),
+  http.get(`${API}/api/v1/games/by-franchise/:name`, () => HttpResponse.json([])),
+  http.get(`${API}/api/v1/games/by-collection/:name`, () => HttpResponse.json([])),
 ]
