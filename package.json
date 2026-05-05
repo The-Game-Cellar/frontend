@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "types:gen": "openapi-typescript openapi/game-service.json -o src/types/api/game.ts && openapi-typescript openapi/library-service.json -o src/types/api/library.ts && openapi-typescript openapi/recommendation-service.json -o src/types/api/recommendation.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -39,7 +40,8 @@
     "globals": "^17.4.0",
     "jsdom": "^29.1.1",
     "msw": "^2.14.3",
-    "typescript": "^6.0.3",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3",
     "vite": "^8.0.4",
     "vitest": "^4.1.5"
   }
