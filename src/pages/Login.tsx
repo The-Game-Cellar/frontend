@@ -1,63 +1,66 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-import { login as keycloakLogin } from '../services/authService';
-import { prefetchDashboard, prefetchPersonalized } from '../services/recommendationService';
-import AttributionFooter from '../components/common/AttributionFooter';
-import LoginTransition from '../components/common/LoginTransition';
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import useAuth from '../hooks/useAuth'
+import { login as keycloakLogin } from '../services/authService'
+import { prefetchDashboard, prefetchPersonalized } from '../services/recommendationService'
+import AttributionFooter from '../components/common/AttributionFooter'
+import LoginTransition from '../components/common/LoginTransition'
 import {
   MIN_FIRST_MS,
   MIN_REPEAT_MS,
   MAX_MS,
   isFirstLogin,
   markFirstLoginDone,
-} from '../config/loginTransition';
+} from '../config/loginTransition'
+
+type TransitionState = 'idle' | 'entering' | 'leaving'
 
 export default function Login() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [transitionState, setTransitionState] = useState('idle'); // idle | entering | leaving
-  const [transitionFloor, setTransitionFloor] = useState(MIN_FIRST_MS);
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [transitionState, setTransitionState] = useState<TransitionState>('idle')
+  const [transitionFloor, setTransitionFloor] = useState(MIN_FIRST_MS)
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
     try {
-      const userInfo = await keycloakLogin(username, password);
-      login(userInfo);
+      const userInfo = await keycloakLogin(username, password)
+      login(userInfo)
 
-      const dashboardPromise = prefetchDashboard();
-      const personalizedPromise = prefetchPersonalized(100);
+      const dashboardPromise = prefetchDashboard()
+      const personalizedPromise = prefetchPersonalized(100)
 
-      const minFloor = isFirstLogin() ? MIN_FIRST_MS : MIN_REPEAT_MS;
-      const startedAt = Date.now();
+      const minFloor = isFirstLogin() ? MIN_FIRST_MS : MIN_REPEAT_MS
+      const startedAt = Date.now()
 
-      setTransitionFloor(minFloor);
-      setTransitionState('entering');
+      setTransitionFloor(minFloor)
+      setTransitionState('entering')
 
-      const gated = Promise.allSettled([dashboardPromise, personalizedPromise]);
-      const cap = new Promise(resolve => setTimeout(resolve, MAX_MS));
-      await Promise.race([gated, cap]);
+      const gated = Promise.allSettled([dashboardPromise, personalizedPromise])
+      const cap = new Promise<void>((resolve) => setTimeout(resolve, MAX_MS))
+      await Promise.race([gated, cap])
 
-      const elapsed = Date.now() - startedAt;
-      const remainder = Math.max(0, minFloor - elapsed);
-      if (remainder > 0) await new Promise(resolve => setTimeout(resolve, remainder));
+      const elapsed = Date.now() - startedAt
+      const remainder = Math.max(0, minFloor - elapsed)
+      if (remainder > 0) await new Promise<void>((resolve) => setTimeout(resolve, remainder))
 
-      markFirstLoginDone();
-      setTransitionState('leaving');
+      markFirstLoginDone()
+      setTransitionState('leaving')
       // Match LoginTransition's fade-out duration so the cross-fade reads.
-      setTimeout(() => navigate('/dashboard'), 250);
+      setTimeout(() => navigate('/dashboard'), 250)
     } catch (err) {
-      setError(err.message);
-      setTransitionState('idle');
-      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Login failed')
+      setTransitionState('idle')
+      setLoading(false)
     }
   }
 
@@ -134,5 +137,5 @@ export default function Login() {
         <LoginTransition leaving={transitionState === 'leaving'} durationMs={transitionFloor} />
       )}
     </div>
-  );
+  )
 }

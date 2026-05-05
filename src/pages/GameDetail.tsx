@@ -1,69 +1,73 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getGameById, getByFranchise, getByCollection, getEditions } from '../services/gameService';
-import { getUserGames, updateGame, removeGame } from '../services/libraryService';
-import { getSimilar } from '../services/recommendationService';
-import GameCard from '../components/common/GameCard';
-import CoverFallback from '../components/common/CoverFallback';
-import TruncatedText from '../components/common/TruncatedText';
-import AddGameModal from '../components/game/AddGameModal';
-import RatingWidget from '../components/game/RatingWidget';
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { getGameById, getByFranchise, getByCollection, getEditions } from '../services/gameService'
+import { getUserGames, updateGame, removeGame } from '../services/libraryService'
+import { getSimilar } from '../services/recommendationService'
+import GameCard from '../components/common/GameCard'
+import CoverFallback from '../components/common/CoverFallback'
+import TruncatedText from '../components/common/TruncatedText'
+import AddGameModal from '../components/game/AddGameModal'
+import RatingWidget from '../components/game/RatingWidget'
+import type {
+  AgeRatingDTO,
+  GameResponse,
+  GameStatus,
+  MultiplayerModeDTO,
+  RecommendationDTO,
+  ReleaseDateDTO,
+  UserGameDTO,
+} from '../types/api'
 
-const statusStyles = {
+type SelectableStatus = Exclude<GameStatus, 'DUSTY'>
+type AddonKind = 'DLC' | 'EXPANSION'
+type AddonPreview = GameResponse & { _kind: AddonKind }
+
+const statusStyles: Record<GameStatus, string> = {
   PLAYING:   'bg-[#22c55e20] text-[#22c55e] border-[#22c55e40]',
   BACKLOG:   'bg-[#2563eb20] text-[#2563eb] border-[#2563eb40]',
   COMPLETED: 'bg-[#a855f720] text-[#a855f7] border-[#a855f740]',
   DROPPED:   'bg-[#ef444420] text-[#ef4444] border-[#ef444440]',
   WISHLIST:  'bg-[#f59e0b20] text-[#f59e0b] border-[#f59e0b40]',
   DUSTY:     'bg-[#8891a820] text-[#8891a8] border-[#8891a840]',
-};
+}
 
-const statusGlowShadow = {
+const statusGlowShadow: Record<GameStatus, string> = {
   PLAYING:   '0 0 8px #22c55e60',
   BACKLOG:   '0 0 8px #2563eb60',
   COMPLETED: '0 0 8px #a855f760',
   DROPPED:   '0 0 8px #ef444460',
   WISHLIST:  '0 0 8px #f59e0b60',
   DUSTY:     '0 0 8px #8891a860',
-};
-
-const statusInsetGlow = {
-  PLAYING:   'inset 0 0 12px #22c55e30',
-  BACKLOG:   'inset 0 0 12px #2563eb30',
-  COMPLETED: 'inset 0 0 12px #a855f730',
-  DROPPED:   'inset 0 0 12px #ef444430',
-  WISHLIST:  'inset 0 0 12px #f59e0b30',
-  DUSTY:     'inset 0 0 12px #8891a830',
-};
-
-const ALL_STATUSES = ['PLAYING', 'BACKLOG', 'WISHLIST', 'COMPLETED', 'DROPPED'];
-
-function formatReleaseDate(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function pickBestSeries(gameName, franchises, collections) {
-  const fr = (Array.isArray(franchises) ? franchises : []).filter(Boolean).map(n => ({ name: n, kind: 'franchise' }));
-  const co = (Array.isArray(collections) ? collections : []).filter(Boolean).map(n => ({ name: n, kind: 'collection' }));
-  const all = [...fr, ...co];
-  if (all.length === 0) return null;
-  const fallback = fr[0] || co[0];
-  if (!gameName) return fallback;
-  const lower = gameName.toLowerCase();
-  const matches = all.filter(c => lower.includes(c.name.toLowerCase()));
-  if (matches.length === 0) return fallback;
-  return matches.slice().sort((a, b) => b.name.length - a.name.length)[0];
+const ALL_STATUSES: SelectableStatus[] = ['PLAYING', 'BACKLOG', 'WISHLIST', 'COMPLETED', 'DROPPED']
+
+interface SeriesPick {
+  name: string
+  kind: 'franchise' | 'collection'
 }
 
-// IGDB category → "X of [Parent]" label. DLC/expansion (1, 2) are intentionally omitted
-// because the parent's DLC stack rail already surfaces them in context. Bundle (3), Mod (5),
-// and Update (14) are included because they cover Complete/GOTY editions, modded re-releases,
-// and patch-style updates respectively. Category 0 surfaces only when a derived parent is
-// inferred server-side from name pattern.
-const CATEGORY_LABELS = {
+function formatReleaseDate(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function pickBestSeries(gameName: string | undefined, franchises: string[] | undefined, collections: string[] | undefined): SeriesPick | null {
+  const fr: SeriesPick[] = (Array.isArray(franchises) ? franchises : []).filter((n): n is string => !!n).map((n) => ({ name: n, kind: 'franchise' as const }))
+  const co: SeriesPick[] = (Array.isArray(collections) ? collections : []).filter((n): n is string => !!n).map((n) => ({ name: n, kind: 'collection' as const }))
+  const all = [...fr, ...co]
+  if (all.length === 0) return null
+  const fallback = fr[0] || co[0]
+  if (!gameName) return fallback
+  const lower = gameName.toLowerCase()
+  const matches = all.filter((c) => lower.includes(c.name.toLowerCase()))
+  if (matches.length === 0) return fallback
+  return matches.slice().sort((a, b) => b.name.length - a.name.length)[0]
+}
+
+const CATEGORY_LABELS: Record<number, string> = {
   0:  'Edition of',
   3:  'Edition of',
   4:  'Standalone Expansion of',
@@ -72,12 +76,9 @@ const CATEGORY_LABELS = {
   9:  'Remaster of',
   10: 'Complete Edition of',
   14: 'Update for',
-};
+}
 
-// IGDB category → noun used in the editions disclosure list ("Remake: ...", "Edition: ...").
-// Falls back to "Edition" for null/0 so IGDB-miscategorized "Complete Edition" / "GOTY Edition"
-// entries (which routinely come back as category 0) still get a sensible prefix.
-const CATEGORY_NOUNS = {
+const CATEGORY_NOUNS: Record<number, string> = {
   0:  'Edition',
   4:  'Standalone Expansion',
   5:  'Mod',
@@ -90,39 +91,44 @@ const CATEGORY_NOUNS = {
   12: 'Fork',
   13: 'Pack',
   14: 'Update',
-};
-
-function categoryLabel(category) {
-  return CATEGORY_LABELS[category] ?? null;
 }
 
-function categoryNoun(category) {
-  return CATEGORY_NOUNS[category] ?? 'Edition';
+function categoryLabel(category: number | null | undefined): string | null {
+  if (category == null) return null
+  return CATEGORY_LABELS[category] ?? null
 }
 
-// Pick the highest-priority age rating: PEGI > ESRB > others. Skips entries without a
-// translated body/label (backend mapper only handles ESRB + PEGI today).
-function pickAgeRating(ageRatings) {
-  if (!Array.isArray(ageRatings) || ageRatings.length === 0) return null;
-  const labeled = ageRatings.filter(r => r?.body && r?.label);
-  if (labeled.length === 0) return null;
-  const pegi = labeled.find(r => r.body === 'PEGI');
-  if (pegi) return pegi;
-  const esrb = labeled.find(r => r.body === 'ESRB');
-  if (esrb) return esrb;
-  return labeled[0];
+function categoryNoun(category: number | null | undefined): string {
+  if (category == null) return 'Edition'
+  return CATEGORY_NOUNS[category] ?? 'Edition'
 }
 
-// Aggregate per-platform multiplayerModes into a chip list. The badges describe the
-// title's overall multiplayer envelope, not per-platform — taking the max of online/offline
-// player counts and the OR of the boolean flags across all platform entries. Falls back to
-// a "Single-player" chip when multiplayerModes is empty BUT gameModes explicitly lists
-// single-player only (avoids false-labeling games whose multiplayer data IGDB has not yet
-// cached).
-function summarizeModes(gameModes, multiplayerModes) {
+function pickAgeRating(ageRatings: AgeRatingDTO[] | undefined): AgeRatingDTO | null {
+  if (!Array.isArray(ageRatings) || ageRatings.length === 0) return null
+  const labeled = ageRatings.filter((r) => r?.body && r?.label)
+  if (labeled.length === 0) return null
+  const pegi = labeled.find((r) => r.body === 'PEGI')
+  if (pegi) return pegi
+  const esrb = labeled.find((r) => r.body === 'ESRB')
+  if (esrb) return esrb
+  return labeled[0]
+}
+
+function summarizeModes(gameModes: string[] | undefined, multiplayerModes: MultiplayerModeDTO[] | undefined): string[] {
+  interface ModeAggregate {
+    onlineMax: number
+    offlineMax: number
+    onlineCoopMax: number
+    offlineCoopMax: number
+    lan: boolean
+    splitscreen: boolean
+    campaignCoop: boolean
+    dropIn: boolean
+  }
   if (Array.isArray(multiplayerModes) && multiplayerModes.length > 0) {
-    const max = (a, b) => Math.max(a ?? 0, b ?? 0);
-    const agg = multiplayerModes.reduce(
+    const max = (a: number, b: number | undefined) => Math.max(a, b ?? 0)
+    const initial: ModeAggregate = { onlineMax: 0, offlineMax: 0, onlineCoopMax: 0, offlineCoopMax: 0, lan: false, splitscreen: false, campaignCoop: false, dropIn: false }
+    const agg = multiplayerModes.reduce<ModeAggregate>(
       (acc, m) => ({
         onlineMax: max(acc.onlineMax, m.onlineMax),
         offlineMax: max(acc.offlineMax, m.offlineMax),
@@ -133,285 +139,284 @@ function summarizeModes(gameModes, multiplayerModes) {
         campaignCoop: acc.campaignCoop || !!m.campaignCoop,
         dropIn: acc.dropIn || !!m.dropIn,
       }),
-      { onlineMax: 0, offlineMax: 0, onlineCoopMax: 0, offlineCoopMax: 0, lan: false, splitscreen: false, campaignCoop: false, dropIn: false },
-    );
-    const chips = [];
-    if (agg.onlineMax > 1) chips.push(`Up to ${agg.onlineMax} online`);
-    if (agg.offlineMax > 1) chips.push(`Up to ${agg.offlineMax} local`);
-    if (agg.splitscreen) chips.push('Split-screen');
-    if (agg.campaignCoop) chips.push('Co-op campaign');
-    if (agg.dropIn) chips.push('Drop-in co-op');
-    if (agg.lan) chips.push('LAN');
-    if (chips.length === 0) return [];
-    if (chips.length <= 4) return chips;
-    return [...chips.slice(0, 3), `+${chips.length - 3} more`];
+      initial,
+    )
+    const chips: string[] = []
+    if (agg.onlineMax > 1) chips.push(`Up to ${agg.onlineMax} online`)
+    if (agg.offlineMax > 1) chips.push(`Up to ${agg.offlineMax} local`)
+    if (agg.splitscreen) chips.push('Split-screen')
+    if (agg.campaignCoop) chips.push('Co-op campaign')
+    if (agg.dropIn) chips.push('Drop-in co-op')
+    if (agg.lan) chips.push('LAN')
+    if (chips.length === 0) return []
+    if (chips.length <= 4) return chips
+    return [...chips.slice(0, 3), `+${chips.length - 3} more`]
   }
-  const gm = Array.isArray(gameModes) ? gameModes.map(s => String(s).toLowerCase()) : [];
-  if (gm.length === 0) return [];
-  const hasSingle = gm.some(m => m.includes('single'));
-  const hasMulti = gm.some(m =>
+  const gm = Array.isArray(gameModes) ? gameModes.map((s) => String(s).toLowerCase()) : []
+  if (gm.length === 0) return []
+  const hasSingle = gm.some((m) => m.includes('single'))
+  const hasMulti = gm.some((m) =>
     m.includes('multiplayer') || m.includes('co-op') || m.includes('cooperative') ||
     m.includes('split screen') || m.includes('battle royale') || m.includes('mmo')
-  );
-  if (hasSingle && !hasMulti) return ['Single-player'];
-  return [];
+  )
+  if (hasSingle && !hasMulti) return ['Single-player']
+  return []
 }
 
-function formatReleaseDateRow(rd) {
-  if (rd?.human) return rd.human;
-  return formatReleaseDate(rd?.date) ?? 'TBA';
+function formatReleaseDateRow(rd: ReleaseDateDTO | undefined): string {
+  if (rd?.human) return rd.human
+  return formatReleaseDate(rd?.date) ?? 'TBA'
 }
 
-// True when the game has more than one distinct release date across platforms — gates
-// whether the disclosure caret renders.
-function hasVariedReleaseDates(releaseDates) {
-  if (!Array.isArray(releaseDates) || releaseDates.length < 2) return false;
-  const distinct = new Set(releaseDates.map(r => r?.date ?? r?.human ?? ''));
-  return distinct.size > 1;
+function hasVariedReleaseDates(releaseDates: ReleaseDateDTO[] | undefined): boolean {
+  if (!Array.isArray(releaseDates) || releaseDates.length < 2) return false
+  const distinct = new Set(releaseDates.map((r) => r?.date ?? r?.human ?? ''))
+  return distinct.size > 1
 }
 
-function stripHtml(html) {
-  if (!html) return '';
+function stripHtml(html: string | null | undefined): string {
+  if (!html) return ''
   return html
     .replace(/<[^>]*>/g, '')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'");
+    .replace(/&#039;/g, "'")
 }
 
 export default function GameDetail() {
-  const { igdbId } = useParams();
-  const navigate = useNavigate();
+  const { igdbId } = useParams<{ igdbId: string }>()
+  const navigate = useNavigate()
 
-  const [game, setGame] = useState(null);
-  const [libraryEntry, setLibraryEntry] = useState(null);
-  const [similar, setSimilar] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
-  const [actionError, setActionError] = useState(null);
-  const [lightboxIndex, setLightboxIndex] = useState(null);
-  const [showAddons, setShowAddons] = useState(false);
-  const [addons, setAddons] = useState(null);
-  const [addonsLoading, setAddonsLoading] = useState(false);
-  const [addonPreviews, setAddonPreviews] = useState([]);
-  const [hoveredAddon, setHoveredAddon] = useState(null);
-  const [franchiseGames, setFranchiseGames] = useState([]);
-  const [showFranchiseModal, setShowFranchiseModal] = useState(false);
-  const [franchiseRowWidth, setFranchiseRowWidth] = useState(0);
-  const franchiseRowRef = useRef(null);
-  const [similarRowWidth, setSimilarRowWidth] = useState(0);
-  const similarRowRef = useRef(null);
-  const [releaseExpanded, setReleaseExpanded] = useState(false);
-  const [editions, setEditions] = useState([]);
-  const [editionsExpanded, setEditionsExpanded] = useState(false);
+  const [game, setGame] = useState<GameResponse | null>(null)
+  const [libraryEntry, setLibraryEntry] = useState<UserGameDTO | null>(null)
+  const [similar, setSimilar] = useState<RecommendationDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
+  const [updating, setUpdating] = useState(false)
+  const [descExpanded, setDescExpanded] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [showAddons, setShowAddons] = useState(false)
+  const [addons, setAddons] = useState<AddonPreview[] | null>(null)
+  const [addonsLoading, setAddonsLoading] = useState(false)
+  const [addonPreviews, setAddonPreviews] = useState<AddonPreview[]>([])
+  const [hoveredAddon, setHoveredAddon] = useState<number | null>(null)
+  const [franchiseGames, setFranchiseGames] = useState<GameResponse[]>([])
+  const [showFranchiseModal, setShowFranchiseModal] = useState(false)
+  const [franchiseRowWidth, setFranchiseRowWidth] = useState(0)
+  const franchiseRowRef = useRef<HTMLDivElement | null>(null)
+  const [similarRowWidth, setSimilarRowWidth] = useState(0)
+  const similarRowRef = useRef<HTMLDivElement | null>(null)
+  const [releaseExpanded, setReleaseExpanded] = useState(false)
+  const [editions, setEditions] = useState<GameResponse[]>([])
+  const [editionsExpanded, setEditionsExpanded] = useState(false)
 
-  const showActionError = msg => {
-    setActionError(msg);
-    setTimeout(() => setActionError(null), 3000);
-  };
+  const showActionError = (msg: string) => {
+    setActionError(msg)
+    setTimeout(() => setActionError(null), 3000)
+  }
 
   const fetchLibraryEntry = () =>
     getUserGames()
-      .then(res => {
-        const entries = Array.isArray(res.data) ? res.data : [];
-        const match = entries.find(e => String(e.igdbGameId) === String(igdbId));
-        setLibraryEntry(match ?? null);
+      .then((res) => {
+        const entries = Array.isArray(res.data) ? res.data : []
+        const match = entries.find((e) => String(e.igdbGameId) === String(igdbId))
+        setLibraryEntry(match ?? null)
       })
-      .catch(() => {});
+      .catch(() => {})
 
   useEffect(() => {
-    if (!/^\d+$/.test(String(igdbId)) || Number(igdbId) < 1) {
-      setError('Invalid game id.');
-      setLoading(false);
-      return;
+    if (!igdbId || !/^\d+$/.test(String(igdbId)) || Number(igdbId) < 1) {
+      setError('Invalid game id.')
+      setLoading(false)
+      return
     }
 
-    setLoading(true);
-    setError(null);
-    setAddons(null);
-    setShowAddons(false);
-    setAddonsLoading(false);
-    setAddonPreviews([]);
-    setHoveredAddon(null);
-    setFranchiseGames([]);
-    setReleaseExpanded(false);
-    setEditions([]);
-    setEditionsExpanded(false);
-    setShowFranchiseModal(false);
+    setLoading(true)
+    setError(null)
+    setAddons(null)
+    setShowAddons(false)
+    setAddonsLoading(false)
+    setAddonPreviews([])
+    setHoveredAddon(null)
+    setFranchiseGames([])
+    setReleaseExpanded(false)
+    setEditions([])
+    setEditionsExpanded(false)
+    setShowFranchiseModal(false)
+
+    const numericId = Number(igdbId)
 
     Promise.all([
-      getGameById(igdbId),
+      getGameById(numericId),
       getUserGames(),
-      getSimilar(igdbId, 50),
+      getSimilar(numericId, 50),
     ])
       .then(([gameRes, libraryRes, similarRes]) => {
-        setGame(gameRes.data);
-        const entries = Array.isArray(libraryRes.data) ? libraryRes.data : [];
-        const match = entries.find(e => String(e.igdbGameId) === String(igdbId));
-        setLibraryEntry(match ?? null);
-        setSimilar(Array.isArray(similarRes.data) ? similarRes.data : []);
+        const gameData = gameRes.data
+        setGame(gameData)
+        const entries = Array.isArray(libraryRes.data) ? libraryRes.data : []
+        const match = entries.find((e) => String(e.igdbGameId) === String(igdbId))
+        setLibraryEntry(match ?? null)
+        setSimilar(Array.isArray(similarRes.data) ? similarRes.data : [])
 
-        const previewTagged = [
-          ...(Array.isArray(gameRes.data.expansionIds) ? gameRes.data.expansionIds : []).map(id => ({ id, kind: 'EXPANSION' })),
-          ...(Array.isArray(gameRes.data.dlcIds) ? gameRes.data.dlcIds : []).map(id => ({ id, kind: 'DLC' })),
-        ];
+        const previewTagged: { id: number; kind: AddonKind }[] = [
+          ...(Array.isArray(gameData.expansionIds) ? gameData.expansionIds : []).map((id) => ({ id, kind: 'EXPANSION' as AddonKind })),
+          ...(Array.isArray(gameData.dlcIds) ? gameData.dlcIds : []).map((id) => ({ id, kind: 'DLC' as AddonKind })),
+        ]
         if (previewTagged.length > 0) {
-          Promise.allSettled(previewTagged.map(t => getGameById(t.id))).then(rs => {
+          Promise.allSettled(previewTagged.map((t) => getGameById(t.id))).then((rs) => {
             setAddonPreviews(
               rs
-                .map((r, idx) => r.status === 'fulfilled' ? { ...r.value.data, _kind: previewTagged[idx].kind } : null)
-                .filter(Boolean)
-            );
-          });
+                .map((r, idx): AddonPreview | null => r.status === 'fulfilled' ? { ...r.value.data, _kind: previewTagged[idx].kind } : null)
+                .filter((p): p is AddonPreview => p !== null)
+            )
+          })
         }
 
-        const series = pickBestSeries(gameRes.data.name, gameRes.data.franchises, gameRes.data.collections);
+        const series = pickBestSeries(gameData.name, gameData.franchises, gameData.collections)
         if (series) {
-          const fetcher = series.kind === 'collection' ? getByCollection : getByFranchise;
-          fetcher(series.name, 50, Number(igdbId))
-            .then(res => setFranchiseGames(Array.isArray(res.data) ? res.data : []))
-            .catch(() => {});
+          const fetcher = series.kind === 'collection' ? getByCollection : getByFranchise
+          fetcher(series.name, 50, numericId)
+            .then((res) => setFranchiseGames(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {})
         }
 
-        // Editions of this game (only meaningful when the current page IS the main game).
-        // Backend filters by parent_game_id + edition categories, returns empty for variants.
-        if (gameRes.data.category === 0 || gameRes.data.category == null) {
-          getEditions(Number(igdbId))
-            .then(res => setEditions(Array.isArray(res.data) ? res.data : []))
-            .catch(() => {});
+        if (gameData.category === 0 || gameData.category == null) {
+          getEditions(numericId)
+            .then((res) => setEditions(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {})
         }
       })
       .catch(() => setError('Failed to load game.'))
-      .finally(() => setLoading(false));
-  }, [igdbId]); // eslint-disable-line react-hooks/exhaustive-deps
+      .finally(() => setLoading(false))
+  }, [igdbId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleStatusChange = async newStatus => {
-    if (!libraryEntry) return;
-    setUpdating(true);
+  const handleStatusChange = async (newStatus: SelectableStatus) => {
+    if (!libraryEntry || libraryEntry.id == null) return
+    setUpdating(true)
     try {
-      await updateGame(libraryEntry.id, { status: newStatus });
-      setLibraryEntry(prev => ({ ...prev, status: newStatus }));
+      await updateGame(libraryEntry.id, { status: newStatus })
+      setLibraryEntry((prev) => (prev ? { ...prev, status: newStatus } : prev))
     } catch {
-      showActionError('Failed to update status. Please try again.');
+      showActionError('Failed to update status. Please try again.')
     } finally {
-      setUpdating(false);
-      setShowStatusMenu(false);
+      setUpdating(false)
+      setShowStatusMenu(false)
     }
-  };
+  }
 
-  const handleRatingChange = async rating => {
-    if (!libraryEntry) return;
+  const handleRatingChange = async (rating: number) => {
+    if (!libraryEntry || libraryEntry.id == null) return
     try {
-      await updateGame(libraryEntry.id, { rating });
-      setLibraryEntry(prev => ({ ...prev, rating }));
+      await updateGame(libraryEntry.id, { rating })
+      setLibraryEntry((prev) => (prev ? { ...prev, rating } : prev))
     } catch {
-      showActionError('Failed to save rating. Please try again.');
+      showActionError('Failed to save rating. Please try again.')
     }
-  };
+  }
 
-  const screenshots = Array.isArray(game?.screenshotUrls) ? game.screenshotUrls : [];
-  const videos = Array.isArray(game?.videoIds) ? game.videoIds : [];
-  const dlcIds = Array.isArray(game?.dlcIds) ? game.dlcIds : [];
-  const expansionIds = Array.isArray(game?.expansionIds) ? game.expansionIds : [];
-  const addonCount = dlcIds.length + expansionIds.length;
+  const screenshots: string[] = Array.isArray(game?.screenshotUrls) ? game.screenshotUrls : []
+  const videos: string[] = Array.isArray(game?.videoIds) ? game.videoIds : []
+  const dlcIds: number[] = Array.isArray(game?.dlcIds) ? game.dlcIds : []
+  const expansionIds: number[] = Array.isArray(game?.expansionIds) ? game.expansionIds : []
+  const addonCount = dlcIds.length + expansionIds.length
 
   const handleOpenAddons = async () => {
-    setShowAddons(true);
-    if (addons !== null) return;
-    setAddonsLoading(true);
-    const tagged = [
-      ...dlcIds.map(id => ({ id, kind: 'DLC' })),
-      ...expansionIds.map(id => ({ id, kind: 'EXPANSION' })),
-    ];
+    setShowAddons(true)
+    if (addons !== null) return
+    setAddonsLoading(true)
+    const tagged: { id: number; kind: AddonKind }[] = [
+      ...dlcIds.map((id) => ({ id, kind: 'DLC' as AddonKind })),
+      ...expansionIds.map((id) => ({ id, kind: 'EXPANSION' as AddonKind })),
+    ]
     const results = await Promise.allSettled(
       tagged.map(({ id }) => getGameById(id))
-    );
+    )
     const resolved = results
-      .map((r, i) => (r.status === 'fulfilled' ? { ...r.value.data, _kind: tagged[i].kind } : null))
-      .filter(Boolean)
+      .map((r, i): AddonPreview | null => (r.status === 'fulfilled' ? { ...r.value.data, _kind: tagged[i].kind } : null))
+      .filter((p): p is AddonPreview => p !== null)
       .sort((a, b) => {
-        const da = a.released ? Date.parse(a.released) : -Infinity;
-        const db = b.released ? Date.parse(b.released) : -Infinity;
-        return db - da;
-      });
-    setAddons(resolved);
-    setAddonsLoading(false);
-  };
+        const da = a.released ? Date.parse(a.released) : -Infinity
+        const db = b.released ? Date.parse(b.released) : -Infinity
+        return db - da
+      })
+    setAddons(resolved)
+    setAddonsLoading(false)
+  }
 
   useEffect(() => {
-    if (!showAddons) return;
-    const onKey = e => { if (e.key === 'Escape') setShowAddons(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [showAddons]);
+    if (!showAddons) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowAddons(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showAddons])
 
   useEffect(() => {
-    if (!showFranchiseModal) return;
-    const onKey = e => { if (e.key === 'Escape') setShowFranchiseModal(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [showFranchiseModal]);
+    if (!showFranchiseModal) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowFranchiseModal(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showFranchiseModal])
 
   useEffect(() => {
-    const el = franchiseRowRef.current;
-    if (!el) return;
-    setFranchiseRowWidth(el.clientWidth);
-    const ro = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect?.width;
-      if (w) setFranchiseRowWidth(w);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [franchiseGames.length]);
+    const el = franchiseRowRef.current
+    if (!el) return
+    setFranchiseRowWidth(el.clientWidth)
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width
+      if (w) setFranchiseRowWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [franchiseGames.length])
 
   useEffect(() => {
-    const el = similarRowRef.current;
-    if (!el) return;
-    setSimilarRowWidth(el.clientWidth);
-    const ro = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect?.width;
-      if (w) setSimilarRowWidth(w);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [similar.length]);
+    const el = similarRowRef.current
+    if (!el) return
+    setSimilarRowWidth(el.clientWidth)
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width
+      if (w) setSimilarRowWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [similar.length])
 
   useEffect(() => {
-    if (lightboxIndex === null) return;
-    const onKey = e => {
-      if (e.key === 'Escape') setLightboxIndex(null);
-      else if (e.key === 'ArrowLeft') setLightboxIndex(i => (i > 0 ? i - 1 : screenshots.length - 1));
-      else if (e.key === 'ArrowRight') setLightboxIndex(i => (i < screenshots.length - 1 ? i + 1 : 0));
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [lightboxIndex, screenshots.length]);
+    if (lightboxIndex === null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxIndex(null)
+      else if (e.key === 'ArrowLeft') setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : screenshots.length - 1))
+      else if (e.key === 'ArrowRight') setLightboxIndex((i) => (i !== null && i < screenshots.length - 1 ? i + 1 : 0))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [lightboxIndex, screenshots.length])
 
   const handleRemove = async () => {
-    if (!libraryEntry) return;
+    if (!libraryEntry || libraryEntry.id == null) return
     try {
-      await removeGame(libraryEntry.id);
-      setLibraryEntry(null);
-      setShowRemoveConfirm(false);
+      await removeGame(libraryEntry.id)
+      setLibraryEntry(null)
+      setShowRemoveConfirm(false)
     } catch {
-      setShowRemoveConfirm(false);
-      showActionError('Failed to remove game. Please try again.');
+      setShowRemoveConfirm(false)
+      showActionError('Failed to remove game. Please try again.')
     }
-  };
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       </div>
-    );
+    )
   }
 
   if (error || !game) {
@@ -419,18 +424,19 @@ export default function GameDetail() {
       <div className="flex items-center justify-center h-64">
         <p className="text-sm text-[#ef4444]">{error ?? 'Game not found.'}</p>
       </div>
-    );
+    )
   }
 
-  const showRating = libraryEntry && libraryEntry.status !== 'WISHLIST';
-  const description = stripHtml(game.description);
-  const hasMedia = screenshots.length > 0 || videos.length > 0;
+  const showRating = libraryEntry && libraryEntry.status !== 'WISHLIST'
+  const description = stripHtml(game.description)
+  const hasMedia = screenshots.length > 0 || videos.length > 0
+  const modalGame = game.igdbId != null && game.name != null ? { igdbId: game.igdbId, name: game.name } : null
 
   return (
     <>
-      {showModal && (
+      {showModal && modalGame && (
         <AddGameModal
-          game={game}
+          game={modalGame}
           onClose={() => setShowModal(false)}
           onAdded={fetchLibraryEntry}
         />
@@ -457,14 +463,14 @@ export default function GameDetail() {
           {screenshots.length > 1 && (
             <>
               <button
-                onClick={e => { e.stopPropagation(); setLightboxIndex(i => (i > 0 ? i - 1 : screenshots.length - 1)); }}
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : screenshots.length - 1)) }}
                 className="absolute left-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,text-shadow] duration-200"
                 aria-label="Previous screenshot"
               >
                 ‹
               </button>
               <button
-                onClick={e => { e.stopPropagation(); setLightboxIndex(i => (i < screenshots.length - 1 ? i + 1 : 0)); }}
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i !== null && i < screenshots.length - 1 ? i + 1 : 0)) }}
                 className="absolute right-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,text-shadow] duration-200"
                 aria-label="Next screenshot"
               >
@@ -476,7 +482,7 @@ export default function GameDetail() {
             src={screenshots[lightboxIndex]}
             alt={`${game.name} screenshot ${lightboxIndex + 1}`}
             className="max-h-[90vh] max-w-[90vw] rounded-lg border border-[#1e2035]"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
           {screenshots.length > 1 && (
             <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-[#8891a8] bg-[#111220cc] px-2 py-1 rounded">
@@ -494,12 +500,12 @@ export default function GameDetail() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg w-fit max-w-5xl max-h-[85vh] flex flex-col animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
               <div className="space-y-0.5">
                 <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
-                <TruncatedText as="p" text={game.name} className="text-xs text-[#4a5068]" />
+                <TruncatedText as="p" text={game.name ?? ''} className="text-xs text-[#4a5068]" />
               </div>
               <button
                 onClick={() => setShowAddons(false)}
@@ -520,7 +526,7 @@ export default function GameDetail() {
               )}
               {!addonsLoading && addons && addons.length > 0 && (
                 <div className="flex flex-wrap gap-4 justify-center">
-                  {addons.map(a => (
+                  {addons.map((a) => (
                     <div key={a.igdbId} className="relative">
                       <span
                         className="absolute top-2 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded font-medium tracking-wider bg-[#111220] text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]"
@@ -529,7 +535,7 @@ export default function GameDetail() {
                       </span>
                       <GameCard
                         game={a}
-                        onClick={() => { setShowAddons(false); navigate(`/games/${a.igdbId}`); }}
+                        onClick={() => { setShowAddons(false); navigate(`/games/${a.igdbId}`) }}
                       />
                     </div>
                   ))}
@@ -548,7 +554,7 @@ export default function GameDetail() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg w-fit max-w-5xl max-h-[85vh] flex flex-col animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
               <div className="space-y-0.5">
@@ -565,11 +571,11 @@ export default function GameDetail() {
             </div>
             <div className="overflow-y-auto p-5">
               <div className="flex flex-wrap gap-4 justify-center">
-                {franchiseGames.map(g => (
+                {franchiseGames.map((g) => (
                   <GameCard
                     key={g.igdbId}
                     game={g}
-                    onClick={() => { setShowFranchiseModal(false); navigate(`/games/${g.igdbId}`); }}
+                    onClick={() => { setShowFranchiseModal(false); navigate(`/games/${g.igdbId}`) }}
                   />
                 ))}
               </div>
@@ -586,7 +592,7 @@ export default function GameDetail() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#e8e4dc]">Remove from library?</p>
@@ -619,7 +625,6 @@ export default function GameDetail() {
 
         {/* Hero */}
         <div className="relative rounded-lg bg-[#111220] border border-[#1e2035]">
-          {/* Blurred bg — clipped inside its own wrapper so absolute children aren't affected */}
           {game.backgroundImage && (
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               <div
@@ -630,14 +635,11 @@ export default function GameDetail() {
           )}
 
           <div className="relative flex flex-col-reverse md:grid md:grid-cols-3 gap-8 p-6">
-            {/* Info — below cover on mobile, left 2/3 on desktop */}
+            {/* Info */}
             <div className="md:col-span-2 flex flex-col gap-5">
-              {/* Title + meta */}
               <div className="space-y-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">{game.name}</h1>
 
-                {/* Category subtitle — renders when category implies a derivative AND a parent
-                    is known (either IGDB-linked or server-inferred from name prefix). */}
                 {categoryLabel(game.category) && (game.parentGameId || game.parentGameName) && (
                   <p className="text-xs text-[#8891a8]">
                     {categoryLabel(game.category)}{' '}
@@ -655,19 +657,18 @@ export default function GameDetail() {
                   </p>
                 )}
 
-                {/* Release date — clickable disclosure when distinct per-platform dates exist */}
                 {(() => {
-                  const baseLine = formatReleaseDate(game.released);
-                  const expandable = hasVariedReleaseDates(game.releaseDates);
-                  if (!baseLine && !expandable) return null;
+                  const baseLine = formatReleaseDate(game.released)
+                  const expandable = hasVariedReleaseDates(game.releaseDates)
+                  if (!baseLine && !expandable) return null
                   if (!expandable) {
-                    return baseLine ? <p className="text-xs text-[#8891a8]">Released {baseLine}</p> : null;
+                    return baseLine ? <p className="text-xs text-[#8891a8]">Released {baseLine}</p> : null
                   }
                   return (
                     <div className="space-y-1">
                       <button
                         type="button"
-                        onClick={() => setReleaseExpanded(v => !v)}
+                        onClick={() => setReleaseExpanded((v) => !v)}
                         className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
                         aria-expanded={releaseExpanded}
                       >
@@ -681,7 +682,7 @@ export default function GameDetail() {
                       </button>
                       {releaseExpanded && (
                         <ul className="text-xs text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
-                          {[...game.releaseDates]
+                          {[...(game.releaseDates ?? [])]
                             .sort((a, b) => (a?.date ?? '').localeCompare(b?.date ?? ''))
                             .map((rd, i) => (
                               <li key={`${rd.platform}-${i}`} className="flex gap-2">
@@ -692,15 +693,14 @@ export default function GameDetail() {
                         </ul>
                       )}
                     </div>
-                  );
+                  )
                 })()}
 
-                {/* Editions disclosure — only renders on a main game when derivative editions exist */}
                 {editions.length > 0 && (
                   <div className="space-y-1">
                     <button
                       type="button"
-                      onClick={() => setEditionsExpanded(v => !v)}
+                      onClick={() => setEditionsExpanded((v) => !v)}
                       className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
                       aria-expanded={editionsExpanded}
                     >
@@ -714,7 +714,7 @@ export default function GameDetail() {
                     </button>
                     {editionsExpanded && (
                       <ul className="text-xs text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
-                        {editions.map(e => (
+                        {editions.map((e) => (
                           <li key={e.igdbId}>
                             <button
                               type="button"
@@ -734,37 +734,35 @@ export default function GameDetail() {
                   </div>
                 )}
 
-                {game.genres?.length > 0 && (
+                {game.genres && game.genres.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {game.genres.map(g => (
+                    {game.genres.map((g) => (
                       <span key={g} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
                         {g}
                       </span>
                     ))}
                   </div>
                 )}
-                {game.platforms?.length > 0 && (
+                {game.platforms && game.platforms.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {game.platforms.map(p => (
+                    {game.platforms.map((p) => (
                       <span key={p} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">{p}</span>
                     ))}
                   </div>
                 )}
 
-                {/* Mode chips — multiplayer envelope when data exists, else "Single-player"
-                    when gameModes confirms it. */}
                 {(() => {
-                  const chips = summarizeModes(game.gameModes, game.multiplayerModes);
-                  if (chips.length === 0) return null;
+                  const chips = summarizeModes(game.gameModes, game.multiplayerModes)
+                  if (chips.length === 0) return null
                   return (
                     <div className="flex flex-wrap gap-1.5">
-                      {chips.map(c => (
+                      {chips.map((c) => (
                         <span key={c} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
                           {c}
                         </span>
                       ))}
                     </div>
-                  );
+                  )
                 })()}
               </div>
 
@@ -779,28 +777,27 @@ export default function GameDetail() {
                   </button>
                 ) : (
                   <>
-                    {/* Status badge — dropdown opens below */}
                     <div className="relative z-20">
                       <button
-                        onClick={() => setShowStatusMenu(v => !v)}
+                        onClick={() => setShowStatusMenu((v) => !v)}
                         disabled={updating}
-                        className={`text-xs px-2 py-0.5 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${statusStyles[libraryEntry.status]}`}
-                        onMouseEnter={e => { e.currentTarget.style.boxShadow = statusGlowShadow[libraryEntry.status]; }}
-                        onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; }}
+                        className={`text-xs px-2 py-0.5 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${libraryEntry.status ? statusStyles[libraryEntry.status] : ''}`}
+                        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = libraryEntry.status ? statusGlowShadow[libraryEntry.status] : '' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
                       >
                         {libraryEntry.status} ▾
                       </button>
 
                       {showStatusMenu && (
                         <div className="absolute top-full left-0 mt-1 flex flex-col gap-1 z-20">
-                          {ALL_STATUSES.filter(s => s !== libraryEntry.status).map(s => (
+                          {ALL_STATUSES.filter((s) => s !== libraryEntry.status).map((s) => (
                             <button
                               key={s}
                               onClick={() => handleStatusChange(s)}
                               disabled={updating}
                               className={`text-xs px-2 py-0.5 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${statusStyles[s]}`}
-                              onMouseEnter={e => { e.currentTarget.style.boxShadow = statusGlowShadow[s]; }}
-                              onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; }}
+                              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = statusGlowShadow[s] }}
+                              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
                             >
                               {s}
                             </button>
@@ -809,7 +806,6 @@ export default function GameDetail() {
                       )}
                     </div>
 
-                    {/* Remove — opens confirm modal */}
                     <button
                       onClick={() => setShowRemoveConfirm(true)}
                       className="px-3 py-1.5 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444425] hover:[box-shadow:0_0_16px_#ef4444,0_0_36px_#ef444460] transition-[background-color,box-shadow] duration-200"
@@ -821,11 +817,10 @@ export default function GameDetail() {
 
               </div>
 
-              {/* Rating cluster — age rating + IGDB scores + user's rating */}
               {(() => {
-                const ageRating = pickAgeRating(game.ageRatings);
-                const hasPills = ageRating || game.rating != null || game.totalRating != null;
-                if (!hasPills && !showRating) return null;
+                const ageRating = pickAgeRating(game.ageRatings)
+                const hasPills = ageRating || game.rating != null || game.totalRating != null
+                if (!hasPills && !showRating) return null
                 return (
                 <div className="mt-auto space-y-3">
                   {hasPills && (
@@ -874,11 +869,10 @@ export default function GameDetail() {
                     </div>
                   )}
                 </div>
-                );
+                )
               })()}
             </div>
 
-            {/* Cover — top on mobile, right 1/3 on desktop */}
             <div className="md:col-span-1">
               {(game.coverImageUrl || game.backgroundImage) ? (
                 <img
@@ -895,12 +889,12 @@ export default function GameDetail() {
           </div>
         </div>
 
-        {/* About + media row — about | screenshot | trailer (each 1/3). About expands to span row when clicked. */}
+        {/* About + media row */}
         {(description || hasMedia) && (
           <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {description && (
               <div
-                onClick={() => description.length > 300 && setDescExpanded(v => !v)}
+                onClick={() => description.length > 300 && setDescExpanded((v) => !v)}
                 className={`md:row-start-1 md:col-start-1 md:col-span-1 self-start bg-[#111220] border rounded-lg p-5 space-y-3 transition-[border-color,box-shadow] duration-200 ${
                   description.length > 300 ? 'cursor-pointer' : ''
                 } ${
@@ -982,23 +976,23 @@ export default function GameDetail() {
                 'w-full aspect-video'
               }`}>
                 {(() => {
-                  const stack = addonPreviews;
-                  const n = stack.length;
-                  const CARD_FRAC = n === 1 ? 1 : n === 2 ? 0.5 : 27 / 64;
+                  const stack = addonPreviews
+                  const n = stack.length
+                  const CARD_FRAC = n === 1 ? 1 : n === 2 ? 0.5 : 27 / 64
                   return stack.map((p, i) => {
-                    const isTop = i === 0;
-                    const isHovered = hoveredAddon === i;
-                    const isBright = isHovered || (hoveredAddon === null && isTop);
+                    const isTop = i === 0
+                    const isHovered = hoveredAddon === i
+                    const isBright = isHovered || (hoveredAddon === null && isTop)
                     const leftPct = n === 1
                       ? ((1 - CARD_FRAC) / 2) * 100
-                      : (i * (1 - CARD_FRAC) / (n - 1)) * 100;
+                      : (i * (1 - CARD_FRAC) / (n - 1)) * 100
                     const zIndex = isHovered
                       ? 100
                       : hoveredAddon !== null
                         ? n - Math.abs(i - hoveredAddon)
-                        : n - i;
-                    const isFirst = i === 0;
-                    const isLast = i === n - 1;
+                        : n - i
+                    const isFirst = i === 0
+                    const isLast = i === n - 1
                     return (
                       <button
                         key={p.igdbId}
@@ -1038,8 +1032,8 @@ export default function GameDetail() {
                           </span>
                         )}
                       </button>
-                    );
-                  });
+                    )
+                  })
                 })()}
               </div>
             </div>
@@ -1048,15 +1042,15 @@ export default function GameDetail() {
 
         {/* More from franchise */}
         {franchiseGames.length > 0 && pickBestSeries(game.name, game.franchises, game.collections) && (() => {
-          const CARD_W = 176; // w-44
-          const GAP = 12;     // gap-3
-          const SLOT = CARD_W + GAP;
-          const fits = Math.max(1, Math.floor((franchiseRowWidth + GAP) / SLOT));
-          const needViewAll = franchiseGames.length > fits;
-          const visible = needViewAll ? franchiseGames.slice(0, fits) : franchiseGames;
+          const CARD_W = 176
+          const GAP = 12
+          const SLOT = CARD_W + GAP
+          const fits = Math.max(1, Math.floor((franchiseRowWidth + GAP) / SLOT))
+          const needViewAll = franchiseGames.length > fits
+          const visible = needViewAll ? franchiseGames.slice(0, fits) : franchiseGames
           const dynamicGap = fits > 1 && franchiseRowWidth > 0
             ? Math.max(GAP, (franchiseRowWidth - fits * CARD_W) / (fits - 1))
-            : GAP;
+            : GAP
           return (
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -1075,7 +1069,7 @@ export default function GameDetail() {
                 className="flex overflow-hidden"
                 style={{ gap: `${dynamicGap}px` }}
               >
-                {visible.map(g => (
+                {visible.map((g) => (
                   <GameCard
                     key={g.igdbId}
                     game={g}
@@ -1084,19 +1078,19 @@ export default function GameDetail() {
                 ))}
               </div>
             </section>
-          );
+          )
         })()}
 
         {/* Similar games */}
         {similar.length > 0 && (() => {
-          const CARD_W = 176;
-          const GAP = 12;
-          const SLOT = CARD_W + GAP;
-          const fits = Math.max(1, Math.floor((similarRowWidth + GAP) / SLOT));
-          const visible = similar.slice(0, fits);
+          const CARD_W = 176
+          const GAP = 12
+          const SLOT = CARD_W + GAP
+          const fits = Math.max(1, Math.floor((similarRowWidth + GAP) / SLOT))
+          const visible = similar.slice(0, fits)
           const dynamicGap = fits > 1 && similarRowWidth > 0
             ? Math.max(GAP, (similarRowWidth - fits * CARD_W) / (fits - 1))
-            : GAP;
+            : GAP
           return (
             <section className="space-y-3">
               <h2 className="text-lg font-medium text-[#e8e4dc]">Similar Games</h2>
@@ -1105,7 +1099,7 @@ export default function GameDetail() {
                 className="flex overflow-hidden"
                 style={{ gap: `${dynamicGap}px` }}
               >
-                {visible.map(g => (
+                {visible.map((g) => (
                   <GameCard
                     key={g.igdbId}
                     game={g}
@@ -1114,9 +1108,9 @@ export default function GameDetail() {
                 ))}
               </div>
             </section>
-          );
+          )
         })()}
       </div>
     </>
-  );
+  )
 }

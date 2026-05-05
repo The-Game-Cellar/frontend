@@ -1,30 +1,31 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getWildCard } from '../services/recommendationService';
-import GameCard from '../components/common/GameCard';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getWildCard } from '../services/recommendationService'
+import GameCard from '../components/common/GameCard'
+import type { RecommendationDTO } from '../types/api'
 
 export default function WildCard() {
-  const navigate = useNavigate();
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [rollCount, setRollCount] = useState(0);
+  const navigate = useNavigate()
+  const [games, setGames] = useState<RecommendationDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [rollCount, setRollCount] = useState(0)
 
   const roll = () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     getWildCard(12)
-      .then(res => {
-        setGames(Array.isArray(res.data) ? res.data : []);
-        setRollCount(c => c + 1);
+      .then((res) => {
+        setGames(Array.isArray(res.data) ? res.data : [])
+        setRollCount((c) => c + 1)
       })
       .catch(() => setError('Failed to load Wild Card.'))
-      .finally(() => setLoading(false));
-  };
+      .finally(() => setLoading(false))
+  }
 
   useEffect(() => {
-    roll();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    roll()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6">
@@ -61,7 +62,7 @@ export default function WildCard() {
           key={rollCount}
           className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4 animate-wildcard"
         >
-          {games.map(game => (
+          {games.map((game) => (
             <GameCard
               key={game.igdbId}
               game={game}
@@ -71,5 +72,5 @@ export default function WildCard() {
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,46 +1,47 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-import { register as registerUser } from '../services/authService';
-import AttributionFooter from '../components/common/AttributionFooter';
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import useAuth from '../hooks/useAuth'
+import { register as registerUser } from '../services/authService'
+import AttributionFooter from '../components/common/AttributionFooter'
 
 const inputClass =
-  'w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none focus:[box-shadow:0_0_8px_#f7258540] transition-[border-color,box-shadow] duration-200';
-const labelClass = 'block text-xs text-[#4a5068] uppercase tracking-wider';
+  'w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none focus:[box-shadow:0_0_8px_#f7258540] transition-[border-color,box-shadow] duration-200'
+const labelClass = 'block text-xs text-[#4a5068] uppercase tracking-wider'
 
 export default function Register() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError(null);
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
 
     if (password !== confirm) {
-      setError('Passwords do not match');
-      return;
+      setError('Passwords do not match')
+      return
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
+      setError('Password must be at least 8 characters')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      const userInfo = await registerUser(username, email, password);
-      login(userInfo);
-      navigate('/onboarding');
+      const userInfo = await registerUser(username, email, password)
+      login(userInfo)
+      navigate('/onboarding')
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -62,7 +63,7 @@ export default function Register() {
               type="text"
               required
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="coolplayer99"
               className={inputClass}
             />
@@ -75,7 +76,7 @@ export default function Register() {
               type="email"
               required
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               className={inputClass}
             />
@@ -88,7 +89,7 @@ export default function Register() {
               type="password"
               required
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className={inputClass}
             />
@@ -101,7 +102,7 @@ export default function Register() {
               type="password"
               required
               value={confirm}
-              onChange={e => setConfirm(e.target.value)}
+              onChange={(e) => setConfirm(e.target.value)}
               placeholder="••••••••"
               className={inputClass}
             />
@@ -136,5 +137,5 @@ export default function Register() {
         <AttributionFooter />
       </div>
     </div>
-  );
+  )
 }

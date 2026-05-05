@@ -1,21 +1,21 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-import AuthProvider from './context/AuthContext';
-import ProtectedRoute from './components/common/ProtectedRoute';
-import Layout from './components/common/Layout';
+import AuthProvider from './context/AuthContext'
+import ProtectedRoute from './components/common/ProtectedRoute'
+import Layout from './components/common/Layout'
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Callback from './pages/Callback';
-import Onboarding from './pages/Onboarding';
-import Dashboard from './pages/Dashboard';
-import Library from './pages/Library';
-import Recommendations from './pages/Recommendations';
-import Explore from './pages/Explore';
-import WildCard from './pages/WildCard';
-import Profile from './pages/Profile';
-import GameDetail from './pages/GameDetail';
-import About from './pages/About';
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Callback from './pages/Callback'
+import Onboarding from './pages/Onboarding'
+import Dashboard from './pages/Dashboard'
+import Library from './pages/Library'
+import Recommendations from './pages/Recommendations'
+import Explore from './pages/Explore'
+import WildCard from './pages/WildCard'
+import Profile from './pages/Profile'
+import GameDetail from './pages/GameDetail'
+import About from './pages/About'
 
 export default function App() {
   return (
@@ -47,5 +47,5 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
-  );
+  )
 }

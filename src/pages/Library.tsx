@@ -1,15 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { getUserGames, removeGame, getUserPlatforms, getLibraryGenres } from '../services/libraryService';
-import GameListItem from '../components/library/GameListItem';
-import LibraryGameCard from '../components/library/LibraryGameCard';
-import StyledSelect from '../components/common/StyledSelect';
+import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { getUserGames, removeGame, getUserPlatforms, getLibraryGenres } from '../services/libraryService'
+import type { GetUserGamesParams } from '../services/libraryService'
+import GameListItem from '../components/library/GameListItem'
+import LibraryGameCard from '../components/library/LibraryGameCard'
+import StyledSelect from '../components/common/StyledSelect'
+import type { GameStatus, UserGameDTO } from '../types/api'
 
-const STATUS_TABS = ['All', 'PLAYING', 'BACKLOG', 'WISHLIST', 'DUSTY', 'COMPLETED', 'DROPPED'];
+type StatusTab = 'All' | GameStatus
+type ViewMode = 'list' | 'grid'
+type SortMode = 'status' | 'latest' | 'oldest' | 'rating' | 'az' | 'za'
 
-const STATUS_ORDER = { PLAYING: 0, BACKLOG: 1, WISHLIST: 2, DUSTY: 3, COMPLETED: 4, DROPPED: 5 };
+const STATUS_TABS: StatusTab[] = ['All', 'PLAYING', 'BACKLOG', 'WISHLIST', 'DUSTY', 'COMPLETED', 'DROPPED']
 
-const tabActiveStyles = {
+const STATUS_ORDER: Record<GameStatus, number> = { PLAYING: 0, BACKLOG: 1, WISHLIST: 2, DUSTY: 3, COMPLETED: 4, DROPPED: 5 }
+
+const tabActiveStyles: Record<StatusTab, string> = {
   All:       'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258560]',
   PLAYING:   'bg-[#22c55e15] border-[#22c55e] text-[#22c55e] [box-shadow:0_0_6px_#22c55e60]',
   BACKLOG:   'bg-[#2563eb15] border-[#2563eb] text-[#2563eb] [box-shadow:0_0_6px_#2563eb60]',
@@ -17,9 +23,9 @@ const tabActiveStyles = {
   DROPPED:   'bg-[#ef444415] border-[#ef4444] text-[#ef4444] [box-shadow:0_0_6px_#ef444460]',
   WISHLIST:  'bg-[#f59e0b15] border-[#f59e0b] text-[#f59e0b] [box-shadow:0_0_6px_#f59e0b60]',
   DUSTY:     'bg-[#8891a815] border-[#8891a8] text-[#8891a8] [box-shadow:0_0_6px_#8891a860]',
-};
+}
 
-const tabHoverStyles = {
+const tabHoverStyles: Record<StatusTab, string> = {
   All:       'hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_6px_#f7258560]',
   PLAYING:   'hover:border-[#22c55e] hover:text-[#22c55e] hover:[box-shadow:0_0_6px_#22c55e60]',
   BACKLOG:   'hover:border-[#2563eb] hover:text-[#2563eb] hover:[box-shadow:0_0_6px_#2563eb60]',
@@ -27,9 +33,9 @@ const tabHoverStyles = {
   DROPPED:   'hover:border-[#ef4444] hover:text-[#ef4444] hover:[box-shadow:0_0_6px_#ef444460]',
   WISHLIST:  'hover:border-[#f59e0b] hover:text-[#f59e0b] hover:[box-shadow:0_0_6px_#f59e0b60]',
   DUSTY:     'hover:border-[#8891a8] hover:text-[#8891a8] hover:[box-shadow:0_0_6px_#8891a860]',
-};
+}
 
-const emptyMessages = {
+const emptyMessages: Record<StatusTab, string> = {
   All:       'Your library is empty. Find games in Explore.',
   PLAYING:   'Nothing currently playing.',
   BACKLOG:   'Backlog is clear!',
@@ -37,7 +43,11 @@ const emptyMessages = {
   DROPPED:   'No dropped games.',
   WISHLIST:  'Wishlist is empty.',
   DUSTY:     'No dusty games — everything has been played recently.',
-};
+}
+
+function isStatusTab(value: string): value is StatusTab {
+  return (STATUS_TABS as string[]).includes(value)
+}
 
 function ListIcon() {
   return (
@@ -49,7 +59,7 @@ function ListIcon() {
       <rect x="0" y="12" width="3" height="3" rx="0.5" />
       <rect x="5" y="12" width="11" height="3" rx="0.5" />
     </svg>
-  );
+  )
 }
 
 function GridIcon() {
@@ -60,113 +70,114 @@ function GridIcon() {
       <rect x="0" y="9" width="7" height="7" rx="1" />
       <rect x="9" y="9" width="7" height="7" rx="1" />
     </svg>
-  );
+  )
 }
 
 export default function Library() {
-  const [searchParams] = useSearchParams();
-  const initialStatus = searchParams.get('filter') === 'dusty'
-    ? 'DUSTY'
-    : (STATUS_TABS.includes(searchParams.get('status')) ? searchParams.get('status') : 'All');
+  const [searchParams] = useSearchParams()
+  const initialStatus: StatusTab = (() => {
+    if (searchParams.get('filter') === 'dusty') return 'DUSTY'
+    const s = searchParams.get('status')
+    return s && isStatusTab(s) ? s : 'All'
+  })()
 
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeStatus, setActiveStatus] = useState(initialStatus);
-  const [activePlatform, setActivePlatform] = useState('');
-  const [platforms, setPlatforms] = useState([]);
-  const [activeGenre, setActiveGenre] = useState('');
-  const [genres, setGenres] = useState([]);
-  const [activeRating, setActiveRating] = useState('');
-  const [activeSort, setActiveSort] = useState('status');
-  const [activeTag, setActiveTag] = useState('');
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem('library_view') || 'list');
-  const [removeError, setRemoveError] = useState(null);
+  const [games, setGames] = useState<UserGameDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeStatus, setActiveStatus] = useState<StatusTab>(initialStatus)
+  const [activePlatform, setActivePlatform] = useState('')
+  const [platforms, setPlatforms] = useState<string[]>([])
+  const [activeGenre, setActiveGenre] = useState('')
+  const [genres, setGenres] = useState<string[]>([])
+  const [activeRating, setActiveRating] = useState('')
+  const [activeSort, setActiveSort] = useState<SortMode>('status')
+  const [activeTag, setActiveTag] = useState('')
+  const [viewMode, setViewMode] = useState<ViewMode>(() => (localStorage.getItem('library_view') as ViewMode) || 'list')
+  const [removeError, setRemoveError] = useState<string | null>(null)
 
   useEffect(() => {
     getUserPlatforms()
-      .then(res => {
-        const data = Array.isArray(res.data) ? res.data : [];
-        setPlatforms(data.map(p => p.platformName ?? p));
+      .then((res) => {
+        const data = Array.isArray(res.data) ? res.data : []
+        setPlatforms(data.map((p) => p.platformName ?? '').filter((s) => s.length > 0))
       })
-      .catch(() => {});
+      .catch(() => {})
     getLibraryGenres()
-      .then(res => setGenres(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {});
-  }, []);
+      .then((res) => setGenres(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {})
+  }, [])
 
-  const fetchGames = useCallback((status, platform, genre) => {
-    setLoading(true);
-    setError(null);
-    const params = {};
-    if (status !== 'All') params.status = status;
-    if (platform) params.platform = platform;
-    if (genre) params.genre = genre;
+  const fetchGames = useCallback((status: StatusTab, platform: string, genre: string) => {
+    setLoading(true)
+    setError(null)
+    const params: GetUserGamesParams = {}
+    if (status !== 'All') params.status = status
+    if (platform) params.platform = platform
+    if (genre) params.genre = genre
     getUserGames(params)
-      .then(res => setGames(Array.isArray(res.data) ? res.data : []))
+      .then((res) => setGames(Array.isArray(res.data) ? res.data : []))
       .catch(() => setError('Failed to load library.'))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
-    fetchGames(activeStatus, activePlatform, activeGenre);
-  }, [activeStatus, fetchGames, activePlatform, activeGenre]);
+    fetchGames(activeStatus, activePlatform, activeGenre)
+  }, [activeStatus, fetchGames, activePlatform, activeGenre])
 
-  const handleViewChange = mode => {
-    setViewMode(mode);
-    localStorage.setItem('library_view', mode);
-  };
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    localStorage.setItem('library_view', mode)
+  }
 
-  const handleRemove = async id => {
+  const handleRemove = async (id: number) => {
     try {
-      await removeGame(id);
-      setGames(prev => prev.filter(g => g.id !== id));
+      await removeGame(id)
+      setGames((prev) => prev.filter((g) => g.id !== id))
     } catch {
-      setRemoveError('Failed to remove game. Please try again.');
-      setTimeout(() => setRemoveError(null), 3000);
+      setRemoveError('Failed to remove game. Please try again.')
+      setTimeout(() => setRemoveError(null), 3000)
     }
-  };
+  }
 
-  const allTags = [...new Set(games.flatMap(g => g.tags ?? []))].sort();
+  const allTags = [...new Set(games.flatMap((g) => g.tags ?? []))].sort()
 
-  const isFiltered = activeStatus !== 'All' || activePlatform || activeGenre || activeRating || activeSort !== 'status' || activeTag;
+  const isFiltered = activeStatus !== 'All' || activePlatform || activeGenre || activeRating || activeSort !== 'status' || activeTag
 
   const resetFilters = () => {
-    setActiveStatus('All');
-    setActivePlatform('');
-    setActiveGenre('');
-    setActiveRating('');
-    setActiveSort('status');
-    setActiveTag('');
-  };
+    setActiveStatus('All')
+    setActivePlatform('')
+    setActiveGenre('')
+    setActiveRating('')
+    setActiveSort('status')
+    setActiveTag('')
+  }
 
   const displayedGames = [...games]
-    .filter(g => {
-      if (activeRating && (g.rating == null || g.rating < Number(activeRating))) return false;
-      if (activeTag && !(g.tags ?? []).includes(activeTag)) return false;
-      return true;
+    .filter((g) => {
+      if (activeRating && (g.rating == null || g.rating < Number(activeRating))) return false
+      if (activeTag && !(g.tags ?? []).includes(activeTag)) return false
+      return true
     })
     .sort((a, b) => {
       switch (activeSort) {
-        case 'latest':    return new Date(b.dateAdded) - new Date(a.dateAdded);
-        case 'oldest':    return new Date(a.dateAdded) - new Date(b.dateAdded);
-        case 'rating':    return (b.rating ?? 0) - (a.rating ?? 0);
-        case 'az':        return a.gameName.localeCompare(b.gameName);
-        case 'za':        return b.gameName.localeCompare(a.gameName);
-        default:          return (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
+        case 'latest':    return new Date(b.dateAdded ?? 0).getTime() - new Date(a.dateAdded ?? 0).getTime()
+        case 'oldest':    return new Date(a.dateAdded ?? 0).getTime() - new Date(b.dateAdded ?? 0).getTime()
+        case 'rating':    return (b.rating ?? 0) - (a.rating ?? 0)
+        case 'az':        return (a.gameName ?? '').localeCompare(b.gameName ?? '')
+        case 'za':        return (b.gameName ?? '').localeCompare(a.gameName ?? '')
+        default:          return (a.status ? STATUS_ORDER[a.status] : 99) - (b.status ? STATUS_ORDER[b.status] : 99)
       }
-    });
+    })
 
-  const viewBtnClass = active =>
+  const viewBtnClass = (active: boolean): string =>
     active
       ? 'p-1.5 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-[border-color,color,background-color,box-shadow] duration-150'
-      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow] duration-150';
+      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow] duration-150'
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        {/* Left: title + count */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Library</h1>
           {!loading && (
@@ -176,7 +187,6 @@ export default function Library() {
           )}
         </div>
 
-        {/* Right: view toggle */}
         <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
           <button onClick={() => handleViewChange('list')} className={viewBtnClass(viewMode === 'list')} title="List view">
             <ListIcon />
@@ -189,9 +199,8 @@ export default function Library() {
 
       {/* Filters */}
       <div className="space-y-3">
-        {/* Status tabs */}
         <div className="flex flex-wrap gap-1.5">
-          {STATUS_TABS.map(tab => (
+          {STATUS_TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveStatus(tab)}
@@ -206,7 +215,6 @@ export default function Library() {
           ))}
         </div>
 
-        {/* Labeled filter row */}
         <div className="flex flex-wrap gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-[#4a5068] uppercase tracking-wider">Platform</label>
@@ -214,7 +222,7 @@ export default function Library() {
               value={activePlatform}
               onChange={setActivePlatform}
               disabled={platforms.length === 0}
-              options={[{ value: '', label: 'All' }, ...platforms.map(p => ({ value: p, label: p }))]}
+              options={[{ value: '', label: 'All' }, ...platforms.map((p) => ({ value: p, label: p }))]}
             />
           </div>
 
@@ -224,7 +232,7 @@ export default function Library() {
               value={activeGenre}
               onChange={setActiveGenre}
               disabled={genres.length === 0}
-              options={[{ value: '', label: 'All' }, ...genres.map(g => ({ value: g, label: g }))]}
+              options={[{ value: '', label: 'All' }, ...genres.map((g) => ({ value: g, label: g }))]}
             />
           </div>
 
@@ -234,7 +242,7 @@ export default function Library() {
               value={activeTag}
               onChange={setActiveTag}
               disabled={allTags.length === 0}
-              options={[{ value: '', label: 'All' }, ...allTags.map(t => ({ value: t, label: t }))]}
+              options={[{ value: '', label: 'All' }, ...allTags.map((t) => ({ value: t, label: t }))]}
             />
           </div>
 
@@ -243,7 +251,7 @@ export default function Library() {
             <StyledSelect
               value={activeRating}
               onChange={setActiveRating}
-              options={[{ value: '', label: 'All' }, ...[9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => ({ value: String(n), label: `${n}+` }))]}
+              options={[{ value: '', label: 'All' }, ...[9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => ({ value: String(n), label: `${n}+` }))]}
             />
           </div>
 
@@ -252,7 +260,7 @@ export default function Library() {
             <StyledSelect
               alwaysActive
               value={activeSort}
-              onChange={setActiveSort}
+              onChange={(v) => setActiveSort(v as SortMode)}
               options={[
                 { value: 'status', label: 'Status' },
                 { value: 'latest', label: 'Latest' },
@@ -275,14 +283,12 @@ export default function Library() {
         </div>
       </div>
 
-      {/* Remove error */}
       {removeError && (
         <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
           {removeError}
         </p>
       )}
 
-      {/* States */}
       {loading && (
         <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       )}
@@ -300,7 +306,7 @@ export default function Library() {
       {!loading && !error && displayedGames.length > 0 && (
         viewMode === 'grid' ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 animate-enter">
-            {displayedGames.map(entry => (
+            {displayedGames.map((entry) => (
               <LibraryGameCard
                 key={entry.id}
                 entry={entry}
@@ -310,7 +316,7 @@ export default function Library() {
           </div>
         ) : (
           <div className="space-y-2 animate-enter">
-            {displayedGames.map(entry => (
+            {displayedGames.map((entry) => (
               <GameListItem
                 key={entry.id}
                 entry={entry}
@@ -321,5 +327,5 @@ export default function Library() {
         )
       )}
     </div>
-  );
+  )
 }

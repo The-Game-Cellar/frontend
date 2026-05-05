@@ -1,48 +1,60 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getPersonalizedGrouped,
   addRecentlyShownIds,
-} from '../services/recommendationService';
-import GameCard from '../components/common/GameCard';
+} from '../services/recommendationService'
+import GameCard from '../components/common/GameCard'
+import type { GroupedRecommendationsResponse, RecommendationDTO, RecommendationRow } from '../types/api'
 
-const CARD_W = 176;
-const GAP = 12;
+const CARD_W = 176
+const GAP = 12
 
-function AdaptiveRail({ games, onGameClick }) {
-  const ref = useRef(null);
-  const [width, setWidth] = useState(0);
+interface AdaptiveRailProps {
+  games: RecommendationDTO[]
+  onGameClick: (game: RecommendationDTO) => void
+}
+
+function AdaptiveRail({ games, onGameClick }: AdaptiveRailProps) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [width, setWidth] = useState(0)
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    setWidth(el.clientWidth);
-    const ro = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect?.width;
-      if (w) setWidth(w);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    const el = ref.current
+    if (!el) return
+    setWidth(el.clientWidth)
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width
+      if (w) setWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
-  const slot = CARD_W + GAP;
-  const fits = Math.max(1, Math.floor((width + GAP) / slot));
-  const visible = games.slice(0, fits);
+  const slot = CARD_W + GAP
+  const fits = Math.max(1, Math.floor((width + GAP) / slot))
+  const visible = games.slice(0, fits)
   const dynamicGap = fits > 1 && width > 0
     ? Math.max(GAP, (width - fits * CARD_W) / (fits - 1))
-    : GAP;
+    : GAP
 
   return (
     <div ref={ref} className="flex overflow-hidden" style={{ gap: `${dynamicGap}px` }}>
-      {visible.map(g => (
+      {visible.map((g) => (
         <GameCard key={g.igdbId} game={g} onClick={() => onGameClick(g)} />
       ))}
     </div>
-  );
+  )
 }
 
-function Row({ row, onGameClick, onLabelClick }) {
-  if (!row.games || row.games.length === 0) return null;
+interface RowProps {
+  row: RecommendationRow
+  onGameClick: (g: RecommendationDTO) => void
+  onLabelClick: (genre: string) => void
+}
+
+function Row({ row, onGameClick, onLabelClick }: RowProps) {
+  if (!row.games || row.games.length === 0) return null
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -50,7 +62,7 @@ function Row({ row, onGameClick, onLabelClick }) {
           <h2 className="text-lg font-medium text-[#e8e4dc]">{row.label}</h2>
         ) : (
           <button
-            onClick={() => onLabelClick(row.genre)}
+            onClick={() => row.genre && onLabelClick(row.genre)}
             className="text-lg font-medium text-[#e8e4dc] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
           >
             {row.label} →
@@ -59,35 +71,35 @@ function Row({ row, onGameClick, onLabelClick }) {
       </div>
       <AdaptiveRail games={row.games} onGameClick={onGameClick} />
     </section>
-  );
+  )
 }
 
 export default function Recommendations() {
-  const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate()
+  const [data, setData] = useState<GroupedRecommendationsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
     getPersonalizedGrouped()
-      .then(res => {
-        const payload = res.data ?? { rows: [], tier: 3 };
-        setData(payload);
-        const allIds = (payload.rows ?? []).flatMap(r => (r.games ?? []).map(g => g.igdbId));
-        addRecentlyShownIds(allIds);
+      .then((res) => {
+        const payload: GroupedRecommendationsResponse = res.data ?? { rows: [], tier: 3 }
+        setData(payload)
+        const allIds = (payload.rows ?? []).flatMap((r) => (r.games ?? []).map((g) => g.igdbId).filter((id): id is number => id != null))
+        addRecentlyShownIds(allIds)
       })
       .catch(() => setError('Failed to load recommendations.'))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
-    load();
-  }, [load]);
+    load()
+  }, [load])
 
-  const handleGameClick = (g) => navigate(`/games/${g.igdbId}`);
-  const handleLabelClick = (genre) => navigate(`/explore?genre=${encodeURIComponent(genre)}`);
+  const handleGameClick = (g: RecommendationDTO) => navigate(`/games/${g.igdbId}`)
+  const handleLabelClick = (genre: string) => navigate(`/explore?genre=${encodeURIComponent(genre)}`)
 
   return (
     <div className="space-y-8">
@@ -130,11 +142,11 @@ export default function Recommendations() {
 
       {!loading && !error && data && (data.rows ?? []).length > 0 && (
         <div className="space-y-10 animate-enter">
-          {data.rows.map((row, i) => (
+          {(data.rows ?? []).map((row, i) => (
             <Row key={`${row.label}-${i}`} row={row} onGameClick={handleGameClick} onLabelClick={handleLabelClick} />
           ))}
         </div>
       )}
     </div>
-  );
+  )
 }

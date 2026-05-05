@@ -1,55 +1,55 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { addPlatform } from '../services/libraryService';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { addPlatform } from '../services/libraryService'
 
-const PLATFORMS = [
+const PLATFORMS: string[] = [
   'PC',
   'PlayStation 5',
   'PlayStation 4',
   'Xbox Series S/X',
   'Xbox One',
   'Nintendo Switch',
-];
+]
 
 export default function Onboarding() {
-  const navigate = useNavigate();
-  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate()
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function togglePlatform(platform) {
+  function togglePlatform(platform: string) {
     setSelectedPlatforms((prev) =>
       prev.includes(platform)
         ? prev.filter((p) => p !== platform)
         : [...prev, platform]
-    );
+    )
   }
 
   async function handleFinish() {
-    if (selectedPlatforms.length === 0) return;
+    if (selectedPlatforms.length === 0) return
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     const results = await Promise.allSettled(
       selectedPlatforms.map((platform) =>
         addPlatform({ platformName: platform, isPrimary: false })
       )
-    );
+    )
 
     const failed = results
       .map((r, i) => (r.status === 'rejected' ? selectedPlatforms[i] : null))
-      .filter(Boolean);
+      .filter((p): p is string => p !== null)
 
     if (failed.length > 0) {
-      setSelectedPlatforms(failed);
-      setError(`Failed to save ${failed.length} platform(s). Please try again.`);
-      setLoading(false);
-      return;
+      setSelectedPlatforms(failed)
+      setError(`Failed to save ${failed.length} platform(s). Please try again.`)
+      setLoading(false)
+      return
     }
 
-    setLoading(false);
-    navigate('/dashboard');
+    setLoading(false)
+    navigate('/dashboard')
   }
 
   return (
@@ -66,7 +66,7 @@ export default function Onboarding() {
 
         <div className="grid grid-cols-2 gap-2">
           {PLATFORMS.map((platform) => {
-            const active = selectedPlatforms.includes(platform);
+            const active = selectedPlatforms.includes(platform)
             return (
               <button
                 key={platform}
@@ -79,7 +79,7 @@ export default function Onboarding() {
               >
                 {platform}
               </button>
-            );
+            )
           })}
         </div>
 
@@ -98,5 +98,5 @@ export default function Onboarding() {
         </button>
       </div>
     </div>
-  );
+  )
 }

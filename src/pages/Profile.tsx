@@ -1,224 +1,245 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-import { getStats, getUserPlatforms, addPlatform, removePlatform } from '../services/libraryService';
-import { changeEmail, changePassword, deleteAccount, exportAccountData } from '../services/authService';
+import { useState, useEffect } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import useAuth from '../hooks/useAuth'
+import { getStats, getUserPlatforms, addPlatform, removePlatform } from '../services/libraryService'
+import { changeEmail, changePassword, deleteAccount, exportAccountData } from '../services/authService'
+import type { UserInfo } from '../services/authService'
+import type { GameStatus, UserPlatformDTO, UserStatsDTO } from '../types/api'
 
 const inputClass =
-  'w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none focus:[box-shadow:0_0_8px_#f7258540] transition-[border-color,box-shadow] duration-200';
-const labelClass = 'block text-xs text-[#4a5068] uppercase tracking-wider';
+  'w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none focus:[box-shadow:0_0_8px_#f7258540] transition-[border-color,box-shadow] duration-200'
+const labelClass = 'block text-xs text-[#4a5068] uppercase tracking-wider'
 
-const ALL_PLATFORMS = [
+const ALL_PLATFORMS: string[] = [
   'PC', 'PlayStation 5', 'PlayStation 4',
   'Xbox Series S/X', 'Xbox One', 'Nintendo Switch',
-];
+]
 
-const STATUSES = [
+interface StatusEntry {
+  key: GameStatus
+  label: string
+  color: string
+  glow: string
+}
+
+const STATUSES: StatusEntry[] = [
   { key: 'PLAYING',   label: 'Playing',   color: '#22c55e', glow: '#22c55e40' },
   { key: 'BACKLOG',   label: 'Backlog',   color: '#2563eb', glow: '#2563eb40' },
   { key: 'COMPLETED', label: 'Completed', color: '#a855f7', glow: '#a855f740' },
   { key: 'DROPPED',   label: 'Dropped',   color: '#ef4444', glow: '#ef444440' },
   { key: 'WISHLIST',  label: 'Wishlist',  color: '#f59e0b', glow: '#f59e0b40' },
-];
+]
+
+interface EmailFormState { newEmail: string; currentPassword: string }
+interface PwFormState { currentPassword: string; newPassword: string; confirmPassword: string }
+
+function asUserInfo(value: unknown): UserInfo | null {
+  if (value && typeof value === 'object' && 'userId' in value && typeof (value as { userId: unknown }).userId === 'string') {
+    return value as UserInfo
+  }
+  return null
+}
 
 export default function Profile() {
-  const { email, logout, login } = useAuth();
-  const navigate = useNavigate();
-  const [stats, setStats] = useState(null);
-  const [statsError, setStatsError] = useState(false);
-  const [platforms, setPlatforms] = useState([]);
-  const [platformsError, setPlatformsError] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [addPlatformError, setAddPlatformError] = useState(false);
-  const [removePlatformError, setRemovePlatformError] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [pwModalOpen, setPwModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteForm, setDeleteForm] = useState({ currentPassword: '' });
-  const [deleteError, setDeleteError] = useState(null);
-  const [deleteSaving, setDeleteSaving] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
-  const [exportError, setExportError] = useState(false);
+  const { email, logout, login } = useAuth()
+  const navigate = useNavigate()
+  const [stats, setStats] = useState<UserStatsDTO | null>(null)
+  const [statsError, setStatsError] = useState(false)
+  const [platforms, setPlatforms] = useState<UserPlatformDTO[]>([])
+  const [platformsError, setPlatformsError] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [addPlatformError, setAddPlatformError] = useState(false)
+  const [removePlatformError, setRemovePlatformError] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const [pwModalOpen, setPwModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteForm, setDeleteForm] = useState({ currentPassword: '' })
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleteSaving, setDeleteSaving] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
+  const [exportError, setExportError] = useState(false)
 
-  const [emailForm, setEmailForm] = useState({ newEmail: '', currentPassword: '' });
-  const [emailError, setEmailError] = useState(null);
-  const [emailSuccess, setEmailSuccess] = useState(false);
-  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailForm, setEmailForm] = useState<EmailFormState>({ newEmail: '', currentPassword: '' })
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [emailSuccess, setEmailSuccess] = useState(false)
+  const [emailSaving, setEmailSaving] = useState(false)
 
-  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  const [pwError, setPwError] = useState(null);
-  const [pwSuccess, setPwSuccess] = useState(false);
-  const [pwSaving, setPwSaving] = useState(false);
+  const [pwForm, setPwForm] = useState<PwFormState>({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [pwError, setPwError] = useState<string | null>(null)
+  const [pwSuccess, setPwSuccess] = useState(false)
+  const [pwSaving, setPwSaving] = useState(false)
 
-  function updateEmailField(key, value) {
-    setEmailForm(prev => ({ ...prev, [key]: value }));
-    if (emailError) setEmailError(null);
-    if (emailSuccess) setEmailSuccess(false);
+  function updateEmailField<K extends keyof EmailFormState>(key: K, value: EmailFormState[K]) {
+    setEmailForm((prev) => ({ ...prev, [key]: value }))
+    if (emailError) setEmailError(null)
+    if (emailSuccess) setEmailSuccess(false)
   }
 
-  function updatePwField(key, value) {
-    setPwForm(prev => ({ ...prev, [key]: value }));
-    if (pwError) setPwError(null);
-    if (pwSuccess) setPwSuccess(false);
+  function updatePwField<K extends keyof PwFormState>(key: K, value: PwFormState[K]) {
+    setPwForm((prev) => ({ ...prev, [key]: value }))
+    if (pwError) setPwError(null)
+    if (pwSuccess) setPwSuccess(false)
   }
 
   function closeEmailModal() {
-    setEmailModalOpen(false);
-    setEmailForm({ newEmail: '', currentPassword: '' });
-    setEmailError(null);
-    setEmailSuccess(false);
+    setEmailModalOpen(false)
+    setEmailForm({ newEmail: '', currentPassword: '' })
+    setEmailError(null)
+    setEmailSuccess(false)
   }
 
   function closePwModal() {
-    setPwModalOpen(false);
-    setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setPwError(null);
-    setPwSuccess(false);
+    setPwModalOpen(false)
+    setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    setPwError(null)
+    setPwSuccess(false)
   }
 
   function closeDeleteModal() {
-    if (deleteSaving) return;
-    setDeleteModalOpen(false);
-    setDeleteForm({ currentPassword: '' });
-    setDeleteError(null);
+    if (deleteSaving) return
+    setDeleteModalOpen(false)
+    setDeleteForm({ currentPassword: '' })
+    setDeleteError(null)
   }
 
-  async function handleDeleteAccount(e) {
-    e.preventDefault();
-    setDeleteError(null);
-    setDeleteSaving(true);
+  async function handleDeleteAccount(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setDeleteError(null)
+    setDeleteSaving(true)
     try {
-      await deleteAccount(deleteForm.currentPassword);
-      navigate('/login', { replace: true });
+      await deleteAccount(deleteForm.currentPassword)
+      navigate('/login', { replace: true })
     } catch (err) {
-      setDeleteError(err.message);
-      setDeleteSaving(false);
+      setDeleteError(err instanceof Error ? err.message : 'Account deletion failed')
+      setDeleteSaving(false)
     }
   }
 
   async function handleExportData() {
-    setExportError(false);
-    setExportLoading(true);
+    setExportError(false)
+    setExportLoading(true)
     try {
-      const data = await exportAccountData();
-      const json = JSON.stringify(data, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const stamp = new Date().toISOString().slice(0, 10);
-      a.download = `the-game-cellar-export-${stamp}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const data = await exportAccountData()
+      const json = JSON.stringify(data, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const stamp = new Date().toISOString().slice(0, 10)
+      a.download = `the-game-cellar-export-${stamp}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
     } catch {
-      setExportError(true);
-      setTimeout(() => setExportError(false), 3000);
+      setExportError(true)
+      setTimeout(() => setExportError(false), 3000)
     } finally {
-      setExportLoading(false);
+      setExportLoading(false)
     }
   }
 
-  async function handleChangeEmail(e) {
-    e.preventDefault();
-    setEmailError(null);
-    setEmailSuccess(false);
+  async function handleChangeEmail(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setEmailError(null)
+    setEmailSuccess(false)
     if (email && emailForm.newEmail.trim().toLowerCase() === email.toLowerCase()) {
-      setEmailError('New email is the same as current email');
-      return;
+      setEmailError('New email is the same as current email')
+      return
     }
-    setEmailSaving(true);
+    setEmailSaving(true)
     try {
-      const userInfo = await changeEmail(emailForm.currentPassword, emailForm.newEmail);
-      if (userInfo && userInfo.userId) login(userInfo);
-      setEmailForm({ newEmail: '', currentPassword: '' });
-      setEmailSuccess(true);
+      const result = await changeEmail(emailForm.currentPassword, emailForm.newEmail)
+      const userInfo = asUserInfo(result)
+      if (userInfo) login(userInfo)
+      setEmailForm({ newEmail: '', currentPassword: '' })
+      setEmailSuccess(true)
       setTimeout(() => {
-        setEmailModalOpen(false);
-        setEmailSuccess(false);
-      }, 1200);
+        setEmailModalOpen(false)
+        setEmailSuccess(false)
+      }, 1200)
     } catch (err) {
-      setEmailError(err.message);
+      setEmailError(err instanceof Error ? err.message : 'Email update failed')
     } finally {
-      setEmailSaving(false);
+      setEmailSaving(false)
     }
   }
 
-  async function handleChangePassword(e) {
-    e.preventDefault();
-    setPwError(null);
-    setPwSuccess(false);
+  async function handleChangePassword(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPwError(null)
+    setPwSuccess(false)
     if (pwForm.newPassword !== pwForm.confirmPassword) {
-      setPwError('New passwords do not match');
-      return;
+      setPwError('New passwords do not match')
+      return
     }
     if (pwForm.newPassword.length < 8) {
-      setPwError('New password must be at least 8 characters');
-      return;
+      setPwError('New password must be at least 8 characters')
+      return
     }
     if (!/[A-Za-z]/.test(pwForm.newPassword) || !/\d/.test(pwForm.newPassword)) {
-      setPwError('New password must contain at least one letter and one digit');
-      return;
+      setPwError('New password must contain at least one letter and one digit')
+      return
     }
     if (pwForm.newPassword === pwForm.currentPassword) {
-      setPwError('New password must differ from current password');
-      return;
+      setPwError('New password must differ from current password')
+      return
     }
-    setPwSaving(true);
+    setPwSaving(true)
     try {
-      await changePassword(pwForm.currentPassword, pwForm.newPassword);
-      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setPwSuccess(true);
+      await changePassword(pwForm.currentPassword, pwForm.newPassword)
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setPwSuccess(true)
       setTimeout(() => {
-        setPwModalOpen(false);
-        setPwSuccess(false);
-      }, 1200);
+        setPwModalOpen(false)
+        setPwSuccess(false)
+      }, 1200)
     } catch (err) {
-      setPwError(err.message);
+      setPwError(err instanceof Error ? err.message : 'Password update failed')
     } finally {
-      setPwSaving(false);
+      setPwSaving(false)
     }
   }
 
   async function handleLogout() {
-    await logout();
-    navigate('/login');
+    await logout()
+    navigate('/login')
   }
 
   useEffect(() => {
-    getStats().then(r => setStats(r.data)).catch(() => setStatsError(true));
-    getUserPlatforms().then(r => setPlatforms(Array.isArray(r.data) ? r.data : [])).catch(() => setPlatformsError(true));
-  }, []);
+    getStats().then((r) => setStats(r.data)).catch(() => setStatsError(true))
+    getUserPlatforms().then((r) => setPlatforms(Array.isArray(r.data) ? r.data : [])).catch(() => setPlatformsError(true))
+  }, [])
 
-  const ownedNames = platforms.map(p => p.platformName);
-  const available = ALL_PLATFORMS.filter(p => !ownedNames.includes(p));
+  const ownedNames = platforms.map((p) => p.platformName ?? '')
+  const available = ALL_PLATFORMS.filter((p) => !ownedNames.includes(p))
   const totalGames = stats
     ? Object.values(stats.byStatus ?? {}).reduce((sum, n) => sum + n, 0)
-    : null;
+    : null
 
-  async function handleRemovePlatform(platformId) {
+  async function handleRemovePlatform(platformId: number) {
     try {
-      await removePlatform(platformId);
-      setPlatforms(prev => prev.filter(p => p.id !== platformId));
+      await removePlatform(platformId)
+      setPlatforms((prev) => prev.filter((p) => p.id !== platformId))
     } catch {
-      setRemovePlatformError(true);
-      setTimeout(() => setRemovePlatformError(false), 3000);
+      setRemovePlatformError(true)
+      setTimeout(() => setRemovePlatformError(false), 3000)
     }
   }
 
-  async function handleAddPlatform(name) {
-    setAdding(true);
+  async function handleAddPlatform(name: string) {
+    setAdding(true)
     try {
-      await addPlatform({ platformName: name, isPrimary: false });
-      const res = await getUserPlatforms();
-      setPlatforms(Array.isArray(res.data) ? res.data : []);
+      await addPlatform({ platformName: name, isPrimary: false })
+      const res = await getUserPlatforms()
+      setPlatforms(Array.isArray(res.data) ? res.data : [])
     } catch {
-      setAddPlatformError(true);
-      setTimeout(() => setAddPlatformError(false), 3000);
+      setAddPlatformError(true)
+      setTimeout(() => setAddPlatformError(false), 3000)
     } finally {
-      setAdding(false);
+      setAdding(false)
     }
   }
 
@@ -267,20 +288,21 @@ export default function Profile() {
           <p className="text-xs text-[#8891a8] uppercase tracking-wider">Library</p>
           <div className="grid grid-cols-3 gap-3">
             {STATUSES.map(({ key, label, color, glow }) => {
-              const count = stats.byStatus?.[key] ?? 0;
+              const count = stats.byStatus?.[key] ?? 0
+              const cardStyle: CSSProperties = { ['--glow' as never]: glow }
               return (
                 <button
                   key={key}
                   onClick={() => navigate(`/library?status=${key}`)}
                   className="bg-[#111220] border border-[#2a2d45] rounded-lg p-4 text-center space-y-1 transition-[border-color,box-shadow,transform] duration-200 hover:border-current hover:scale-[1.02]"
-                  style={{ '--glow': glow }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = color;
-                    e.currentTarget.style.boxShadow = `0 0 12px ${glow}`;
+                  style={cardStyle}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = color
+                    e.currentTarget.style.boxShadow = `0 0 12px ${glow}`
                   }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = '';
-                    e.currentTarget.style.boxShadow = '';
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = ''
+                    e.currentTarget.style.boxShadow = ''
                   }}
                 >
                   <p className="text-2xl font-semibold" style={{ color, textShadow: `0 0 10px ${glow}` }}>
@@ -288,7 +310,7 @@ export default function Profile() {
                   </p>
                   <p className="text-xs text-[#8891a8]">{label}</p>
                 </button>
-              );
+              )
             })}
           </div>
         </section>
@@ -309,12 +331,12 @@ export default function Profile() {
         )}
         {!platformsError && platforms.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {platforms.map(p => (
+            {platforms.map((p) => (
               <span key={p.id} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border bg-[#f7258510] border-[#f7258560] text-[#f72585]">
                 {p.platformName}
                 <button
                   type="button"
-                  onClick={() => handleRemovePlatform(p.id)}
+                  onClick={() => p.id != null && handleRemovePlatform(p.id)}
                   className="text-base leading-none text-[#4a5068] hover:text-[#ef4444] transition-colors"
                   title="Remove platform"
                 >
@@ -335,7 +357,7 @@ export default function Profile() {
           <div className="space-y-2 pt-3 border-t border-[#1e2035]">
             <p className="text-xs text-[#8891a8]">Add platform</p>
             <div className="flex flex-wrap gap-2">
-              {available.map(name => (
+              {available.map((name) => (
                 <button
                   key={name}
                   onClick={() => handleAddPlatform(name)}
@@ -394,7 +416,7 @@ export default function Profile() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-sm space-y-4 animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#e8e4dc]">Change email</p>
@@ -408,7 +430,7 @@ export default function Profile() {
                   type="email"
                   required
                   value={emailForm.newEmail}
-                  onChange={e => updateEmailField('newEmail', e.target.value)}
+                  onChange={(e) => updateEmailField('newEmail', e.target.value)}
                   placeholder="you@example.com"
                   className={inputClass}
                 />
@@ -420,7 +442,7 @@ export default function Profile() {
                   type="password"
                   required
                   value={emailForm.currentPassword}
-                  onChange={e => updateEmailField('currentPassword', e.target.value)}
+                  onChange={(e) => updateEmailField('currentPassword', e.target.value)}
                   placeholder="••••••••"
                   className={inputClass}
                 />
@@ -464,7 +486,7 @@ export default function Profile() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-sm space-y-4 animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#e8e4dc]">Change password</p>
@@ -478,7 +500,7 @@ export default function Profile() {
                   type="password"
                   required
                   value={pwForm.currentPassword}
-                  onChange={e => updatePwField('currentPassword', e.target.value)}
+                  onChange={(e) => updatePwField('currentPassword', e.target.value)}
                   placeholder="••••••••"
                   className={inputClass}
                 />
@@ -490,7 +512,7 @@ export default function Profile() {
                   type="password"
                   required
                   value={pwForm.newPassword}
-                  onChange={e => updatePwField('newPassword', e.target.value)}
+                  onChange={(e) => updatePwField('newPassword', e.target.value)}
                   placeholder="••••••••"
                   className={inputClass}
                 />
@@ -502,7 +524,7 @@ export default function Profile() {
                   type="password"
                   required
                   value={pwForm.confirmPassword}
-                  onChange={e => updatePwField('confirmPassword', e.target.value)}
+                  onChange={(e) => updatePwField('confirmPassword', e.target.value)}
                   placeholder="••••••••"
                   className={inputClass}
                 />
@@ -546,7 +568,7 @@ export default function Profile() {
         >
           <div
             className="bg-[#111220] border border-[#ef444460] rounded-lg p-6 w-full max-w-sm space-y-4 animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#ef4444]">Delete account?</p>
@@ -562,7 +584,7 @@ export default function Profile() {
                   type="password"
                   required
                   value={deleteForm.currentPassword}
-                  onChange={e => setDeleteForm({ currentPassword: e.target.value })}
+                  onChange={(e) => setDeleteForm({ currentPassword: e.target.value })}
                   placeholder="••••••••"
                   className={inputClass}
                   autoFocus
@@ -603,7 +625,7 @@ export default function Profile() {
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#e8e4dc]">Sign out?</p>
@@ -627,5 +649,5 @@ export default function Profile() {
         </div>
       )}
     </div>
-  );
+  )
 }
