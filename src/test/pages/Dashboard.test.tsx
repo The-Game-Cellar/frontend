@@ -1,23 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
+import { renderWithProviders } from '../test-utils'
 import Dashboard from '../../pages/Dashboard'
-import { invalidateDashboard, invalidatePrefetchedPersonalized } from '../../services/recommendationService'
 
 const API = 'http://api.test'
 
 describe('Dashboard page', () => {
-  beforeEach(() => {
-    // Module-level prefetch caches survive vitest's per-test cleanup; reset them
-    // explicitly so each test starts from a known state and the mock handlers fire.
-    invalidateDashboard()
-    invalidatePrefetchedPersonalized()
-  })
-
   it('renders the four primary section headings', async () => {
-    render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    render(renderWithProviders(<Dashboard />))
     await waitFor(() => expect(screen.getByRole('heading', { name: /recommendations for you/i, level: 2 })).toBeInTheDocument())
     expect(screen.getByRole('heading', { name: /coming soon/i, level: 2 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /your backlog/i, level: 2 })).toBeInTheDocument()
@@ -33,7 +25,7 @@ describe('Dashboard page', () => {
         })
       ),
     )
-    render(<MemoryRouter><Dashboard /></MemoryRouter>)
+    render(renderWithProviders(<Dashboard />))
     await waitFor(() => expect(screen.getByText('Stardew Valley')).toBeInTheDocument())
   })
 })

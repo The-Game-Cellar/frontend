@@ -1,8 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getGameById, getByFranchise, getByCollection, getEditions } from '../services/gameService'
-import { getUserGames, updateGame, removeGame } from '../services/libraryService'
-import { getSimilar } from '../services/recommendationService'
+import { useQueries } from '@tanstack/react-query'
+import {
+  getGameById,
+  gameKeys,
+  useGameById,
+  useByFranchise,
+  useByCollection,
+  useEditions,
+} from '../services/gameService'
+import { useUserGames, useUpdateGame, useRemoveGame } from '../services/libraryService'
+import { useSimilar } from '../services/recommendationService'
 import GameCard from '../components/common/GameCard'
 import CoverFallback from '../components/common/CoverFallback'
 import TruncatedText from '../components/common/TruncatedText'
@@ -189,136 +197,122 @@ export default function GameDetail() {
   const { igdbId } = useParams<{ igdbId: string }>()
   const navigate = useNavigate()
 
-  const [game, setGame] = useState<GameResponse | null>(null)
-  const [libraryEntry, setLibraryEntry] = useState<UserGameDTO | null>(null)
-  const [similar, setSimilar] = useState<RecommendationDTO[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const isValidId = !!igdbId && /^\d+$/.test(String(igdbId)) && Number(igdbId) >= 1
+  const numericId = isValidId ? Number(igdbId) : 0
+
+  const { data: game, isPending: gameLoading, error: gameError } = useGameById(numericId, isValidId)
+  const { data: userGames } = useUserGames()
+  const libraryEntry: UserGameDTO | null = userGames?.find((e) => String(e.igdbGameId) === String(igdbId)) ?? null
+  const { data: similarData } = useSimilar(numericId, 50, isValidId)
+  const similar: RecommendationDTO[] = similarData ?? []
+
+  const updateGameMutation = useUpdateGame()
+  const removeGameMutation = useRemoveGame()
+  const updating = updateGameMutation.isPending
+
+  const series = useMemo(
+    () => pickBestSeries(game?.name, game?.franchises, game?.collections),
+    [game?.name, game?.franchises, game?.collections],
+  )
+  const seriesName = series?.name ?? ''
+  const isFranchise = series?.kind === 'franchise'
+  const { data: franchiseDataF } = useByFranchise(seriesName, 50, numericId, !!series && isFranchise)
+  const { data: franchiseDataC } = useByCollection(seriesName, 50, numericId, !!series && !isFranchise)
+  const franchiseGames: GameResponse[] = (franchiseDataF ?? franchiseDataC ?? [])
+
+  const editionsEnabled = isValidId && !!game && (game.category === 0 || game.category == null)
+  const { data: editionsData } = useEditions(numericId, editionsEnabled)
+  const editions: GameResponse[] = editionsData ?? []
+
+  const addonTagged = useMemo<{ id: number; kind: AddonKind }[]>(
+    () => [
+      ...(Array.isArray(game?.expansionIds) ? game.expansionIds : []).map((id) => ({ id, kind: 'EXPANSION' as AddonKind })),
+      ...(Array.isArray(game?.dlcIds) ? game.dlcIds : []).map((id) => ({ id, kind: 'DLC' as AddonKind })),
+    ],
+    [game?.expansionIds, game?.dlcIds],
+  )
+  const addonQueries = useQueries({
+    queries: addonTagged.map((t) => ({
+      queryKey: gameKeys.byId(t.id),
+      queryFn: () => getGameById(t.id).then((r) => r.data),
+    })),
+  })
+  const addonsLoading = addonQueries.some((q) => q.isLoading)
+  const addonPreviews: AddonPreview[] = useMemo(
+    () =>
+      addonQueries
+        .map((q, i): AddonPreview | null => (q.data ? { ...q.data, _kind: addonTagged[i].kind } : null))
+        .filter((p): p is AddonPreview => p !== null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addonQueries.map((q) => q.dataUpdatedAt).join('|'), addonTagged],
+  )
+  const addons: AddonPreview[] | null = addonsLoading
+    ? null
+    : [...addonPreviews].sort((a, b) => {
+        const da = a.released ? Date.parse(a.released) : -Infinity
+        const db = b.released ? Date.parse(b.released) : -Infinity
+        return db - da
+      })
+
   const [showModal, setShowModal] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
-  const [updating, setUpdating] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [showAddons, setShowAddons] = useState(false)
-  const [addons, setAddons] = useState<AddonPreview[] | null>(null)
-  const [addonsLoading, setAddonsLoading] = useState(false)
-  const [addonPreviews, setAddonPreviews] = useState<AddonPreview[]>([])
   const [hoveredAddon, setHoveredAddon] = useState<number | null>(null)
-  const [franchiseGames, setFranchiseGames] = useState<GameResponse[]>([])
   const [showFranchiseModal, setShowFranchiseModal] = useState(false)
   const [franchiseRowWidth, setFranchiseRowWidth] = useState(0)
   const franchiseRowRef = useRef<HTMLDivElement | null>(null)
   const [similarRowWidth, setSimilarRowWidth] = useState(0)
   const similarRowRef = useRef<HTMLDivElement | null>(null)
   const [releaseExpanded, setReleaseExpanded] = useState(false)
-  const [editions, setEditions] = useState<GameResponse[]>([])
   const [editionsExpanded, setEditionsExpanded] = useState(false)
+
+  // Reset per-igdb UI state on navigation between game-detail pages.
+  useEffect(() => {
+    setShowAddons(false)
+    setHoveredAddon(null)
+    setReleaseExpanded(false)
+    setEditionsExpanded(false)
+    setShowFranchiseModal(false)
+  }, [igdbId])
 
   const showActionError = (msg: string) => {
     setActionError(msg)
     setTimeout(() => setActionError(null), 3000)
   }
 
-  const fetchLibraryEntry = () =>
-    getUserGames()
-      .then((res) => {
-        const entries = Array.isArray(res.data) ? res.data : []
-        const match = entries.find((e) => String(e.igdbGameId) === String(igdbId))
-        setLibraryEntry(match ?? null)
-      })
-      .catch(() => {})
+  const loading = isValidId && gameLoading
+  const error: string | null = !isValidId
+    ? 'Invalid game id.'
+    : gameError
+    ? 'Failed to load game.'
+    : null
 
-  useEffect(() => {
-    if (!igdbId || !/^\d+$/.test(String(igdbId)) || Number(igdbId) < 1) {
-      setError('Invalid game id.')
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    setAddons(null)
-    setShowAddons(false)
-    setAddonsLoading(false)
-    setAddonPreviews([])
-    setHoveredAddon(null)
-    setFranchiseGames([])
-    setReleaseExpanded(false)
-    setEditions([])
-    setEditionsExpanded(false)
-    setShowFranchiseModal(false)
-
-    const numericId = Number(igdbId)
-
-    Promise.all([
-      getGameById(numericId),
-      getUserGames(),
-      getSimilar(numericId, 50),
-    ])
-      .then(([gameRes, libraryRes, similarRes]) => {
-        const gameData = gameRes.data
-        setGame(gameData)
-        const entries = Array.isArray(libraryRes.data) ? libraryRes.data : []
-        const match = entries.find((e) => String(e.igdbGameId) === String(igdbId))
-        setLibraryEntry(match ?? null)
-        setSimilar(Array.isArray(similarRes.data) ? similarRes.data : [])
-
-        const previewTagged: { id: number; kind: AddonKind }[] = [
-          ...(Array.isArray(gameData.expansionIds) ? gameData.expansionIds : []).map((id) => ({ id, kind: 'EXPANSION' as AddonKind })),
-          ...(Array.isArray(gameData.dlcIds) ? gameData.dlcIds : []).map((id) => ({ id, kind: 'DLC' as AddonKind })),
-        ]
-        if (previewTagged.length > 0) {
-          Promise.allSettled(previewTagged.map((t) => getGameById(t.id))).then((rs) => {
-            setAddonPreviews(
-              rs
-                .map((r, idx): AddonPreview | null => r.status === 'fulfilled' ? { ...r.value.data, _kind: previewTagged[idx].kind } : null)
-                .filter((p): p is AddonPreview => p !== null)
-            )
-          })
-        }
-
-        const series = pickBestSeries(gameData.name, gameData.franchises, gameData.collections)
-        if (series) {
-          const fetcher = series.kind === 'collection' ? getByCollection : getByFranchise
-          fetcher(series.name, 50, numericId)
-            .then((res) => setFranchiseGames(Array.isArray(res.data) ? res.data : []))
-            .catch(() => {})
-        }
-
-        if (gameData.category === 0 || gameData.category == null) {
-          getEditions(numericId)
-            .then((res) => setEditions(Array.isArray(res.data) ? res.data : []))
-            .catch(() => {})
-        }
-      })
-      .catch(() => setError('Failed to load game.'))
-      .finally(() => setLoading(false))
-  }, [igdbId])
-
-  const handleStatusChange = async (newStatus: SelectableStatus) => {
-    if (!libraryEntry || libraryEntry.id == null) return
-    setUpdating(true)
-    try {
-      await updateGame(libraryEntry.id, { status: newStatus })
-      setLibraryEntry((prev) => (prev ? { ...prev, status: newStatus } : prev))
-    } catch {
-      showActionError('Failed to update status. Please try again.')
-    } finally {
-      setUpdating(false)
-      setShowStatusMenu(false)
-    }
+  const fetchLibraryEntry = () => {
+    // Library invalidation handled automatically by useAddGame's onSuccess.
+    // Function kept as a no-op so AddGameModal's onAdded callback signature stays compatible.
   }
 
-  const handleRatingChange = async (rating: number) => {
+  const handleStatusChange = (newStatus: SelectableStatus) => {
     if (!libraryEntry || libraryEntry.id == null) return
-    try {
-      await updateGame(libraryEntry.id, { rating })
-      setLibraryEntry((prev) => (prev ? { ...prev, rating } : prev))
-    } catch {
-      showActionError('Failed to save rating. Please try again.')
-    }
+    updateGameMutation.mutate(
+      { gameId: libraryEntry.id, data: { status: newStatus } },
+      {
+        onError: () => showActionError('Failed to update status. Please try again.'),
+        onSettled: () => setShowStatusMenu(false),
+      },
+    )
+  }
+
+  const handleRatingChange = (rating: number) => {
+    if (!libraryEntry || libraryEntry.id == null) return
+    updateGameMutation.mutate(
+      { gameId: libraryEntry.id, data: { rating } },
+      { onError: () => showActionError('Failed to save rating. Please try again.') },
+    )
   }
 
   const screenshots: string[] = Array.isArray(game?.screenshotUrls) ? game.screenshotUrls : []
@@ -327,27 +321,8 @@ export default function GameDetail() {
   const expansionIds: number[] = Array.isArray(game?.expansionIds) ? game.expansionIds : []
   const addonCount = dlcIds.length + expansionIds.length
 
-  const handleOpenAddons = async () => {
+  const handleOpenAddons = () => {
     setShowAddons(true)
-    if (addons !== null) return
-    setAddonsLoading(true)
-    const tagged: { id: number; kind: AddonKind }[] = [
-      ...dlcIds.map((id) => ({ id, kind: 'DLC' as AddonKind })),
-      ...expansionIds.map((id) => ({ id, kind: 'EXPANSION' as AddonKind })),
-    ]
-    const results = await Promise.allSettled(
-      tagged.map(({ id }) => getGameById(id))
-    )
-    const resolved = results
-      .map((r, i): AddonPreview | null => (r.status === 'fulfilled' ? { ...r.value.data, _kind: tagged[i].kind } : null))
-      .filter((p): p is AddonPreview => p !== null)
-      .sort((a, b) => {
-        const da = a.released ? Date.parse(a.released) : -Infinity
-        const db = b.released ? Date.parse(b.released) : -Infinity
-        return db - da
-      })
-    setAddons(resolved)
-    setAddonsLoading(false)
   }
 
   useEffect(() => {
@@ -399,16 +374,12 @@ export default function GameDetail() {
     return () => window.removeEventListener('keydown', onKey)
   }, [lightboxIndex, screenshots.length])
 
-  const handleRemove = async () => {
+  const handleRemove = () => {
     if (!libraryEntry || libraryEntry.id == null) return
-    try {
-      await removeGame(libraryEntry.id)
-      setLibraryEntry(null)
-      setShowRemoveConfirm(false)
-    } catch {
-      setShowRemoveConfirm(false)
-      showActionError('Failed to remove game. Please try again.')
-    }
+    removeGameMutation.mutate(libraryEntry.id, {
+      onSettled: () => setShowRemoveConfirm(false),
+      onError: () => showActionError('Failed to remove game. Please try again.'),
+    })
   }
 
   if (loading) {

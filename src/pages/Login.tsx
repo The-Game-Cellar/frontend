@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import useAuth from '../hooks/useAuth'
-import { login as keycloakLogin } from '../services/authService'
-import { prefetchDashboard, prefetchPersonalized } from '../services/recommendationService'
+import { useLogin } from '../services/authService'
+import { recommendationKeys } from '../services/recommendationService'
+import { getDashboard } from '../services/recommendationService'
 import AttributionFooter from '../components/common/AttributionFooter'
 import LoginTransition from '../components/common/LoginTransition'
 import {
@@ -19,6 +21,8 @@ type TransitionState = 'idle' | 'entering' | 'leaving'
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const loginMutation = useLogin()
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -33,11 +37,16 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const userInfo = await keycloakLogin(username, password)
+      const userInfo = await loginMutation.mutateAsync({ username, password })
       login(userInfo)
 
-      const dashboardPromise = prefetchDashboard()
-      const personalizedPromise = prefetchPersonalized(100)
+      // Prime the dashboard "current" buffer slot so the post-login mount renders instantly.
+      // Dashboard maintains a separate "next" buffer that's queued after first render so
+      // the user's first refresh click is also instant. See Dashboard.tsx.
+      const dashboardPromise = queryClient.prefetchQuery({
+        queryKey: [...recommendationKeys.dashboard(), 'current'],
+        queryFn: () => getDashboard().then((r) => r.data),
+      })
 
       const minFloor = isFirstLogin() ? MIN_FIRST_MS : MIN_REPEAT_MS
       const startedAt = Date.now()
@@ -45,9 +54,8 @@ export default function Login() {
       setTransitionFloor(minFloor)
       setTransitionState('entering')
 
-      const gated = Promise.allSettled([dashboardPromise, personalizedPromise])
       const cap = new Promise<void>((resolve) => setTimeout(resolve, MAX_MS))
-      await Promise.race([gated, cap])
+      await Promise.race([dashboardPromise, cap])
 
       const elapsed = Date.now() - startedAt
       const remainder = Math.max(0, minFloor - elapsed)

@@ -1,15 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { renderWithProviders } from '../test-utils'
 import Onboarding from '../../pages/Onboarding'
 
 function renderOnboarding() {
-  return render(
-    <MemoryRouter>
-      <Onboarding />
-    </MemoryRouter>
-  )
+  return render(renderWithProviders(<Onboarding />))
 }
 
 describe('Onboarding page', () => {

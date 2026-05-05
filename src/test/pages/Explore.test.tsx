@@ -1,16 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
+import { renderWithProviders } from '../test-utils'
 import Explore from '../../pages/Explore'
 
 const API = 'http://api.test'
 
 describe('Explore page', () => {
   it('renders the Browse / Coming soon tabs', async () => {
-    render(<MemoryRouter><Explore /></MemoryRouter>)
+    render(renderWithProviders(<Explore />))
     await waitFor(() => expect(screen.getByRole('button', { name: /^browse$/i })).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /coming soon/i })).toBeInTheDocument()
   })
@@ -25,7 +25,7 @@ describe('Explore page', () => {
       ),
     )
     const user = userEvent.setup()
-    render(<MemoryRouter><Explore /></MemoryRouter>)
+    render(renderWithProviders(<Explore />))
     // Wait until the page mount + initial fetches have settled.
     await waitFor(() => expect(screen.getByText('Genre')).toBeInTheDocument())
     // Open the Genre dropdown — its trigger sits next to the "Genre" label.

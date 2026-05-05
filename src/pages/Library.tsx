@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getUserGames, removeGame, getUserPlatforms, getLibraryGenres } from '../services/libraryService'
+import { useUserGames, useUserPlatforms, useLibraryGenres, useRemoveGame } from '../services/libraryService'
 import type { GetUserGamesParams } from '../services/libraryService'
 import GameListItem from '../components/library/GameListItem'
 import LibraryGameCard from '../components/library/LibraryGameCard'
 import StyledSelect from '../components/common/StyledSelect'
-import type { GameStatus, UserGameDTO } from '../types/api'
+import type { GameStatus } from '../types/api'
 
 type StatusTab = 'All' | GameStatus
 type ViewMode = 'list' | 'grid'
@@ -81,63 +81,41 @@ export default function Library() {
     return s && isStatusTab(s) ? s : 'All'
   })()
 
-  const [games, setGames] = useState<UserGameDTO[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeStatus, setActiveStatus] = useState<StatusTab>(initialStatus)
   const [activePlatform, setActivePlatform] = useState('')
-  const [platforms, setPlatforms] = useState<string[]>([])
   const [activeGenre, setActiveGenre] = useState('')
-  const [genres, setGenres] = useState<string[]>([])
   const [activeRating, setActiveRating] = useState('')
   const [activeSort, setActiveSort] = useState<SortMode>('status')
   const [activeTag, setActiveTag] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>(() => (localStorage.getItem('library_view') as ViewMode) || 'list')
   const [removeError, setRemoveError] = useState<string | null>(null)
 
-  useEffect(() => {
-    getUserPlatforms()
-      .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : []
-        setPlatforms(data.map((p) => p.platformName ?? '').filter((s) => s.length > 0))
-      })
-      .catch(() => {})
-    getLibraryGenres()
-      .then((res) => setGenres(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
-  }, [])
+  const userGamesParams: GetUserGamesParams = {}
+  if (activeStatus !== 'All') userGamesParams.status = activeStatus
+  if (activePlatform) userGamesParams.platform = activePlatform
+  if (activeGenre) userGamesParams.genre = activeGenre
 
-  const fetchGames = useCallback((status: StatusTab, platform: string, genre: string) => {
-    setLoading(true)
-    setError(null)
-    const params: GetUserGamesParams = {}
-    if (status !== 'All') params.status = status
-    if (platform) params.platform = platform
-    if (genre) params.genre = genre
-    getUserGames(params)
-      .then((res) => setGames(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setError('Failed to load library.'))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: gamesData, isPending: gamesPending, error: gamesError } = useUserGames(userGamesParams)
+  const { data: platformsData } = useUserPlatforms()
+  const { data: genresData } = useLibraryGenres()
+  const removeGameMutation = useRemoveGame()
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- filter-change effect re-fetches on filter deps; refactor to derive state during render planned
-    fetchGames(activeStatus, activePlatform, activeGenre)
-  }, [activeStatus, fetchGames, activePlatform, activeGenre])
+  const games = gamesData ?? []
+  const platforms = (platformsData ?? []).map((p) => p.platformName ?? '').filter((s) => s.length > 0)
+  const genres = genresData ?? []
 
   const handleViewChange = (mode: ViewMode) => {
     setViewMode(mode)
     localStorage.setItem('library_view', mode)
   }
 
-  const handleRemove = async (id: number) => {
-    try {
-      await removeGame(id)
-      setGames((prev) => prev.filter((g) => g.id !== id))
-    } catch {
-      setRemoveError('Failed to remove game. Please try again.')
-      setTimeout(() => setRemoveError(null), 3000)
-    }
+  const handleRemove = (id: number) => {
+    removeGameMutation.mutate(id, {
+      onError: () => {
+        setRemoveError('Failed to remove game. Please try again.')
+        setTimeout(() => setRemoveError(null), 3000)
+      },
+    })
   }
 
   const allTags = [...new Set(games.flatMap((g) => g.tags ?? []))].sort()
@@ -181,7 +159,7 @@ export default function Library() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3 flex-shrink-0">
           <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Library</h1>
-          {!loading && (
+          {!gamesPending && (
             <span className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#2a2d45]">
               {displayedGames.length}
             </span>
@@ -290,21 +268,21 @@ export default function Library() {
         </p>
       )}
 
-      {loading && (
+      {gamesPending && (
         <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       )}
 
-      {!loading && error && (
-        <p className="text-sm text-[#ef4444]">{error}</p>
+      {!gamesPending && gamesError && (
+        <p className="text-sm text-[#ef4444]">Failed to load library.</p>
       )}
 
-      {!loading && !error && displayedGames.length === 0 && (
+      {!gamesPending && !gamesError && displayedGames.length === 0 && (
         <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
           <p className="text-sm text-[#8891a8]">{emptyMessages[activeStatus] ?? 'No games match your filters.'}</p>
         </div>
       )}
 
-      {!loading && !error && displayedGames.length > 0 && (
+      {!gamesPending && !gamesError && displayedGames.length > 0 && (
         viewMode === 'grid' ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 animate-enter">
             {displayedGames.map((entry) => (

@@ -1,25 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import GameCard from '../components/common/GameCard'
 import type { GameCardData } from '../components/common/GameCard'
-import {
-  getDashboard,
-  prefetchPersonalized,
-  consumePrefetchedDashboard,
-  getLoadedDashboard,
-  setLoadedDashboard,
-  invalidateDashboard,
-} from '../services/recommendationService'
-import { getBacklog, getDustyGames, getUserPlatforms, getOwnedIgdbIds } from '../services/libraryService'
-import { getUpcomingGames } from '../services/gameService'
+import { recommendationKeys } from '../services/recommendationService'
+import { getDashboard } from '../services/recommendationService'
+import { useBacklog, useDustyGames, useUserPlatforms, useOwnedIgdbIds } from '../services/libraryService'
+import { useUpcomingGames } from '../services/gameService'
 import type {
-  BecauseYouLikedDTO,
   DashboardDTO,
   GameResponse,
   RecommendationDTO,
   UserGameDTO,
 } from '../types/api'
+
+// Dashboard recommendations buffer. `current` holds what's rendered; an
+// in-memory queue holds N pre-fetched batches that are ready to swap in
+// instantly when the user clicks Refresh. After every consume, a fresh batch
+// is queued in the background so the buffer stays topped up — rapid refresh
+// clicks burn through the queue without ever waiting on the network until the
+// queue genuinely empties.
+const DASHBOARD_CURRENT_KEY = [...recommendationKeys.dashboard(), 'current'] as const
+const DASHBOARD_BUFFER_TARGET = 4
 
 type LibraryDashboardEntry = UserGameDTO & { name: string }
 
@@ -149,111 +152,97 @@ function GameScroll<T extends GameCardData>({ games, getKey, onClick, loading = 
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [recommendations, setRecommendations] = useState<RecommendationDTO[]>([])
-  const [becauseYouLiked, setBecauseYouLiked] = useState<BecauseYouLikedDTO[]>([])
-  const [wildcard, setWildcard] = useState<RecommendationDTO[]>([])
-  const [backlog, setBacklog] = useState<LibraryDashboardEntry[]>([])
-  const [dusty, setDusty] = useState<LibraryDashboardEntry[]>([])
-  const [upcoming, setUpcoming] = useState<GameResponse[]>([])
-  const [upcomingLoading, setUpcomingLoading] = useState(true)
-  const [upcomingError, setUpcomingError] = useState(false)
-  const [dashLoading, setDashLoading] = useState(true)
-  const [recsError, setRecsError] = useState(false)
-  const [backlogError, setBacklogError] = useState(false)
-  const [dustyError, setDustyError] = useState(false)
+  const queryClient = useQueryClient()
 
-  const loadBacklog = useCallback(() => {
-    setBacklogError(false)
-    getBacklog()
+  const {
+    data: dashData,
+    isPending: dashLoading,
+    isError: recsError,
+  } = useQuery({
+    queryKey: DASHBOARD_CURRENT_KEY,
+    queryFn: () => getDashboard().then((r) => r.data),
+  })
+
+  // In-memory FIFO of pre-fetched dashboard batches + a counter for in-flight
+  // refills. The buffer is drained one entry at a time by the Refresh button
+  // and topped up to DASHBOARD_BUFFER_TARGET in the background. Refs (not state)
+  // because mutations to these don't need to trigger renders.
+  const bufferRef = useRef<DashboardDTO[]>([])
+  const inFlightRef = useRef(0)
+
+  const fetchOne = useCallback(() => {
+    inFlightRef.current += 1
+    return getDashboard()
       .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : []
-        setBacklog(data.map((g) => ({ ...g, name: g.gameName ?? '' })))
+        if (res.data) bufferRef.current.push(res.data)
       })
-      .catch(() => setBacklogError(true))
+      .catch(() => { /* swallow — refill is best-effort, refresh button still works */ })
+      .finally(() => {
+        inFlightRef.current -= 1
+      })
   }, [])
 
-  const loadDusty = useCallback(() => {
-    setDustyError(false)
-    getDustyGames()
-      .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : []
-        setDusty(data.map((g) => ({ ...g, name: g.gameName ?? '' })))
-      })
-      .catch(() => setDustyError(true))
-  }, [])
-
-  const loadUpcoming = useCallback(() => {
-    setUpcomingError(false)
-    setUpcomingLoading(true)
-    Promise.all([getUserPlatforms(), getOwnedIgdbIds()])
-      .then(([platformsRes, ownedRes]) => {
-        const platformList = Array.isArray(platformsRes.data) ? platformsRes.data : []
-        const platformNames = platformList
-          .map((p) => p.platformName ?? '')
-          .filter((p) => p.length > 0)
-        const ownedIds = Array.isArray(ownedRes.data) ? ownedRes.data : []
-        return getUpcomingGames({ platforms: platformNames, windowDays: 90, limit: 20, excludeIds: ownedIds })
-      })
-      .then((res) => {
-        const data = Array.isArray(res.data?.games) ? res.data.games : []
-        setUpcoming(data)
-      })
-      .catch(() => setUpcomingError(true))
-      .finally(() => setUpcomingLoading(false))
-  }, [])
-
-  const applyDashboardPayload = useCallback((data: DashboardDTO | null) => {
-    setRecommendations(data?.recommendations ?? [])
-    setBecauseYouLiked(data?.becauseYouLiked ?? [])
-    setWildcard(data?.wildcard ?? [])
-  }, [])
-
-  const loadDashboard = useCallback(() => {
-    setRecsError(false)
-
-    const cached = getLoadedDashboard()
-    if (cached) {
-      applyDashboardPayload(cached)
-      setDashLoading(false)
-      return
+  const refillBuffer = useCallback(() => {
+    while (bufferRef.current.length + inFlightRef.current < DASHBOARD_BUFFER_TARGET) {
+      fetchOne()
     }
+  }, [fetchOne])
 
-    const prefetched = consumePrefetchedDashboard()
-    if (prefetched) {
-      setDashLoading(true)
-      prefetched
-        .then((data) => {
-          if (!data) {
-            setRecsError(true)
-            return
-          }
-          applyDashboardPayload(data)
-          setLoadedDashboard(data)
-        })
-        .catch(() => setRecsError(true))
-        .finally(() => setDashLoading(false))
-      return
-    }
-
-    setDashLoading(true)
-    getDashboard()
-      .then((res) => {
-        const data = res.data
-        applyDashboardPayload(data)
-        setLoadedDashboard(data)
-      })
-      .catch(() => setRecsError(true))
-      .finally(() => setDashLoading(false))
-  }, [applyDashboardPayload])
-
+  // Once the current batch is rendered, top the buffer up. Re-runs whenever
+  // dashData reference changes (e.g. after a refresh-button consume swaps in
+  // a new batch via setQueryData) so the queue is continuously refilled.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap effect kicks initial fetches; refactor to derive state during render planned
-    loadBacklog()
-    loadDusty()
-    loadDashboard()
-    loadUpcoming()
-    prefetchPersonalized(100)
-  }, [loadBacklog, loadDusty, loadDashboard, loadUpcoming])
+    if (dashData) refillBuffer()
+  }, [dashData, refillBuffer])
+
+  // Track the rare cold-buffer fallback so the button can flag it briefly.
+  const [dashRefreshing, setDashRefreshing] = useState(false)
+
+  const loadDashboard = useCallback(async () => {
+    if (bufferRef.current.length > 0) {
+      const next = bufferRef.current.shift()!
+      queryClient.setQueryData(DASHBOARD_CURRENT_KEY, next)
+      // useEffect on dashData will trigger refillBuffer.
+      return
+    }
+    // Cold buffer — fetch directly, swap when it lands.
+    setDashRefreshing(true)
+    try {
+      const res = await getDashboard()
+      if (res.data) queryClient.setQueryData(DASHBOARD_CURRENT_KEY, res.data)
+    } catch { /* ignore — keep showing current */ }
+    setDashRefreshing(false)
+  }, [queryClient])
+  const recommendations: RecommendationDTO[] = dashData?.recommendations ?? []
+  const becauseYouLiked = dashData?.becauseYouLiked ?? []
+  const wildcard: RecommendationDTO[] = dashData?.wildcard ?? []
+
+  const { data: backlogData, isError: backlogError, refetch: refetchBacklog } = useBacklog()
+  const backlog: LibraryDashboardEntry[] = (backlogData ?? []).map((g) => ({ ...g, name: g.gameName ?? '' }))
+
+  const { data: dustyData, isError: dustyError, refetch: refetchDusty } = useDustyGames()
+  const dusty: LibraryDashboardEntry[] = (dustyData ?? []).map((g) => ({ ...g, name: g.gameName ?? '' }))
+
+  const { data: platformsData } = useUserPlatforms()
+  const platformNames = (platformsData ?? [])
+    .map((p) => p.platformName ?? '')
+    .filter((p) => p.length > 0)
+
+  const { data: ownedIdsData } = useOwnedIgdbIds()
+  const ownedIds = ownedIdsData ?? []
+
+  const {
+    data: upcomingResp,
+    isPending: upcomingLoading,
+    isFetching: upcomingRefreshing,
+    isError: upcomingError,
+    refetch: refetchUpcoming,
+  } = useUpcomingGames({ platforms: platformNames, windowDays: 90, limit: 20, excludeIds: ownedIds })
+  const upcoming: GameResponse[] = Array.isArray(upcomingResp?.games) ? upcomingResp.games : []
+
+  const loadBacklog = () => { refetchBacklog() }
+  const loadDusty = () => { refetchDusty() }
+  const loadUpcoming = () => { refetchUpcoming() }
 
   return (
     <div className="space-y-10 animate-enter">
@@ -267,11 +256,12 @@ export default function Dashboard() {
               View all →
             </Link>
             <button
-              onClick={() => { invalidateDashboard(); loadDashboard() }}
-              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
+              onClick={loadDashboard}
+              disabled={dashRefreshing}
+              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
               title="Re-shuffle"
             >
-              Refresh
+              {dashRefreshing ? '↻ Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
@@ -306,10 +296,11 @@ export default function Dashboard() {
             </Link>
             <button
               onClick={loadUpcoming}
-              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
+              disabled={upcomingRefreshing}
+              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
               title="Re-shuffle"
             >
-              Refresh
+              {upcomingRefreshing ? '↻ Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
