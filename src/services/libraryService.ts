@@ -1,13 +1,7 @@
 import type { AxiosResponse } from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from './api'
-import {
-  invalidatePrefetchedPersonalized,
-  prefetchPersonalized,
-  invalidateDashboard,
-  prefetchDashboard,
-  recommendationKeys,
-} from './recommendationService'
+import { recommendationKeys } from './recommendationService'
 import type {
   AddGameRequest,
   AddPlatformRequest,
@@ -25,13 +19,6 @@ export interface GetUserGamesParams {
   genre?: string
 }
 
-const refreshRecsCache = (): void => {
-  invalidatePrefetchedPersonalized()
-  prefetchPersonalized(100)
-  invalidateDashboard()
-  prefetchDashboard()
-}
-
 // Collection
 export const getUserGames = (params?: GetUserGamesParams): Promise<AxiosResponse<UserGameDTO[]>> =>
   api.get('/api/v1/library/games', { params })
@@ -40,22 +27,13 @@ export const getOwnedIgdbIds = (): Promise<AxiosResponse<number[]>> =>
   api.get('/api/v1/library/igdb-ids')
 
 export const addGame = (data: AddGameRequest): Promise<AxiosResponse<UserGameDTO>> =>
-  api.post<UserGameDTO>('/api/v1/library/games', data).then((res) => {
-    refreshRecsCache()
-    return res
-  })
+  api.post<UserGameDTO>('/api/v1/library/games', data)
 
 export const updateGame = (gameId: number, data: UpdateGameRequest): Promise<AxiosResponse<UserGameDTO>> =>
-  api.put<UserGameDTO>(`/api/v1/library/games/${gameId}`, data).then((res) => {
-    refreshRecsCache()
-    return res
-  })
+  api.put<UserGameDTO>(`/api/v1/library/games/${gameId}`, data)
 
 export const removeGame = (gameId: number): Promise<AxiosResponse<void>> =>
-  api.delete<void>(`/api/v1/library/games/${gameId}`).then((res) => {
-    refreshRecsCache()
-    return res
-  })
+  api.delete<void>(`/api/v1/library/games/${gameId}`)
 
 // Filtered views
 export const getBacklog = (): Promise<AxiosResponse<UserGameDTO[]>> =>

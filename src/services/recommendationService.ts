@@ -58,14 +58,9 @@ export const clearRecentlyShownIds = (): void => {
   }
 }
 
+// Row-based variant — returns { rows: [{ label, genre, fallback, games[] }], tier, emptyMessage }.
 // POST rather than GET because recentlyShownIds grows uncapped with session activity and
 // would blow Tomcat's default 8KB header buffer on the URL path. Body has no such limit.
-export const getPersonalized = (limit: number = 10): Promise<AxiosResponse<RecommendationDTO[]>> => {
-  const recentlyShownIds = getRecentlyShownIds()
-  return api.post('/api/v1/recommendations/personalized', { limit, recentlyShownIds })
-}
-
-// Row-based variant — returns { rows: [{ label, genre, fallback, games[] }], tier, emptyMessage }.
 export const getPersonalizedGrouped = (): Promise<AxiosResponse<GroupedRecommendationsResponse>> => {
   const recentlyShownIds = getRecentlyShownIds()
   return api.post('/api/v1/recommendations/personalized/grouped', { recentlyShownIds })
@@ -82,82 +77,6 @@ export const getBasedOn = (gameId: number, limit: number = 10): Promise<AxiosRes
 
 export const getDashboard = (): Promise<AxiosResponse<DashboardDTO>> =>
   api.get('/api/v1/recommendations/dashboard')
-
-// ─── Prefetch cache for /dashboard ──────────────────────────────────────────
-// Two-slot cache mirroring the /personalized pattern: loadedDashboard restores
-// the rendered Dashboard payload across navigations; nextDashboardPromise
-// holds the in-flight fetch fired right after login so the first Dashboard
-// render is instant. Both clear on logout / library mutation.
-
-let loadedDashboard: DashboardDTO | null = null
-let nextDashboardPromise: Promise<DashboardDTO | null> | null = null
-
-const fetchDashboardPayload = (): Promise<DashboardDTO | null> =>
-  getDashboard()
-    .then((res) => res.data ?? null)
-    .catch(() => null)
-
-export const prefetchDashboard = (): Promise<DashboardDTO | null> => {
-  if (nextDashboardPromise) return nextDashboardPromise
-  nextDashboardPromise = fetchDashboardPayload()
-  return nextDashboardPromise
-}
-
-export const consumePrefetchedDashboard = (): Promise<DashboardDTO | null> | null => {
-  const p = nextDashboardPromise
-  nextDashboardPromise = null
-  return p
-}
-
-export const getLoadedDashboard = (): DashboardDTO | null => loadedDashboard
-
-export const setLoadedDashboard = (payload: DashboardDTO | null): void => {
-  loadedDashboard = payload ?? null
-}
-
-export const invalidateDashboard = (): void => {
-  loadedDashboard = null
-  nextDashboardPromise = null
-}
-
-// ─── Prefetch cache for /personalized ───────────────────────────────────────
-// Two-slot module cache that survives SPA navigations:
-//   - loadedGames: the currently-rendered list. Restored when the user leaves
-//     Recommendations and comes back, so the page is consistent within a session.
-//   - nextBatchPromise: the next batch waiting in the wings. Dashboard kicks
-//     the first prefetch; Recommendations consumes when no loadedGames exist.
-//     fetchMore (last-page boundary) consumes the ready batch + queues another.
-// Both slots clear on logout / deleteAccount and on any library mutation.
-// Failed HTTP resolves to [] so callers never have to handle reject.
-
-let loadedGames: RecommendationDTO[] | null = null
-let nextBatchPromise: Promise<RecommendationDTO[]> | null = null
-
-const fetchPersonalizedBatch = (limit: number): Promise<RecommendationDTO[]> =>
-  getPersonalized(limit).then((res) => (Array.isArray(res.data) ? res.data : []))
-
-export const prefetchPersonalized = (limit: number = 100): Promise<RecommendationDTO[]> => {
-  if (nextBatchPromise) return nextBatchPromise
-  nextBatchPromise = fetchPersonalizedBatch(limit).catch(() => [])
-  return nextBatchPromise
-}
-
-export const consumePrefetchedPersonalized = (): Promise<RecommendationDTO[]> | null => {
-  const p = nextBatchPromise
-  nextBatchPromise = null
-  return p
-}
-
-export const getLoadedPersonalized = (): RecommendationDTO[] | null => loadedGames
-
-export const setLoadedPersonalized = (games: RecommendationDTO[] | null | undefined): void => {
-  loadedGames = Array.isArray(games) ? games : null
-}
-
-export const invalidatePrefetchedPersonalized = (): void => {
-  loadedGames = null
-  nextBatchPromise = null
-}
 
 // ─── TanStack Query hooks ───────────────────────────────────────────────────
 
