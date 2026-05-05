@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../server'
-import AuthProvider from '../../../context/AuthContext'
+import AuthProvider from '../../../context/AuthProvider'
 import ProtectedRoute from '../../../components/common/ProtectedRoute'
 
 const API = 'http://api.test'

@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { server } from '../server'
 import { TEST_USER } from '../handlers'
-import AuthProvider, { AuthContext } from '../../context/AuthContext'
+import AuthProvider from '../../context/AuthProvider'
+import { AuthContext } from '../../context/AuthContext'
 
 const API = 'http://api.test'
 
