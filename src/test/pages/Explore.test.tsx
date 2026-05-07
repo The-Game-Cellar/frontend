@@ -15,13 +15,10 @@ describe('Explore page', () => {
     expect(screen.getByRole('button', { name: /coming soon/i })).toBeInTheDocument()
   })
 
-  // Surfaced-bug regression — backend returns Record<string, string[]>; the page must
-  // populate the genre dropdown from the top-level keys, not from a non-existent .genres field.
-  // Asserts the genre StyledSelect's option list contains the backend keys after expanding.
-  it('populates the genre dropdown from the canonical Record<string,string[]> shape', async () => {
+  it('populates the genre dropdown from GenresResponse', async () => {
     server.use(
       http.get(`${API}/api/v1/games/genres`, () =>
-        HttpResponse.json({ Action: ['Brawler'], RPG: ['JRPG', 'WRPG'] })
+        HttpResponse.json({ genres: ['Action', 'RPG'] })
       ),
     )
     const user = userEvent.setup()

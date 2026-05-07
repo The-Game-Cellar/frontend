@@ -1,7 +1,7 @@
 import type { AxiosResponse } from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import api from './api'
-import type { GameResponse, GameSearchResponse, PlatformsResponse } from '../types/api'
+import type { GameResponse, GameSearchResponse, GenresResponse, PlatformsResponse } from '../types/api'
 
 export interface SearchGamesParams {
   query?: string
@@ -28,7 +28,6 @@ export interface UpcomingGamesParams {
   excludeIds?: number[]
 }
 
-export type GenresResponse = Record<string, string[]>
 export type UpcomingPlatformsResponse = Record<string, string[]>
 
 export const searchGames = (params: SearchGamesParams): Promise<AxiosResponse<GameSearchResponse>> =>

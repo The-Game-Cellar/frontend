@@ -417,6 +417,9 @@ export interface components {
             groups?: components["schemas"]["PlatformGroup"][];
             others?: string[];
         };
+        GenresResponse: {
+            genres?: string[];
+        };
     };
     responses: never;
     parameters: never;
@@ -801,9 +804,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": {
-                        [key: string]: string[];
-                    };
+                    "*/*": components["schemas"]["GenresResponse"];
                 };
             };
         };
