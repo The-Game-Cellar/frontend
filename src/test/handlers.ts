@@ -30,7 +30,7 @@ export const handlers = [
   http.get(`${API}/api/v1/library/stats`, () => HttpResponse.json({ totalGames: 0, byStatus: {}, averageRating: 0, totalRated: 0 })),
 
   // Game catalog
-  http.get(`${API}/api/v1/games/genres`, () => HttpResponse.json({})),
+  http.get(`${API}/api/v1/games/genres`, () => HttpResponse.json({ genres: [] })),
   http.get(`${API}/api/v1/games/platforms`, () => HttpResponse.json({ groups: [], others: [] })),
   http.get(`${API}/api/v1/games/upcoming`, () => HttpResponse.json({ games: [], totalCount: 0, page: 0, pageSize: 20 })),
   http.get(`${API}/api/v1/games/upcoming/platforms`, () => HttpResponse.json({ platforms: [] })),

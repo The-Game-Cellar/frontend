@@ -95,7 +95,7 @@ export default function Explore() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data: genresData } = useGenres()
-  const genres = genresData && typeof genresData === 'object' ? Object.keys(genresData) : []
+  const genres = genresData?.genres ?? []
 
   const { data: platformsData } = useGamePlatforms()
   const platformGroups: PlatformGroup[] = Array.isArray(platformsData?.groups) ? platformsData.groups : []
