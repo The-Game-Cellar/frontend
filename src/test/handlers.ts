@@ -27,7 +27,12 @@ export const handlers = [
   http.get(`${API}/api/v1/library/dusty`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/genres`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/platforms`, () => HttpResponse.json([])),
-  http.get(`${API}/api/v1/library/stats`, () => HttpResponse.json({ totalGames: 0, byStatus: {}, averageRating: 0, totalRated: 0 })),
+  http.patch(`${API}/api/v1/library/platforms/:id/primary`, () =>
+    HttpResponse.json({ id: 1, platformName: 'PC', isPrimary: true }),
+  ),
+  http.get(`${API}/api/v1/library/genre-preferences`, () => HttpResponse.json([])),
+  http.put(`${API}/api/v1/library/genre-preferences`, () => HttpResponse.json([])),
+  http.get(`${API}/api/v1/library/stats`, () => HttpResponse.json({ totalGames: 0, byStatus: {}, averageRating: 0, totalRated: 0, byGenre: {}, byPlatform: {} })),
 
   // Game catalog
   http.get(`${API}/api/v1/games/genres`, () => HttpResponse.json({ genres: [] })),
