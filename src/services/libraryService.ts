@@ -6,8 +6,11 @@ import type {
   AddGameRequest,
   AddPlatformRequest,
   GameStatus,
+  SetPrimaryRequest,
   UpdateGameRequest,
+  UpdateGenrePreferencesRequest,
   UserGameDTO,
+  UserGenrePreferenceDTO,
   UserPlatformDTO,
   UserStatsDTO,
 } from '../types/api'
@@ -68,6 +71,21 @@ export const addPlatform = (data: AddPlatformRequest): Promise<AxiosResponse<Use
 export const removePlatform = (platformId: number): Promise<AxiosResponse<void>> =>
   api.delete(`/api/v1/library/platforms/${platformId}`)
 
+export const setPlatformPrimary = (
+  platformId: number,
+  data: SetPrimaryRequest
+): Promise<AxiosResponse<UserPlatformDTO>> =>
+  api.patch(`/api/v1/library/platforms/${platformId}/primary`, data)
+
+// Genre preferences (cold-start signal collected during onboarding)
+export const getGenrePreferences = (): Promise<AxiosResponse<UserGenrePreferenceDTO[]>> =>
+  api.get('/api/v1/library/genre-preferences')
+
+export const updateGenrePreferences = (
+  data: UpdateGenrePreferencesRequest
+): Promise<AxiosResponse<UserGenrePreferenceDTO[]>> =>
+  api.put('/api/v1/library/genre-preferences', data)
+
 // ─── TanStack Query hooks ───────────────────────────────────────────────────
 
 export const libraryKeys = {
@@ -82,6 +100,7 @@ export const libraryKeys = {
   dusty: () => [...libraryKeys.all, 'dusty'] as const,
   genres: () => [...libraryKeys.all, 'genres'] as const,
   platforms: () => [...libraryKeys.all, 'platforms'] as const,
+  genrePreferences: () => [...libraryKeys.all, 'genrePreferences'] as const,
 }
 
 export const useUserGames = (params?: GetUserGamesParams) =>
@@ -191,6 +210,41 @@ export const useRemovePlatform = () => {
     mutationFn: (platformId: number) => removePlatform(platformId).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.all })
+      queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
+    },
+  })
+}
+
+export const useSetPlatformPrimary = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ platformId, isPrimary }: { platformId: number; isPrimary: boolean }) =>
+      setPlatformPrimary(platformId, { isPrimary }).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.all })
+      queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
+    },
+  })
+}
+
+export const useGenrePreferences = () =>
+  useQuery({
+    queryKey: libraryKeys.genrePreferences(),
+    queryFn: () =>
+      getGenrePreferences().then((r) =>
+        Array.isArray(r.data)
+          ? r.data.map((d) => d.genreName ?? '').filter((s) => s.length > 0)
+          : []
+      ),
+  })
+
+export const useUpdateGenrePreferences = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (genres: string[]) =>
+      updateGenrePreferences({ genres }).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.genrePreferences() })
       queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
     },
   })

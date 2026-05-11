@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/library/genre-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPreferences"];
+        put: operations["replacePreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/games/{gameId}": {
         parameters: {
             query?: never;
@@ -66,6 +82,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/library/platforms/{platformId}/primary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["setPrimary"];
         trace?: never;
     };
     "/api/v1/library/wishlist": {
@@ -248,6 +280,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        UpdateGenrePreferencesRequest: {
+            genres: string[];
+        };
+        UserGenrePreferenceDTO: {
+            genreName?: string;
+        };
         UpdateGameRequest: {
             /** @enum {string} */
             status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
@@ -304,6 +342,9 @@ export interface components {
             rating?: number;
             notes?: string;
         };
+        SetPrimaryRequest: {
+            isPrimary: boolean;
+        };
         UserStatsDTO: {
             /** Format: int64 */
             totalGames?: number;
@@ -314,6 +355,12 @@ export interface components {
             averageRating?: number;
             /** Format: int64 */
             totalRated?: number;
+            byGenre?: {
+                [key: string]: number;
+            };
+            byPlatform?: {
+                [key: string]: number;
+            };
         };
         AccountExportDTO: {
             userId?: string;
@@ -334,6 +381,50 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                };
+            };
+        };
+    };
+    replacePreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGenrePreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                };
+            };
+        };
+    };
     getGame: {
         parameters: {
             query?: never;
@@ -513,6 +604,32 @@ export interface operations {
                     "*/*": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    setPrimary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                platformId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPrimaryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserPlatformDTO"];
                 };
             };
         };

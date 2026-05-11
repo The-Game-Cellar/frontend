@@ -14,6 +14,8 @@ import Recommendations from './pages/Recommendations'
 import Explore from './pages/Explore'
 import WildCard from './pages/WildCard'
 import Profile from './pages/Profile'
+import Statistics from './pages/Statistics'
+import Preferences from './pages/Preferences'
 import GameDetail from './pages/GameDetail'
 import About from './pages/About'
 
@@ -37,6 +39,8 @@ export default function App() {
               <Route path="/explore" element={<Explore />} />
               <Route path="/wildcard" element={<WildCard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/statistics" element={<Statistics />} />
+              <Route path="/profile/preferences" element={<Preferences />} />
               <Route path="/about" element={<About />} />
               <Route path="/games/:igdbId" element={<GameDetail />} />
             </Route>

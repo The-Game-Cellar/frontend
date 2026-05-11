@@ -1,12 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { http, HttpResponse } from 'msw'
-import { server } from '../server'
 import { renderWithProviders } from '../test-utils'
 import Profile from '../../pages/Profile'
-
-const API = 'http://api.test'
 
 function renderProfile() {
   return render(renderWithProviders(<Profile />))
@@ -18,18 +14,14 @@ describe('Profile page', () => {
     await waitFor(() => expect(screen.getByText('test@example.test')).toBeInTheDocument())
   })
 
-  it('renders rendered library stats from the backend', async () => {
-    server.use(
-      http.get(`${API}/api/v1/library/stats`, () =>
-        HttpResponse.json({
-          totalGames: 7,
-          byStatus: { PLAYING: 2, BACKLOG: 3, COMPLETED: 1, DROPPED: 0, WISHLIST: 1 },
-        })
-      ),
-    )
+  it('renders the account-management actions and Sign out', async () => {
     renderProfile()
-    await waitFor(() => expect(screen.getByText(/7/)).toBeInTheDocument())
-    expect(screen.getByText(/games in library/i)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('test@example.test')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /change email/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /change password/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /download my data/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete account/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument()
   })
 
   it('opens the change-password modal when its button is clicked', async () => {

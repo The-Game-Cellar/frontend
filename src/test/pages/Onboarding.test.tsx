@@ -9,17 +9,17 @@ function renderOnboarding() {
 }
 
 describe('Onboarding page', () => {
-  it('renders the platform grid', () => {
+  it('renders the platform step first with the platform grid', () => {
     renderOnboarding()
     expect(screen.getByText(/welcome to the cellar/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'PC' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'PlayStation 5' })).toBeInTheDocument()
   })
 
-  it('reflects the selection count in the finish button', async () => {
+  it('reflects the selection count in the platform-step continue button', async () => {
     const user = userEvent.setup()
     renderOnboarding()
     await user.click(screen.getByRole('button', { name: 'PC' }))
-    expect(screen.getByRole('button', { name: /enter the cellar \(1 selected\)/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue \(1 selected\)/i })).toBeInTheDocument()
   })
 })
