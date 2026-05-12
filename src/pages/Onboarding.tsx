@@ -194,7 +194,7 @@ export default function Onboarding() {
                       key={genre}
                       onClick={() => toggleGenre(genre)}
                       title={genre}
-                      className={`px-3 py-1.5 rounded text-xs text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                      className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
                         active
                           ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                           : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'

@@ -34,6 +34,23 @@ describe('Preferences page', () => {
     expect(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument()
   })
 
+  it('renders the tag-preferences section with chips from the catalog', async () => {
+    server.use(
+      http.get(`${API}/api/v1/games/tags/popular`, () =>
+        HttpResponse.json({ tags: ['cozy', 'atmospheric', 'story rich'] }),
+      ),
+      http.get(`${API}/api/v1/library/tag-preferences`, () =>
+        HttpResponse.json([{ tagName: 'cozy' }]),
+      ),
+    )
+    renderPreferences()
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'cozy' })).toBeInTheDocument())
+    expect(screen.getByText('Tag preferences')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'atmospheric' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'story rich' })).toBeInTheDocument()
+  })
+
   it('toggles primary platform when star is clicked', async () => {
     let patchCalled = false
     let patchedBody: { isPrimary: boolean } | null = null
