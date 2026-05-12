@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExchangeAuthorizationCode } from '../services/authService'
 import { getUserPlatforms } from '../services/libraryService'
@@ -8,6 +8,7 @@ export default function Callback() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const exchangeMutation = useExchangeAuthorizationCode()
+  const [stateError, setStateError] = useState<string | null>(null)
 
   const params = new URLSearchParams(window.location.search)
   const errorParam = params.get('error')
@@ -17,7 +18,7 @@ export default function Callback() {
   const exchangeError = exchangeMutation.isError
     ? (exchangeMutation.error instanceof Error ? exchangeMutation.error.message : 'Authentication failed')
     : null
-  const error = initialErrorMessage ?? exchangeError
+  const error = initialErrorMessage ?? stateError ?? exchangeError
 
   const fired = useRef(false)
   useEffect(() => {
@@ -27,6 +28,14 @@ export default function Callback() {
     const code = params.get('code')
     if (!code) {
       navigate('/register', { replace: true })
+      return
+    }
+    const returnedState = params.get('state')
+    const storedState = sessionStorage.getItem('oauth_state')
+    sessionStorage.removeItem('oauth_state')
+    if (!returnedState || !storedState || returnedState !== storedState) {
+      sessionStorage.removeItem('pkce_verifier')
+      setStateError('Authentication failed. Please try registering again.')
       return
     }
     exchangeMutation.mutate(code, {
