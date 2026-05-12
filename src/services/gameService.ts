@@ -1,7 +1,13 @@
 import type { AxiosResponse } from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import api from './api'
-import type { GameResponse, GameSearchResponse, GenresResponse, PlatformsResponse } from '../types/api'
+import type {
+  GameResponse,
+  GameSearchResponse,
+  GenresResponse,
+  PlatformsResponse,
+  PopularTagsResponse,
+} from '../types/api'
 
 export interface SearchGamesParams {
   query?: string
@@ -60,6 +66,9 @@ export const getGenres = (): Promise<AxiosResponse<GenresResponse>> =>
 export const getPlatforms = (): Promise<AxiosResponse<PlatformsResponse>> =>
   api.get('/api/v1/games/platforms')
 
+export const getPopularTags = (limit: number = 50): Promise<AxiosResponse<PopularTagsResponse>> =>
+  api.get('/api/v1/games/tags/popular', { params: { limit } })
+
 export const getByFranchise = (
   name: string,
   limit: number = 20,
@@ -92,6 +101,7 @@ export const gameKeys = {
   upcomingPlatforms: () => [...gameKeys.all, 'upcoming', 'platforms'] as const,
   genres: () => [...gameKeys.all, 'genres'] as const,
   platforms: () => [...gameKeys.all, 'platforms'] as const,
+  popularTags: (limit: number) => [...gameKeys.all, 'popularTags', limit] as const,
   byFranchise: (name: string, limit: number, excludeIgdbId?: number) =>
     [...gameKeys.all, 'byFranchise', name, limit, excludeIgdbId] as const,
   byCollection: (name: string, limit: number, excludeIgdbId?: number) =>
@@ -142,6 +152,13 @@ export const useGamePlatforms = () =>
   useQuery({
     queryKey: gameKeys.platforms(),
     queryFn: () => getPlatforms().then((r) => r.data),
+  })
+
+export const usePopularTags = (limit = 50) =>
+  useQuery({
+    queryKey: gameKeys.popularTags(limit),
+    queryFn: () =>
+      getPopularTags(limit).then((r) => (r.data?.tags ?? []).filter((t): t is string => typeof t === 'string' && t.length > 0)),
   })
 
 export const useByFranchise = (name: string, limit = 20, excludeIgdbId?: number, enabled = true) =>

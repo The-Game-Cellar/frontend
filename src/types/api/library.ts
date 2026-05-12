@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/v1/library/genre-preferences": {
+    "/api/v1/library/tag-preferences": {
         parameters: {
             query?: never;
             header?: never;
@@ -13,6 +13,22 @@ export interface paths {
         };
         get: operations["getPreferences"];
         put: operations["replacePreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/library/genre-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPreferences_1"];
+        put: operations["replacePreferences_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -280,6 +296,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        UpdateTagPreferencesRequest: {
+            tags: string[];
+        };
+        UserTagPreferenceDTO: {
+            tagName?: string;
+        };
         UpdateGenrePreferencesRequest: {
             genres: string[];
         };
@@ -396,12 +418,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                    "*/*": components["schemas"]["UserTagPreferenceDTO"][];
                 };
             };
         };
     };
     replacePreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTagPreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserTagPreferenceDTO"][];
+                };
+            };
+        };
+    };
+    getPreferences_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                };
+            };
+        };
+    };
+    replacePreferences_1: {
         parameters: {
             query?: never;
             header?: never;

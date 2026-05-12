@@ -6,8 +6,10 @@ import {
   useSetPlatformPrimary,
   useGenrePreferences,
   useUpdateGenrePreferences,
+  useTagPreferences,
+  useUpdateTagPreferences,
 } from '../services/libraryService'
-import { useGenres } from '../services/gameService'
+import { useGenres, usePopularTags } from '../services/gameService'
 
 const ALL_PLATFORMS: string[] = [
   'PC', 'PlayStation 5', 'PlayStation 4',
@@ -21,10 +23,14 @@ export default function Preferences() {
   const removePlatformMutation = useRemovePlatform()
   const setPrimaryMutation = useSetPlatformPrimary()
   const updateGenrePreferencesMutation = useUpdateGenrePreferences()
+  const updateTagPreferencesMutation = useUpdateTagPreferences()
 
   const { data: storedGenrePreferences } = useGenrePreferences()
   const { data: genresData } = useGenres()
   const genreList: string[] = Array.isArray(genresData?.genres) ? genresData.genres : []
+
+  const { data: storedTagPreferences } = useTagPreferences()
+  const { data: tagList = [] } = usePopularTags(50)
 
   const [adding, setAdding] = useState(false)
   const [addPlatformError, setAddPlatformError] = useState(false)
@@ -37,12 +43,25 @@ export default function Preferences() {
   const [genreError, setGenreError] = useState(false)
   const [genreSuccess, setGenreSuccess] = useState(false)
 
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [tagInitialized, setTagInitialized] = useState(false)
+  const [tagSaving, setTagSaving] = useState(false)
+  const [tagError, setTagError] = useState(false)
+  const [tagSuccess, setTagSuccess] = useState(false)
+
   useEffect(() => {
     if (!genreInitialized && Array.isArray(storedGenrePreferences)) {
       setSelectedGenres(storedGenrePreferences)
       setGenreInitialized(true)
     }
   }, [storedGenrePreferences, genreInitialized])
+
+  useEffect(() => {
+    if (!tagInitialized && Array.isArray(storedTagPreferences)) {
+      setSelectedTags(storedTagPreferences)
+      setTagInitialized(true)
+    }
+  }, [storedTagPreferences, tagInitialized])
 
   function toggleGenre(genre: string) {
     setSelectedGenres((prev) =>
@@ -73,6 +92,36 @@ export default function Preferences() {
   const genresDirty =
     storedSet.size !== selectedSet.size ||
     [...storedSet].some((g) => !selectedSet.has(g))
+
+  const storedTagSet = new Set(Array.isArray(storedTagPreferences) ? storedTagPreferences : [])
+  const selectedTagSet = new Set(selectedTags)
+  const tagsDirty =
+    storedTagSet.size !== selectedTagSet.size ||
+    [...storedTagSet].some((t) => !selectedTagSet.has(t))
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+    if (tagSuccess) setTagSuccess(false)
+    if (tagError) setTagError(false)
+  }
+
+  async function saveTagPreferences() {
+    setTagSaving(true)
+    setTagError(false)
+    setTagSuccess(false)
+    try {
+      await updateTagPreferencesMutation.mutateAsync(selectedTags)
+      setTagSuccess(true)
+      setTimeout(() => setTagSuccess(false), 2500)
+    } catch {
+      setTagError(true)
+      setTimeout(() => setTagError(false), 3000)
+    } finally {
+      setTagSaving(false)
+    }
+  }
 
   const ownedNames = platforms.map((p) => p.platformName ?? '')
   const available = ALL_PLATFORMS.filter((p) => !ownedNames.includes(p))
@@ -112,7 +161,7 @@ export default function Preferences() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Preferences</h1>
         <p className="text-xs text-[#8891a8]">
-          The platforms you play on and the genres that shape your recommendations.
+          The platforms you play on, plus the genres and gameplay tags that shape your recommendations.
         </p>
       </div>
 
@@ -120,7 +169,7 @@ export default function Preferences() {
         <div className="space-y-1.5">
           <p className="text-xs text-[#8891a8] uppercase tracking-wider">Platforms</p>
           <p className="text-xs text-[#4a5068]">
-            Star a platform to mark it as primary. Its games get extra weight in your recommendations.
+            Star a platform to mark it as primary.
           </p>
         </div>
         {platformsError && (
@@ -216,7 +265,7 @@ export default function Preferences() {
           </p>
         </div>
         <p className="text-xs text-[#4a5068]">
-          Optional cold-start signal. Fades as you rate more games — pick 3+ for noticeable effect on your slate while your library is small.
+          Game genres you enjoy.
         </p>
         {genreList.length === 0 ? (
           <p className="text-xs text-[#8891a8] text-center py-4">
@@ -235,7 +284,7 @@ export default function Preferences() {
                   type="button"
                   onClick={() => toggleGenre(genre)}
                   title={genre}
-                  className={`px-3 py-1.5 rounded text-xs text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
                     active
                       ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                       : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -265,6 +314,76 @@ export default function Preferences() {
             className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
           >
             {genreSaving ? '[ SAVING... ]' : 'Save preferences'}
+          </button>
+        </div>
+      </section>
+
+      <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-xs text-[#8891a8] uppercase tracking-wider">Tag preferences</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#4a5068]">
+            Selected{' '}
+            <span
+              className={
+                selectedTags.length > 0
+                  ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
+                  : ''
+              }
+            >
+              {selectedTags.length}
+            </span>
+          </p>
+        </div>
+        <p className="text-xs text-[#4a5068]">
+          Gameplay styles, atmospheres, and settings you enjoy.
+        </p>
+        {tagList.length === 0 ? (
+          <p className="text-xs text-[#8891a8] text-center py-4">
+            Couldn't load the tag catalog. Try again in a moment.
+          </p>
+        ) : (
+          <div
+            className="grid gap-2 max-h-64 overflow-y-auto styled-scrollbar pr-1 -mr-1"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
+          >
+            {tagList.map((tag) => {
+              const active = selectedTagSet.has(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  title={tag}
+                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                    active
+                      ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
+                      : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
+                  }`}
+                >
+                  {tag}
+                </button>
+              )
+            })}
+          </div>
+        )}
+        {tagError && (
+          <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+            Failed to save tag preferences. Please try again.
+          </p>
+        )}
+        {tagSuccess && (
+          <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+            Tag preferences saved.
+          </p>
+        )}
+        <div className="flex justify-end pt-1 border-t border-[#1e2035]">
+          <button
+            type="button"
+            onClick={saveTagPreferences}
+            disabled={!tagsDirty || tagSaving}
+            className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+          >
+            {tagSaving ? '[ SAVING... ]' : 'Save preferences'}
           </button>
         </div>
       </section>

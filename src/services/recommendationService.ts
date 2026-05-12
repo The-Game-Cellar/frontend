@@ -75,8 +75,17 @@ export const getSimilar = (gameId: number, limit: number = 10): Promise<AxiosRes
 export const getBasedOn = (gameId: number, limit: number = 10): Promise<AxiosResponse<RecommendationDTO[]>> =>
   api.get(`/api/v1/recommendations/because-you-liked/${gameId}`, { params: { limit } })
 
-export const getDashboard = (): Promise<AxiosResponse<DashboardDTO>> =>
-  api.get('/api/v1/recommendations/dashboard')
+// POST so unbounded recentlyShownIds clears Tomcat's 8KB header limit. Reads localStorage at
+// fetch time; appends personalized-section ids to the shared shown-set on success.
+export const getDashboard = async (): Promise<AxiosResponse<DashboardDTO>> => {
+  const recentlyShownIds = getRecentlyShownIds()
+  const res = await api.post<DashboardDTO>('/api/v1/recommendations/dashboard', { recentlyShownIds })
+  const personalizedIds = (res.data?.recommendations ?? [])
+    .map((r) => r.igdbId)
+    .filter((id): id is number => id != null)
+  addRecentlyShownIds(personalizedIds)
+  return res
+}
 
 // ─── TanStack Query hooks ───────────────────────────────────────────────────
 

@@ -9,10 +9,12 @@ import type {
   SetPrimaryRequest,
   UpdateGameRequest,
   UpdateGenrePreferencesRequest,
+  UpdateTagPreferencesRequest,
   UserGameDTO,
   UserGenrePreferenceDTO,
   UserPlatformDTO,
   UserStatsDTO,
+  UserTagPreferenceDTO,
 } from '../types/api'
 
 export interface GetUserGamesParams {
@@ -86,6 +88,15 @@ export const updateGenrePreferences = (
 ): Promise<AxiosResponse<UserGenrePreferenceDTO[]>> =>
   api.put('/api/v1/library/genre-preferences', data)
 
+// Tag preferences (Profile-only equivalent of genre preferences for the tag dimension)
+export const getTagPreferences = (): Promise<AxiosResponse<UserTagPreferenceDTO[]>> =>
+  api.get('/api/v1/library/tag-preferences')
+
+export const updateTagPreferences = (
+  data: UpdateTagPreferencesRequest
+): Promise<AxiosResponse<UserTagPreferenceDTO[]>> =>
+  api.put('/api/v1/library/tag-preferences', data)
+
 // ─── TanStack Query hooks ───────────────────────────────────────────────────
 
 export const libraryKeys = {
@@ -101,6 +112,7 @@ export const libraryKeys = {
   genres: () => [...libraryKeys.all, 'genres'] as const,
   platforms: () => [...libraryKeys.all, 'platforms'] as const,
   genrePreferences: () => [...libraryKeys.all, 'genrePreferences'] as const,
+  tagPreferences: () => [...libraryKeys.all, 'tagPreferences'] as const,
 }
 
 export const useUserGames = (params?: GetUserGamesParams) =>
@@ -245,6 +257,29 @@ export const useUpdateGenrePreferences = () => {
       updateGenrePreferences({ genres }).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.genrePreferences() })
+      queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
+    },
+  })
+}
+
+export const useTagPreferences = () =>
+  useQuery({
+    queryKey: libraryKeys.tagPreferences(),
+    queryFn: () =>
+      getTagPreferences().then((r) =>
+        Array.isArray(r.data)
+          ? r.data.map((d) => d.tagName ?? '').filter((s) => s.length > 0)
+          : []
+      ),
+  })
+
+export const useUpdateTagPreferences = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (tags: string[]) =>
+      updateTagPreferences({ tags }).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.tagPreferences() })
       queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
     },
   })

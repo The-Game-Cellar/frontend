@@ -17,7 +17,7 @@ describe('Dashboard page', () => {
 
   it('renders dashboard payload entries when the backend returns data', async () => {
     server.use(
-      http.get(`${API}/api/v1/recommendations/dashboard`, () =>
+      http.post(`${API}/api/v1/recommendations/dashboard`, () =>
         HttpResponse.json({
           recommendations: [{ igdbId: 1, name: 'Stardew Valley', genres: ['Sim'], tier: 1 }],
           wildcard: [],

@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recommendations/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["getDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recommendations/wildcard": {
         parameters: {
             query?: never;
@@ -60,22 +76,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getSimilar"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/recommendations/dashboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getDashboard"];
         put?: never;
         post?: never;
         delete?: never;
@@ -135,6 +135,9 @@ export interface components {
             genre?: string;
             fallback?: boolean;
             games?: components["schemas"]["RecommendationDTO"][];
+        };
+        DashboardRequest: {
+            recentlyShownIds?: number[];
         };
         BecauseYouLikedDTO: {
             /** Format: int32 */
@@ -204,6 +207,30 @@ export interface operations {
             };
         };
     };
+    getDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DashboardDTO"];
+                };
+            };
+        };
+    };
     getWildCard: {
         parameters: {
             query?: {
@@ -246,26 +273,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["RecommendationDTO"][];
-                };
-            };
-        };
-    };
-    getDashboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["DashboardDTO"];
                 };
             };
         };
