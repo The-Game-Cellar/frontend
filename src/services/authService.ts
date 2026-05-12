@@ -18,22 +18,29 @@ interface ApiErrorBody {
   error?: string
 }
 
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(32)
-  crypto.getRandomValues(array)
-  return btoa(String.fromCharCode(...array))
+function base64UrlEncode(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=/g, '')
 }
 
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return base64UrlEncode(array)
+}
+
+function generateOAuthState(): string {
+  const array = new Uint8Array(16)
+  crypto.getRandomValues(array)
+  return base64UrlEncode(array)
+}
+
 async function generateCodeChallenge(verifier: string): Promise<string> {
   const data = new TextEncoder().encode(verifier)
   const digest = await crypto.subtle.digest('SHA-256', data)
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
+  return base64UrlEncode(new Uint8Array(digest))
 }
 
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
@@ -147,14 +154,17 @@ export async function exportAccountData(): Promise<AccountExportDTO> {
 export async function redirectToRegister(): Promise<void> {
   const verifier = generateCodeVerifier()
   const challenge = await generateCodeChallenge(verifier)
+  const state = generateOAuthState()
   sessionStorage.setItem('pkce_verifier', verifier)
+  sessionStorage.setItem('oauth_state', state)
 
   const redirectUri = encodeURIComponent(`${window.location.origin}/callback`)
   window.location.href =
     `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/registrations` +
     `?client_id=${CLIENT_ID}&response_type=code&scope=openid` +
     `&redirect_uri=${redirectUri}` +
-    `&code_challenge=${challenge}&code_challenge_method=S256`
+    `&code_challenge=${challenge}&code_challenge_method=S256` +
+    `&state=${encodeURIComponent(state)}`
 }
 
 export async function exchangeAuthorizationCode(code: string): Promise<UserInfo> {

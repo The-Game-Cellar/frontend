@@ -7,6 +7,13 @@ body {
   margin: 0;
 }
 
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
 html {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
