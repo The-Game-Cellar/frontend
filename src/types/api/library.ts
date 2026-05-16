@@ -391,8 +391,14 @@ export interface components {
             gameCount?: number;
             /** Format: int32 */
             platformCount?: number;
+            /** Format: int32 */
+            genrePreferenceCount?: number;
+            /** Format: int32 */
+            tagPreferenceCount?: number;
             games?: components["schemas"]["UserGameDTO"][];
             platforms?: components["schemas"]["UserPlatformDTO"][];
+            genrePreferences?: components["schemas"]["UserGenrePreferenceDTO"][];
+            tagPreferences?: components["schemas"]["UserTagPreferenceDTO"][];
         };
     };
     responses: never;
