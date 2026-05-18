@@ -12,9 +12,6 @@ export default defineConfig({
     css: false,
     env: {
       VITE_API_URL: 'http://api.test',
-      VITE_KEYCLOAK_URL: 'http://keycloak.test',
-      VITE_KEYCLOAK_REALM: 'test-realm',
-      VITE_KEYCLOAK_CLIENT_ID: 'test-client',
     },
     coverage: {
       provider: 'v8',

@@ -6,7 +6,6 @@ import Layout from './components/common/Layout'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Callback from './pages/Callback'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Library from './pages/Library'
@@ -27,7 +26,6 @@ export default function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/callback" element={<Callback />} />
 
           {/* Protected routes — redirect to /login if not authenticated */}
           <Route element={<ProtectedRoute />}>
