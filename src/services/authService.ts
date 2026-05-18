@@ -3,9 +3,6 @@ import { queryClient } from './queryClient'
 import { clearRecentlyShownIds } from './recommendationService'
 import type { AccountExportDTO } from '../types/api'
 
-const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'
-const REALM = import.meta.env.VITE_KEYCLOAK_REALM || 'game-cellar'
-const CLIENT_ID = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'game-cellar-client'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export interface UserInfo {
@@ -16,31 +13,6 @@ export interface UserInfo {
 
 interface ApiErrorBody {
   error?: string
-}
-
-function base64UrlEncode(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
-}
-
-function generateCodeVerifier(): string {
-  const array = new Uint8Array(32)
-  crypto.getRandomValues(array)
-  return base64UrlEncode(array)
-}
-
-function generateOAuthState(): string {
-  const array = new Uint8Array(16)
-  crypto.getRandomValues(array)
-  return base64UrlEncode(array)
-}
-
-async function generateCodeChallenge(verifier: string): Promise<string> {
-  const data = new TextEncoder().encode(verifier)
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  return base64UrlEncode(new Uint8Array(digest))
 }
 
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
@@ -151,42 +123,6 @@ export async function exportAccountData(): Promise<AccountExportDTO> {
   return res.json() as Promise<AccountExportDTO>
 }
 
-export async function redirectToRegister(): Promise<void> {
-  const verifier = generateCodeVerifier()
-  const challenge = await generateCodeChallenge(verifier)
-  const state = generateOAuthState()
-  sessionStorage.setItem('pkce_verifier', verifier)
-  sessionStorage.setItem('oauth_state', state)
-
-  const redirectUri = encodeURIComponent(`${window.location.origin}/callback`)
-  window.location.href =
-    `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/registrations` +
-    `?client_id=${CLIENT_ID}&response_type=code&scope=openid` +
-    `&redirect_uri=${redirectUri}` +
-    `&code_challenge=${challenge}&code_challenge_method=S256` +
-    `&state=${encodeURIComponent(state)}`
-}
-
-export async function exchangeAuthorizationCode(code: string): Promise<UserInfo> {
-  const verifier = sessionStorage.getItem('pkce_verifier')
-  sessionStorage.removeItem('pkce_verifier')
-
-  const res = await fetch(`${API_URL}/api/v1/auth/callback`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      code,
-      codeVerifier: verifier,
-      redirectUri: `${window.location.origin}/callback`,
-    }),
-  })
-  if (!res.ok) {
-    throw new Error(await readErrorMessage(res, 'Authorization code exchange failed'))
-  }
-  return res.json() as Promise<UserInfo>
-}
-
 // ─── TanStack Query mutation hooks ──────────────────────────────────────────
 // Auth bootstrap (getMe / refreshAccessToken) stays imperative inside AuthProvider —
 // see TanStackQueryAdoption design doc, Decision 5. Only write-operations are mutations.
@@ -201,11 +137,6 @@ export const useRegister = () =>
   useMutation({
     mutationFn: ({ username, email, password }: { username: string; email: string; password: string }) =>
       register(username, email, password),
-  })
-
-export const useExchangeAuthorizationCode = () =>
-  useMutation({
-    mutationFn: (code: string) => exchangeAuthorizationCode(code),
   })
 
 export const useChangeEmail = () =>

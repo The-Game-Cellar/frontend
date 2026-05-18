@@ -32,6 +32,7 @@ export default function GameCard({ game, onClick, style, subtitle }: GameCardPro
             alt={game.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             loading="lazy"
+            referrerPolicy="no-referrer"
           />
         ) : (
           <CoverFallback platforms={game.platforms} />

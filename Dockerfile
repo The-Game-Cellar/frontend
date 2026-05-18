@@ -12,13 +12,7 @@ COPY package.json package-lock.json ./
 RUN npm install --no-audit --no-fund
 COPY . .
 ARG VITE_API_URL=http://localhost:8000
-ARG VITE_KEYCLOAK_URL=http://localhost:8080
-ARG VITE_KEYCLOAK_REALM=game-cellar
-ARG VITE_KEYCLOAK_CLIENT_ID=game-cellar-client
-ENV VITE_API_URL=$VITE_API_URL \
-    VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL \
-    VITE_KEYCLOAK_REALM=$VITE_KEYCLOAK_REALM \
-    VITE_KEYCLOAK_CLIENT_ID=$VITE_KEYCLOAK_CLIENT_ID
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Runtime stage: nginx serves the static bundle with SPA fallback (any unknown

@@ -454,6 +454,7 @@ export default function GameDetail() {
             alt={`${game.name} screenshot ${lightboxIndex + 1}`}
             className="max-h-[90vh] max-w-[90vw] rounded-lg border border-[#1e2035]"
             onClick={(e) => e.stopPropagation()}
+            referrerPolicy="no-referrer"
           />
           {screenshots.length > 1 && (
             <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-[#8891a8] bg-[#111220cc] px-2 py-1 rounded">
@@ -600,7 +601,7 @@ export default function GameDetail() {
             <div className="absolute inset-0 rounded-lg overflow-hidden">
               <div
                 className="absolute inset-0 bg-cover bg-center scale-110 opacity-15 blur-sm"
-                style={{ backgroundImage: `url(${game.backgroundImage})` }}
+                style={{ backgroundImage: `url("${encodeURI(game.backgroundImage)}")` }}
               />
             </div>
           )}
@@ -850,6 +851,7 @@ export default function GameDetail() {
                   src={game.coverImageUrl || game.backgroundImage}
                   alt={game.name}
                   className="w-full rounded-lg border border-[#1e2035]"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div className="w-full aspect-[3/4] rounded-lg overflow-hidden border border-[#1e2035]">
@@ -892,6 +894,7 @@ export default function GameDetail() {
                     alt={`${game.name} screenshot 1`}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    referrerPolicy="no-referrer"
                   />
                   <span className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center">
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-sm text-[#e8e4dc] bg-[#111220cc] backdrop-blur-sm border border-[#f72585] [box-shadow:0_0_12px_#f7258540] px-3 py-1.5 rounded">
@@ -991,6 +994,7 @@ export default function GameDetail() {
                             alt={p.name}
                             loading="lazy"
                             className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
