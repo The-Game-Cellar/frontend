@@ -1,4 +1,4 @@
-import type { AxiosResponse } from 'axios'
+import type { AxiosError, AxiosResponse } from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from './api'
 import { recommendationKeys } from './recommendationService'
@@ -30,6 +30,9 @@ export const getUserGames = (params?: GetUserGamesParams): Promise<AxiosResponse
 
 export const getOwnedIgdbIds = (): Promise<AxiosResponse<number[]>> =>
   api.get('/api/v1/library/igdb-ids')
+
+export const getUserGameByIgdbId = (igdbId: number): Promise<AxiosResponse<UserGameDTO>> =>
+  api.get(`/api/v1/library/games/by-igdb/${igdbId}`)
 
 export const addGame = (data: AddGameRequest): Promise<AxiosResponse<UserGameDTO>> =>
   api.post<UserGameDTO>('/api/v1/library/games', data)
@@ -103,6 +106,7 @@ export const libraryKeys = {
   all: ['library'] as const,
   games: (params?: GetUserGamesParams) => [...libraryKeys.all, 'games', params ?? {}] as const,
   ownedIgdbIds: () => [...libraryKeys.all, 'ownedIgdbIds'] as const,
+  byIgdb: (igdbId: number) => [...libraryKeys.all, 'byIgdb', igdbId] as const,
   backlog: () => [...libraryKeys.all, 'backlog'] as const,
   wishlist: () => [...libraryKeys.all, 'wishlist'] as const,
   playing: () => [...libraryKeys.all, 'playing'] as const,
@@ -125,6 +129,24 @@ export const useOwnedIgdbIds = () =>
   useQuery({
     queryKey: libraryKeys.ownedIgdbIds(),
     queryFn: () => getOwnedIgdbIds().then((r) => (Array.isArray(r.data) ? r.data : [])),
+  })
+
+export const useUserGameByIgdb = (igdbId: number, enabled = true) =>
+  useQuery<UserGameDTO | null>({
+    queryKey: libraryKeys.byIgdb(igdbId),
+    queryFn: () =>
+      getUserGameByIgdbId(igdbId)
+        .then((r) => r.data)
+        .catch((e: AxiosError) => {
+          if (e.response?.status === 404) return null
+          throw e
+        }),
+    enabled: enabled && Number.isFinite(igdbId) && igdbId >= 1,
+    retry: (failureCount, error) => {
+      const status = (error as AxiosError).response?.status
+      if (status === 404) return false
+      return failureCount < 3
+    },
   })
 
 export const useBacklog = () =>

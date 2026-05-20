@@ -9,7 +9,7 @@ import {
   useByCollection,
   useEditions,
 } from '../services/gameService'
-import { useUserGames, useUpdateGame, useRemoveGame } from '../services/libraryService'
+import { useUserGameByIgdb, useUpdateGame, useRemoveGame } from '../services/libraryService'
 import { useSimilar } from '../services/recommendationService'
 import GameCard from '../components/common/GameCard'
 import CoverFallback from '../components/common/CoverFallback'
@@ -201,8 +201,8 @@ export default function GameDetail() {
   const numericId = isValidId ? Number(igdbId) : 0
 
   const { data: game, isPending: gameLoading, error: gameError } = useGameById(numericId, isValidId)
-  const { data: userGames } = useUserGames()
-  const libraryEntry: UserGameDTO | null = userGames?.find((e) => String(e.igdbGameId) === String(igdbId)) ?? null
+  const { data: libraryEntryData } = useUserGameByIgdb(numericId, isValidId)
+  const libraryEntry: UserGameDTO | null = libraryEntryData ?? null
   const { data: similarData } = useSimilar(numericId, 50, isValidId)
   const similar: RecommendationDTO[] = similarData ?? []
 
