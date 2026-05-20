@@ -34,6 +34,8 @@ export const handlers = [
   http.put(`${API}/api/v1/library/genre-preferences`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/tag-preferences`, () => HttpResponse.json([])),
   http.put(`${API}/api/v1/library/tag-preferences`, () => HttpResponse.json([])),
+  http.get(`${API}/api/v1/library/release-year-preferences`, () => HttpResponse.json([])),
+  http.put(`${API}/api/v1/library/release-year-preferences`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/stats`, () => HttpResponse.json({ totalGames: 0, byStatus: {}, averageRating: 0, totalRated: 0, byGenre: {}, byPlatform: {} })),
 
   // Game catalog

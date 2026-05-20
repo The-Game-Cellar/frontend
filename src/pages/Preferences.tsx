@@ -8,6 +8,8 @@ import {
   useUpdateGenrePreferences,
   useTagPreferences,
   useUpdateTagPreferences,
+  useReleaseYearPreferences,
+  useUpdateReleaseYearPreferences,
 } from '../services/libraryService'
 import { useGenres, usePopularTags } from '../services/gameService'
 
@@ -15,6 +17,8 @@ const ALL_PLATFORMS: string[] = [
   'PC', 'PlayStation 5', 'PlayStation 4',
   'Xbox Series S/X', 'Xbox One', 'Nintendo Switch',
 ]
+
+const RELEASE_YEAR_BUCKETS: string[] = ['Pre-1990', '1990s', '2000s', '2010s', '2020s']
 
 export default function Preferences() {
   const { data: platformsData, isError: platformsError } = useUserPlatforms()
@@ -24,6 +28,7 @@ export default function Preferences() {
   const setPrimaryMutation = useSetPlatformPrimary()
   const updateGenrePreferencesMutation = useUpdateGenrePreferences()
   const updateTagPreferencesMutation = useUpdateTagPreferences()
+  const updateReleaseYearPreferencesMutation = useUpdateReleaseYearPreferences()
 
   const { data: storedGenrePreferences } = useGenrePreferences()
   const { data: genresData } = useGenres()
@@ -31,6 +36,8 @@ export default function Preferences() {
 
   const { data: storedTagPreferences } = useTagPreferences()
   const { data: tagList = [] } = usePopularTags(50)
+
+  const { data: storedReleaseYearPreferences } = useReleaseYearPreferences()
 
   const [adding, setAdding] = useState(false)
   const [addPlatformError, setAddPlatformError] = useState(false)
@@ -49,6 +56,12 @@ export default function Preferences() {
   const [tagError, setTagError] = useState(false)
   const [tagSuccess, setTagSuccess] = useState(false)
 
+  const [selectedBuckets, setSelectedBuckets] = useState<string[]>([])
+  const [bucketInitialized, setBucketInitialized] = useState(false)
+  const [bucketSaving, setBucketSaving] = useState(false)
+  const [bucketError, setBucketError] = useState(false)
+  const [bucketSuccess, setBucketSuccess] = useState(false)
+
   useEffect(() => {
     if (!genreInitialized && Array.isArray(storedGenrePreferences)) {
       setSelectedGenres(storedGenrePreferences)
@@ -62,6 +75,13 @@ export default function Preferences() {
       setTagInitialized(true)
     }
   }, [storedTagPreferences, tagInitialized])
+
+  useEffect(() => {
+    if (!bucketInitialized && Array.isArray(storedReleaseYearPreferences)) {
+      setSelectedBuckets(storedReleaseYearPreferences)
+      setBucketInitialized(true)
+    }
+  }, [storedReleaseYearPreferences, bucketInitialized])
 
   function toggleGenre(genre: string) {
     setSelectedGenres((prev) =>
@@ -99,6 +119,12 @@ export default function Preferences() {
     storedTagSet.size !== selectedTagSet.size ||
     [...storedTagSet].some((t) => !selectedTagSet.has(t))
 
+  const storedBucketSet = new Set(Array.isArray(storedReleaseYearPreferences) ? storedReleaseYearPreferences : [])
+  const selectedBucketSet = new Set(selectedBuckets)
+  const bucketsDirty =
+    storedBucketSet.size !== selectedBucketSet.size ||
+    [...storedBucketSet].some((b) => !selectedBucketSet.has(b))
+
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -120,6 +146,30 @@ export default function Preferences() {
       setTimeout(() => setTagError(false), 3000)
     } finally {
       setTagSaving(false)
+    }
+  }
+
+  function toggleBucket(bucket: string) {
+    setSelectedBuckets((prev) =>
+      prev.includes(bucket) ? prev.filter((b) => b !== bucket) : [...prev, bucket]
+    )
+    if (bucketSuccess) setBucketSuccess(false)
+    if (bucketError) setBucketError(false)
+  }
+
+  async function saveReleaseYearPreferences() {
+    setBucketSaving(true)
+    setBucketError(false)
+    setBucketSuccess(false)
+    try {
+      await updateReleaseYearPreferencesMutation.mutateAsync(selectedBuckets)
+      setBucketSuccess(true)
+      setTimeout(() => setBucketSuccess(false), 2500)
+    } catch {
+      setBucketError(true)
+      setTimeout(() => setBucketError(false), 3000)
+    } finally {
+      setBucketSaving(false)
     }
   }
 
@@ -384,6 +434,70 @@ export default function Preferences() {
             className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
           >
             {tagSaving ? '[ SAVING... ]' : 'Save preferences'}
+          </button>
+        </div>
+      </section>
+
+      <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-xs text-[#8891a8] uppercase tracking-wider">Release era preferences</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#4a5068]">
+            Selected{' '}
+            <span
+              className={
+                selectedBuckets.length > 0
+                  ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
+                  : ''
+              }
+            >
+              {selectedBuckets.length}
+            </span>
+          </p>
+        </div>
+        <p className="text-xs text-[#4a5068]">
+          Game eras you enjoy.
+        </p>
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
+        >
+          {RELEASE_YEAR_BUCKETS.map((bucket) => {
+            const active = selectedBucketSet.has(bucket)
+            return (
+              <button
+                key={bucket}
+                type="button"
+                onClick={() => toggleBucket(bucket)}
+                title={bucket}
+                className={`px-3 py-1.5 rounded text-xs text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                  active
+                    ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
+                    : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
+                }`}
+              >
+                {bucket}
+              </button>
+            )
+          })}
+        </div>
+        {bucketError && (
+          <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+            Failed to save release era preferences. Please try again.
+          </p>
+        )}
+        {bucketSuccess && (
+          <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+            Release era preferences saved.
+          </p>
+        )}
+        <div className="flex justify-end pt-1 border-t border-[#1e2035]">
+          <button
+            type="button"
+            onClick={saveReleaseYearPreferences}
+            disabled={!bucketsDirty || bucketSaving}
+            className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+          >
+            {bucketSaving ? '[ SAVING... ]' : 'Save preferences'}
           </button>
         </div>
       </section>

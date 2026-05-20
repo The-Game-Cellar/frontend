@@ -51,6 +51,27 @@ describe('Preferences page', () => {
     expect(screen.getByRole('button', { name: 'story rich' })).toBeInTheDocument()
   })
 
+  it('renders the release-era section with the five decade buckets and enables Save on chip click', async () => {
+    server.use(
+      http.get(`${API}/api/v1/library/release-year-preferences`, () => HttpResponse.json([])),
+    )
+    renderPreferences()
+
+    await waitFor(() => expect(screen.getByText('Release era preferences')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Pre-1990' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1990s' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2000s' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2010s' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '2020s' })).toBeInTheDocument()
+
+    const saveButtons = screen.getAllByRole('button', { name: /save preferences/i })
+    const eraSaveButton = saveButtons[saveButtons.length - 1]
+    expect(eraSaveButton).toBeDisabled()
+
+    await userEvent.click(screen.getByRole('button', { name: '2020s' }))
+    await waitFor(() => expect(eraSaveButton).not.toBeDisabled())
+  })
+
   it('toggles primary platform when star is clicked', async () => {
     let patchCalled = false
     let patchedBody: { isPrimary: boolean } | null = null
