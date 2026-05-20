@@ -20,7 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/library/genre-preferences": {
+    "/api/v1/library/release-year-preferences": {
         parameters: {
             query?: never;
             header?: never;
@@ -29,6 +29,22 @@ export interface paths {
         };
         get: operations["getPreferences_1"];
         put: operations["replacePreferences_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/library/genre-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPreferences_2"];
+        put: operations["replacePreferences_2"];
         post?: never;
         delete?: never;
         options?: never;
@@ -196,6 +212,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/library/games/by-igdb/{igdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGameByIgdbId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/dusty": {
         parameters: {
             query?: never;
@@ -302,6 +334,12 @@ export interface components {
         UserTagPreferenceDTO: {
             tagName?: string;
         };
+        UpdateReleaseYearPreferencesRequest: {
+            buckets: string[];
+        };
+        UserReleaseYearPreferenceDTO: {
+            bucketLabel?: string;
+        };
         UpdateGenrePreferencesRequest: {
             genres: string[];
         };
@@ -330,6 +368,7 @@ export interface components {
             genres?: string[];
             themes?: string[];
             tags?: string[];
+            released?: string;
             /** @enum {string} */
             status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
             /** Format: int32 */
@@ -468,12 +507,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                    "*/*": components["schemas"]["UserReleaseYearPreferenceDTO"][];
                 };
             };
         };
     };
     replacePreferences_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReleaseYearPreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserReleaseYearPreferenceDTO"][];
+                };
+            };
+        };
+    };
+    getPreferences_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                };
+            };
+        };
+    };
+    replacePreferences_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -802,6 +885,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": string[];
+                };
+            };
+        };
+    };
+    getGameByIgdbId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                igdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGameDTO"];
                 };
             };
         };

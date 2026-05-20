@@ -9,10 +9,12 @@ import type {
   SetPrimaryRequest,
   UpdateGameRequest,
   UpdateGenrePreferencesRequest,
+  UpdateReleaseYearPreferencesRequest,
   UpdateTagPreferencesRequest,
   UserGameDTO,
   UserGenrePreferenceDTO,
   UserPlatformDTO,
+  UserReleaseYearPreferenceDTO,
   UserStatsDTO,
   UserTagPreferenceDTO,
 } from '../types/api'
@@ -100,6 +102,15 @@ export const updateTagPreferences = (
 ): Promise<AxiosResponse<UserTagPreferenceDTO[]>> =>
   api.put('/api/v1/library/tag-preferences', data)
 
+// Release-year preferences (declared decade buckets; boost candidates whose release falls in)
+export const getReleaseYearPreferences = (): Promise<AxiosResponse<UserReleaseYearPreferenceDTO[]>> =>
+  api.get('/api/v1/library/release-year-preferences')
+
+export const updateReleaseYearPreferences = (
+  data: UpdateReleaseYearPreferencesRequest
+): Promise<AxiosResponse<UserReleaseYearPreferenceDTO[]>> =>
+  api.put('/api/v1/library/release-year-preferences', data)
+
 // ─── TanStack Query hooks ───────────────────────────────────────────────────
 
 export const libraryKeys = {
@@ -117,6 +128,7 @@ export const libraryKeys = {
   platforms: () => [...libraryKeys.all, 'platforms'] as const,
   genrePreferences: () => [...libraryKeys.all, 'genrePreferences'] as const,
   tagPreferences: () => [...libraryKeys.all, 'tagPreferences'] as const,
+  releaseYearPreferences: () => [...libraryKeys.all, 'releaseYearPreferences'] as const,
 }
 
 export const useUserGames = (params?: GetUserGamesParams) =>
@@ -302,6 +314,29 @@ export const useUpdateTagPreferences = () => {
       updateTagPreferences({ tags }).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.tagPreferences() })
+      queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
+    },
+  })
+}
+
+export const useReleaseYearPreferences = () =>
+  useQuery({
+    queryKey: libraryKeys.releaseYearPreferences(),
+    queryFn: () =>
+      getReleaseYearPreferences().then((r) =>
+        Array.isArray(r.data)
+          ? r.data.map((d) => d.bucketLabel ?? '').filter((s) => s.length > 0)
+          : []
+      ),
+  })
+
+export const useUpdateReleaseYearPreferences = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (buckets: string[]) =>
+      updateReleaseYearPreferences({ buckets }).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.releaseYearPreferences() })
       queryClient.invalidateQueries({ queryKey: recommendationKeys.all })
     },
   })

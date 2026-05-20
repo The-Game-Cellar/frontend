@@ -23,6 +23,8 @@ export type UserGenrePreferenceDTO = LibraryComponents['schemas']['UserGenrePref
 export type UpdateGenrePreferencesRequest = LibraryComponents['schemas']['UpdateGenrePreferencesRequest']
 export type UserTagPreferenceDTO = LibraryComponents['schemas']['UserTagPreferenceDTO']
 export type UpdateTagPreferencesRequest = LibraryComponents['schemas']['UpdateTagPreferencesRequest']
+export type UserReleaseYearPreferenceDTO = LibraryComponents['schemas']['UserReleaseYearPreferenceDTO']
+export type UpdateReleaseYearPreferencesRequest = LibraryComponents['schemas']['UpdateReleaseYearPreferencesRequest']
 export type PopularTagsResponse = GameComponents['schemas']['PopularTagsResponse']
 
 export type RecommendationDTO = RecommendationComponents['schemas']['RecommendationDTO']

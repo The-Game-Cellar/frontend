@@ -424,43 +424,45 @@ export default function GameDetail() {
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-enter"
           onClick={() => setLightboxIndex(null)}
         >
-          <button
-            onClick={() => setLightboxIndex(null)}
-            className="absolute top-4 right-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-2xl leading-none transition-[color,text-shadow] duration-200"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-          {screenshots.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : screenshots.length - 1)) }}
-                className="absolute left-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,text-shadow] duration-200"
-                aria-label="Previous screenshot"
-              >
-                ‹
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i !== null && i < screenshots.length - 1 ? i + 1 : 0)) }}
-                className="absolute right-4 text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,text-shadow] duration-200"
-                aria-label="Next screenshot"
-              >
-                ›
-              </button>
-            </>
-          )}
-          <img
-            src={screenshots[lightboxIndex]}
-            alt={`${game.name} screenshot ${lightboxIndex + 1}`}
-            className="max-h-[90vh] max-w-[90vw] rounded-lg border border-[#1e2035]"
+          <div
+            className="relative inline-block"
             onClick={(e) => e.stopPropagation()}
-            referrerPolicy="no-referrer"
-          />
-          {screenshots.length > 1 && (
-            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-[#8891a8] bg-[#111220cc] px-2 py-1 rounded">
-              {lightboxIndex + 1} / {screenshots.length}
-            </span>
-          )}
+          >
+            <img
+              src={screenshots[lightboxIndex]}
+              alt={`${game.name} screenshot ${lightboxIndex + 1}`}
+              className="block max-h-[90vh] max-w-[90vw] rounded-lg border border-[#1e2035]"
+              referrerPolicy="no-referrer"
+            />
+            <button
+              onClick={() => setLightboxIndex(null)}
+              className="absolute bottom-full right-0 mb-2 w-12 h-12 flex items-center justify-center rounded bg-[#111220] border border-[#2a2d45] text-[#e8e4dc] hover:text-[#f72585] hover:border-[#f72585] hover:[box-shadow:0_0_12px_#f7258560,0_0_24px_#f7258530] hover:[text-shadow:0_0_8px_#f72585] text-2xl leading-none transition-[color,border-color,box-shadow,text-shadow] duration-200"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            {screenshots.length > 1 && (
+              <>
+                <button
+                  onClick={() => setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : screenshots.length - 1))}
+                  className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded bg-[#111220] border border-[#2a2d45] text-[#e8e4dc] hover:text-[#f72585] hover:border-[#f72585] hover:[box-shadow:0_0_12px_#f7258560,0_0_24px_#f7258530] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,border-color,box-shadow,text-shadow] duration-200"
+                  aria-label="Previous screenshot"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => setLightboxIndex((i) => (i !== null && i < screenshots.length - 1 ? i + 1 : 0))}
+                  className="absolute left-full ml-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded bg-[#111220] border border-[#2a2d45] text-[#e8e4dc] hover:text-[#f72585] hover:border-[#f72585] hover:[box-shadow:0_0_12px_#f7258560,0_0_24px_#f7258530] hover:[text-shadow:0_0_8px_#f72585] text-4xl leading-none transition-[color,border-color,box-shadow,text-shadow] duration-200"
+                  aria-label="Next screenshot"
+                >
+                  ›
+                </button>
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 text-xs text-[#8891a8] bg-[#111220cc] backdrop-blur-sm px-2 py-1 rounded">
+                  {lightboxIndex + 1} / {screenshots.length}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       )}
 
