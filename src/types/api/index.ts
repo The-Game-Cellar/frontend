@@ -9,6 +9,7 @@ export type MultiplayerModeDTO = GameComponents['schemas']['MultiplayerModeDTO']
 export type ReleaseDateDTO = GameComponents['schemas']['ReleaseDateDTO']
 export type PlatformGroup = GameComponents['schemas']['PlatformGroup']
 export type PlatformsResponse = GameComponents['schemas']['PlatformsResponse']
+export type PlatformCatalogDTO = GameComponents['schemas']['PlatformCatalogDTO']
 export type GenresResponse = GameComponents['schemas']['GenresResponse']
 
 export type UserGameDTO = LibraryComponents['schemas']['UserGameDTO']

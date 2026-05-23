@@ -5,6 +5,7 @@ import type {
   GameResponse,
   GameSearchResponse,
   GenresResponse,
+  PlatformCatalogDTO,
   PlatformsResponse,
   PopularTagsResponse,
 } from '../types/api'
@@ -66,6 +67,9 @@ export const getGenres = (): Promise<AxiosResponse<GenresResponse>> =>
 export const getPlatforms = (): Promise<AxiosResponse<PlatformsResponse>> =>
   api.get('/api/v1/games/platforms')
 
+export const getPlatformCatalog = (): Promise<AxiosResponse<PlatformCatalogDTO[]>> =>
+  api.get('/api/v1/platforms/catalog')
+
 export const getPopularTags = (limit: number = 50): Promise<AxiosResponse<PopularTagsResponse>> =>
   api.get('/api/v1/games/tags/popular', { params: { limit } })
 
@@ -101,6 +105,7 @@ export const gameKeys = {
   upcomingPlatforms: () => [...gameKeys.all, 'upcoming', 'platforms'] as const,
   genres: () => [...gameKeys.all, 'genres'] as const,
   platforms: () => [...gameKeys.all, 'platforms'] as const,
+  platformCatalog: () => [...gameKeys.all, 'platformCatalog'] as const,
   popularTags: (limit: number) => [...gameKeys.all, 'popularTags', limit] as const,
   byFranchise: (name: string, limit: number, excludeIgdbId?: number) =>
     [...gameKeys.all, 'byFranchise', name, limit, excludeIgdbId] as const,
@@ -152,6 +157,12 @@ export const useGamePlatforms = () =>
   useQuery({
     queryKey: gameKeys.platforms(),
     queryFn: () => getPlatforms().then((r) => r.data),
+  })
+
+export const usePlatformCatalog = () =>
+  useQuery({
+    queryKey: gameKeys.platformCatalog(),
+    queryFn: () => getPlatformCatalog().then((r) => r.data),
   })
 
 export const usePopularTags = (limit = 50) =>
