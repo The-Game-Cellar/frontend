@@ -401,7 +401,9 @@ export default function GameDetail() {
   const showRating = libraryEntry && libraryEntry.status !== 'WISHLIST'
   const description = stripHtml(game.description)
   const hasMedia = screenshots.length > 0 || videos.length > 0
-  const modalGame = game.igdbId != null && game.name != null ? { igdbId: game.igdbId, name: game.name } : null
+  const modalGame = game.igdbId != null && game.name != null
+    ? { igdbId: game.igdbId, name: game.name, platforms: game.platforms ?? [] }
+    : null
 
   return (
     <>

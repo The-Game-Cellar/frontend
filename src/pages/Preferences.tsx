@@ -11,18 +11,16 @@ import {
   useReleaseYearPreferences,
   useUpdateReleaseYearPreferences,
 } from '../services/libraryService'
-import { useGenres, usePopularTags } from '../services/gameService'
-
-const ALL_PLATFORMS: string[] = [
-  'PC', 'PlayStation 5', 'PlayStation 4',
-  'Xbox Series S/X', 'Xbox One', 'Nintendo Switch',
-]
+import { useGenres, usePlatformCatalog, usePopularTags } from '../services/gameService'
+import PreferencePlatformPicker from '../components/common/PreferencePlatformPicker'
 
 const RELEASE_YEAR_BUCKETS: string[] = ['Pre-1990', '1990s', '2000s', '2010s', '2020s']
 
 export default function Preferences() {
   const { data: platformsData, isError: platformsError } = useUserPlatforms()
   const platforms = platformsData ?? []
+  const { data: catalogData, isError: catalogError } = usePlatformCatalog()
+  const catalog = catalogData ?? []
   const addPlatformMutation = useAddPlatform()
   const removePlatformMutation = useRemovePlatform()
   const setPrimaryMutation = useSetPlatformPrimary()
@@ -173,9 +171,6 @@ export default function Preferences() {
     }
   }
 
-  const ownedNames = platforms.map((p) => p.platformName ?? '')
-  const available = ALL_PLATFORMS.filter((p) => !ownedNames.includes(p))
-
   async function handleRemovePlatform(platformId: number) {
     try {
       await removePlatformMutation.mutateAsync(platformId)
@@ -219,12 +214,17 @@ export default function Preferences() {
         <div className="space-y-1.5">
           <p className="text-xs text-[#8891a8] uppercase tracking-wider">Platforms</p>
           <p className="text-xs text-[#4a5068]">
-            Star a platform to mark it as primary.
+            Pick the platforms you play on. Star one to mark it as primary.
           </p>
         </div>
         {platformsError && (
           <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
-            Failed to load platforms.
+            Failed to load your platforms.
+          </p>
+        )}
+        {catalogError && (
+          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+            Failed to load the platform catalog.
           </p>
         )}
         {removePlatformError && (
@@ -232,69 +232,29 @@ export default function Preferences() {
             Failed to remove platform. Please try again.
           </p>
         )}
-        {!platformsError && platforms.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {platforms.map((p) => {
-              const isPrimary = !!p.isPrimary
-              return (
-                <span key={p.id} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border bg-[#f7258510] border-[#f7258560] text-[#f72585]">
-                  <button
-                    type="button"
-                    onClick={() => p.id != null && handleTogglePrimary(p.id, !isPrimary)}
-                    disabled={setPrimaryMutation.isPending}
-                    title={isPrimary ? 'Primary platform (click to unset)' : 'Set as primary'}
-                    aria-label={isPrimary ? 'Unset primary platform' : 'Set as primary platform'}
-                    aria-pressed={isPrimary}
-                    className={`text-sm leading-none transition-[color,text-shadow] disabled:opacity-50 ${
-                      isPrimary
-                        ? 'text-[#f59e0b] [text-shadow:0_0_6px_#f59e0b80]'
-                        : 'text-[#4a5068] hover:text-[#f59e0b]'
-                    }`}
-                  >
-                    {isPrimary ? '★' : '☆'}
-                  </button>
-                  {p.platformName}
-                  <button
-                    type="button"
-                    onClick={() => p.id != null && handleRemovePlatform(p.id)}
-                    className="text-base leading-none text-[#4a5068] hover:text-[#ef4444] transition-colors"
-                    title="Remove platform"
-                  >
-                    ×
-                  </button>
-                </span>
-              )
-            })}
-          </div>
-        ) : (
-          !platformsError && <p className="text-xs text-[#4a5068]">No platforms added yet.</p>
+        {addPlatformError && (
+          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+            Failed to add platform. Please try again.
+          </p>
         )}
         {primaryError && (
           <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to update primary platform. Please try again.
           </p>
         )}
-        {addPlatformError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
-            Failed to add platform. Please try again.
-          </p>
-        )}
-        {!platformsError && available.length > 0 && (
-          <div className="space-y-2 pt-3 border-t border-[#1e2035]">
-            <p className="text-xs text-[#8891a8]">Add platform</p>
-            <div className="flex flex-wrap gap-2">
-              {available.map((name) => (
-                <button
-                  key={name}
-                  onClick={() => handleAddPlatform(name)}
-                  disabled={adding}
-                  className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 transition-colors"
-                >
-                  + {name}
-                </button>
-              ))}
-            </div>
-          </div>
+        {!catalogError && (
+          <PreferencePlatformPicker
+            catalog={catalog}
+            owned={platforms}
+            onAdd={handleAddPlatform}
+            onRemove={handleRemovePlatform}
+            onTogglePrimary={handleTogglePrimary}
+            isBusy={
+              adding ||
+              removePlatformMutation.isPending ||
+              setPrimaryMutation.isPending
+            }
+          />
         )}
       </section>
 

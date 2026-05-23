@@ -42,6 +42,7 @@ export const handlers = [
   http.get(`${API}/api/v1/games/genres`, () => HttpResponse.json({ genres: [] })),
   http.get(`${API}/api/v1/games/tags/popular`, () => HttpResponse.json({ tags: [] })),
   http.get(`${API}/api/v1/games/platforms`, () => HttpResponse.json({ groups: [], others: [] })),
+  http.get(`${API}/api/v1/platforms/catalog`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/games/upcoming`, () => HttpResponse.json({ games: [], totalCount: 0, page: 0, pageSize: 20 })),
   http.get(`${API}/api/v1/games/upcoming/platforms`, () => HttpResponse.json({ platforms: [] })),
   http.get(`${API}/api/v1/games/search`, () => HttpResponse.json({ games: [], totalCount: 0, page: 0, pageSize: 20 })),

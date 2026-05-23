@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { AxiosError } from 'axios'
-import { useUserPlatforms, useAddGame } from '../../services/libraryService'
+import { useAddGame } from '../../services/libraryService'
 import RatingWidget from './RatingWidget'
 import type { GameStatus } from '../../types/api'
 
 interface AddGameModalProps {
-  game: { igdbId: number; name: string }
+  game: { igdbId: number; name: string; platforms: string[] }
   onClose: () => void
   onAdded?: () => void
 }
@@ -45,17 +45,11 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
   const [error, setError] = useState<string | null>(null)
   const [closing, setClosing] = useState(false)
 
-  const {
-    data: platformsData,
-    isPending: platformsLoading,
-    isError: platformLoadError,
-    refetch: loadPlatforms,
-  } = useUserPlatforms()
-  const platforms = platformsData ?? []
+  const platforms = game.platforms
   const addGameMutation = useAddGame()
   const loading = addGameMutation.isPending
 
-  const platform = platformOverride || (platforms[0]?.platformName ?? '')
+  const platform = platformOverride || (platforms[0] ?? '')
 
   const handleClose = () => {
     setClosing(true)
@@ -142,33 +136,17 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
         {/* Platform */}
         <div className="space-y-2">
           <label className="text-xs text-[#4a5068] uppercase tracking-wider">Platform</label>
-          {platformLoadError ? (
-            <div className="flex items-center gap-3">
-              <p className="text-xs text-[#ef4444]">Could not load platforms.</p>
-              <button
-                type="button"
-                onClick={() => loadPlatforms()}
-                className="flex items-center gap-1.5 px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                  <path d="M21 3v5h-5" />
-                </svg>
-                Retry
-              </button>
-            </div>
-          ) : platformsLoading ? (
-            <p className="text-xs text-[#4a5068]">Loading platforms...</p>
+          {platforms.length === 0 ? (
+            <p className="text-xs text-[#ef4444]">No release platforms known for this game.</p>
           ) : (
             <select
               value={platform}
               onChange={(e) => updatePlatform(e.target.value)}
               className="w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] focus:border-[#f72585] focus:outline-none transition-colors"
             >
-              {platforms.map((p, i) => {
-                const name = p.platformName ?? ''
-                return <option key={p.id ?? i} value={name}>{name}</option>
-              })}
+              {platforms.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
             </select>
           )}
         </div>
