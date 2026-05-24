@@ -7,15 +7,8 @@ import type {
   RecommendationDTO,
 } from '../types/api'
 
-// ─── Recently-shown set (localStorage) ──────────────────────────────────────
-// Session-scoped set of IGDB ids the user has been shown on the Recommendations
-// page. Sent as `recentlyShownIds` on every /personalized fetch so the backend
-// applies a soft score penalty; recently-shown games drop out of MMR top picks
-// but resurface if the candidate pool runs dry, so the system never returns
-// truly empty. Cleared on logout / deleteAccount; otherwise grows for the
-// length of the session. Hard ceiling at 2000 ids as a runaway-guard against
-// extreme browse sessions blowing the URL length budget.
-
+// Session-scoped IGDB ids; backend uses this as a soft-penalty input, not an exclusion.
+// Cleared on logout/deleteAccount. Hard cap at 2000 to guard URL length on extreme sessions.
 const SHOWN_KEY = 'cellar:recs:shown'
 const SHOWN_HARD_CAP = 2000
 
@@ -46,7 +39,7 @@ export const addRecentlyShownIds = (ids: number[]): void => {
   try {
     localStorage.setItem(SHOWN_KEY, JSON.stringify(trimmed))
   } catch {
-    // localStorage full / disabled, ignore
+    // localStorage full or disabled
   }
 }
 
@@ -58,9 +51,7 @@ export const clearRecentlyShownIds = (): void => {
   }
 }
 
-// Row-based variant. Returns { rows: [{ label, genre, fallback, games[] }], tier, emptyMessage }.
-// POST rather than GET because recentlyShownIds grows uncapped with session activity and
-// would blow Tomcat's default 8KB header buffer on the URL path. Body has no such limit.
+// POST because recentlyShownIds grows uncapped per session and would blow Tomcat's 8KB header buffer.
 export const getPersonalizedGrouped = (): Promise<AxiosResponse<GroupedRecommendationsResponse>> => {
   const recentlyShownIds = getRecentlyShownIds()
   return api.post('/api/v1/recommendations/personalized/grouped', { recentlyShownIds })
@@ -75,8 +66,6 @@ export const getSimilar = (gameId: number, limit: number = 10): Promise<AxiosRes
 export const getBasedOn = (gameId: number, limit: number = 10): Promise<AxiosResponse<RecommendationDTO[]>> =>
   api.get(`/api/v1/recommendations/because-you-liked/${gameId}`, { params: { limit } })
 
-// POST so unbounded recentlyShownIds clears Tomcat's 8KB header limit. Reads localStorage at
-// fetch time; appends personalized-section ids to the shared shown-set on success.
 export const getDashboard = async (): Promise<AxiosResponse<DashboardDTO>> => {
   const recentlyShownIds = getRecentlyShownIds()
   const res = await api.post<DashboardDTO>('/api/v1/recommendations/dashboard', { recentlyShownIds })
@@ -87,12 +76,9 @@ export const getDashboard = async (): Promise<AxiosResponse<DashboardDTO>> => {
   return res
 }
 
-// ─── TanStack Query hooks ───────────────────────────────────────────────────
-
 export const recommendationKeys = {
   all: ['recommendations'] as const,
-  // Note: recentlyShownIds intentionally excluded from grouped(); it's tracking
-  // state, not query identity. Including it would invalidate cache on every refresh.
+  // recentlyShownIds excluded from grouped key: it's tracking state, not query identity.
   grouped: () => [...recommendationKeys.all, 'grouped'] as const,
   wildcard: (limit: number) => [...recommendationKeys.all, 'wildcard', limit] as const,
   similar: (gameId: number, limit: number) => [...recommendationKeys.all, 'similar', gameId, limit] as const,

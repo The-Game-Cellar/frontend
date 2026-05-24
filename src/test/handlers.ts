@@ -9,15 +9,12 @@ export const TEST_USER: Readonly<UserInfo> = Object.freeze({
   roles: ['user'],
 })
 
-// Default catch-all handlers that return empty payloads so page-level smoke tests
-// can render without hitting unhandled-request errors. Individual tests use server.use(...)
-// to override per-endpoint behaviour (loading states, errors, populated lists).
+// Catch-all defaults; individual tests override via server.use().
 export const handlers = [
   http.get(`${API}/api/v1/auth/me`, () => HttpResponse.json(TEST_USER)),
   http.post(`${API}/api/v1/auth/refresh`, () => HttpResponse.json(TEST_USER)),
   http.post(`${API}/api/v1/auth/logout`, () => new HttpResponse(null, { status: 204 })),
 
-  // Library
   http.get(`${API}/api/v1/library/games`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/igdb-ids`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/backlog`, () => HttpResponse.json([])),
@@ -38,7 +35,6 @@ export const handlers = [
   http.put(`${API}/api/v1/library/release-year-preferences`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/stats`, () => HttpResponse.json({ totalGames: 0, byStatus: {}, averageRating: 0, totalRated: 0, byGenre: {}, byPlatform: {} })),
 
-  // Game catalog
   http.get(`${API}/api/v1/games/genres`, () => HttpResponse.json({ genres: [] })),
   http.get(`${API}/api/v1/games/tags/popular`, () => HttpResponse.json({ tags: [] })),
   http.get(`${API}/api/v1/games/platforms`, () => HttpResponse.json({ groups: [], others: [] })),
@@ -47,13 +43,11 @@ export const handlers = [
   http.get(`${API}/api/v1/games/upcoming/platforms`, () => HttpResponse.json({ platforms: [] })),
   http.get(`${API}/api/v1/games/search`, () => HttpResponse.json({ games: [], totalCount: 0, page: 0, pageSize: 20 })),
 
-  // Recommendations
   http.post(`${API}/api/v1/recommendations/dashboard`, () => HttpResponse.json({ recommendations: [], wildcard: [], becauseYouLiked: [] })),
   http.post(`${API}/api/v1/recommendations/personalized`, () => HttpResponse.json([])),
   http.post(`${API}/api/v1/recommendations/personalized/grouped`, () => HttpResponse.json({ rows: [], tier: 3, emptyMessage: 'Rate games in your library to unlock personalized recommendations.' })),
   http.get(`${API}/api/v1/recommendations/wildcard`, () => HttpResponse.json([])),
 
-  // Game-detail companion endpoints. Empty by default so GameDetail smokes don't trip MSW unhandled-request errors.
   http.get(`${API}/api/v1/games/:id/editions`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/recommendations/similar/:id`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/games/by-franchise/:name`, () => HttpResponse.json([])),

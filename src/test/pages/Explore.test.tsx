@@ -23,9 +23,7 @@ describe('Explore page', () => {
     )
     const user = userEvent.setup()
     render(renderWithProviders(<Explore />))
-    // Wait until the page mount + initial fetches have settled.
     await waitFor(() => expect(screen.getByText('Genre')).toBeInTheDocument())
-    // Open the Genre dropdown. Its trigger sits next to the "Genre" label.
     const genreLabel = screen.getByText('Genre')
     const genreSelectTrigger = genreLabel.parentElement?.querySelector('button')
     if (!genreSelectTrigger) throw new Error('genre dropdown trigger not found')

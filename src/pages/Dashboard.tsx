@@ -15,12 +15,7 @@ import type {
   UserGameDTO,
 } from '../types/api'
 
-// Dashboard recommendations buffer. `current` holds what's rendered; an
-// in-memory queue holds N pre-fetched batches that are ready to swap in
-// instantly when the user clicks Refresh. After every consume, a fresh batch
-// is queued in the background so the buffer stays topped up; rapid refresh
-// clicks burn through the queue without ever waiting on the network until the
-// queue genuinely empties.
+// Pre-fetch N batches so Refresh swaps instantly until the queue empties.
 const DASHBOARD_CURRENT_KEY = [...recommendationKeys.dashboard(), 'current'] as const
 const DASHBOARD_BUFFER_TARGET = 4
 
@@ -177,10 +172,7 @@ export default function Dashboard() {
     queryFn: () => getDashboard().then((r) => r.data),
   })
 
-  // In-memory FIFO of pre-fetched dashboard batches + a counter for in-flight
-  // refills. The buffer is drained one entry at a time by the Refresh button
-  // and topped up to DASHBOARD_BUFFER_TARGET in the background. Refs (not state)
-  // because mutations to these don't need to trigger renders.
+  // Refs (not state): buffer mutations don't need to trigger renders.
   const bufferRef = useRef<DashboardDTO[]>([])
   const inFlightRef = useRef(0)
 
@@ -190,7 +182,7 @@ export default function Dashboard() {
       .then((res) => {
         if (res.data) bufferRef.current.push(res.data)
       })
-      .catch(() => { /* swallow: refill is best-effort, refresh button still works */ })
+      .catch(() => { /* best-effort refill */ })
       .finally(() => {
         inFlightRef.current -= 1
       })
@@ -202,29 +194,23 @@ export default function Dashboard() {
     }
   }, [fetchOne])
 
-  // Once the current batch is rendered, top the buffer up. Re-runs whenever
-  // dashData reference changes (e.g. after a refresh-button consume swaps in
-  // a new batch via setQueryData) so the queue is continuously refilled.
   useEffect(() => {
     if (dashData) refillBuffer()
   }, [dashData, refillBuffer])
 
-  // Track the rare cold-buffer fallback so the button can flag it briefly.
   const [dashRefreshing, setDashRefreshing] = useState(false)
 
   const loadDashboard = useCallback(async () => {
     if (bufferRef.current.length > 0) {
       const next = bufferRef.current.shift()!
       queryClient.setQueryData(DASHBOARD_CURRENT_KEY, next)
-      // useEffect on dashData will trigger refillBuffer.
       return
     }
-    // Cold buffer. Fetch directly, swap when it lands.
     setDashRefreshing(true)
     try {
       const res = await getDashboard()
       if (res.data) queryClient.setQueryData(DASHBOARD_CURRENT_KEY, res.data)
-    } catch { /* ignore, keep showing current */ }
+    } catch { /* keep showing current */ }
     setDashRefreshing(false)
   }, [queryClient])
   const recommendations: RecommendationDTO[] = dashData?.recommendations ?? []

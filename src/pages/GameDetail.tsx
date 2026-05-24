@@ -16,6 +16,8 @@ import GameCard from '../components/common/GameCard'
 import CoverFallback from '../components/common/CoverFallback'
 import TruncatedText from '../components/common/TruncatedText'
 import AddGameModal from '../components/game/AddGameModal'
+import NotesPanel from '../components/game/NotesPanel'
+import PeekStack from '../components/game/PeekStack'
 import RatingWidget from '../components/game/RatingWidget'
 import type {
   AgeRatingDTO,
@@ -271,14 +273,9 @@ export default function GameDetail() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [showAddons, setShowAddons] = useState(false)
-  const [hoveredAddon, setHoveredAddon] = useState<number | null>(null)
   const [showFranchiseModal, setShowFranchiseModal] = useState(false)
-  const [franchiseRowWidth, setFranchiseRowWidth] = useState(0)
-  const franchiseRowRef = useRef<HTMLDivElement | null>(null)
   const [similarRowWidth, setSimilarRowWidth] = useState(0)
   const similarRowRef = useRef<HTMLDivElement | null>(null)
-  const [developerRowWidth, setDeveloperRowWidth] = useState(0)
-  const developerRowRef = useRef<HTMLDivElement | null>(null)
   const [showDeveloperModal, setShowDeveloperModal] = useState(false)
   const [releaseExpanded, setReleaseExpanded] = useState(false)
   const [editionsExpanded, setEditionsExpanded] = useState(false)
@@ -286,7 +283,6 @@ export default function GameDetail() {
   // Reset per-igdb UI state on navigation between game-detail pages.
   useEffect(() => {
     setShowAddons(false)
-    setHoveredAddon(null)
     setReleaseExpanded(false)
     setEditionsExpanded(false)
     setShowFranchiseModal(false)
@@ -360,18 +356,6 @@ export default function GameDetail() {
   }, [showDeveloperModal])
 
   useEffect(() => {
-    const el = franchiseRowRef.current
-    if (!el) return
-    setFranchiseRowWidth(el.clientWidth)
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect?.width
-      if (w) setFranchiseRowWidth(w)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [franchiseGames.length])
-
-  useEffect(() => {
     const el = similarRowRef.current
     if (!el) return
     setSimilarRowWidth(el.clientWidth)
@@ -382,18 +366,6 @@ export default function GameDetail() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [similar.length])
-
-  useEffect(() => {
-    const el = developerRowRef.current
-    if (!el) return
-    setDeveloperRowWidth(el.clientWidth)
-    const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect?.width
-      if (w) setDeveloperRowWidth(w)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [developerGames.length])
 
   useEffect(() => {
     if (lightboxIndex === null) return
@@ -862,6 +834,10 @@ export default function GameDetail() {
                       )}
                     </div>
 
+                    {libraryEntry.id != null && (
+                      <NotesPanel entry={libraryEntry} onError={showActionError} />
+                    )}
+
                     <button
                       onClick={() => setShowRemoveConfirm(true)}
                       className="px-3 py-1.5 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444425] hover:[box-shadow:0_0_16px_#ef4444,0_0_36px_#ef444460] transition-[background-color,box-shadow] duration-200"
@@ -1015,168 +991,83 @@ export default function GameDetail() {
           </section>
         )}
 
-        {/* DLC & Expansions */}
-        {addonCount > 0 && addonPreviews.length > 0 && (
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-1 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
-                <button
-                  onClick={handleOpenAddons}
-                  className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
-                >
-                  View all {addonCount} →
-                </button>
-              </div>
-              <div className={`relative rounded-lg border border-[#1e2035] bg-[#111220] ${
-                addonPreviews.length === 1 ? 'w-[42.1875%] aspect-[3/4]' :
-                addonPreviews.length === 2 ? 'w-[84.375%] aspect-[3/2]' :
-                'w-full aspect-video'
-              }`}>
-                {(() => {
-                  const stack = addonPreviews
-                  const n = stack.length
-                  const CARD_FRAC = n === 1 ? 1 : n === 2 ? 0.5 : 27 / 64
-                  return stack.map((p, i) => {
-                    const isTop = i === 0
-                    const isHovered = hoveredAddon === i
-                    const isBright = isHovered || (hoveredAddon === null && isTop)
-                    const leftPct = n === 1
-                      ? ((1 - CARD_FRAC) / 2) * 100
-                      : (i * (1 - CARD_FRAC) / (n - 1)) * 100
-                    const zIndex = isHovered
-                      ? 100
-                      : hoveredAddon !== null
-                        ? n - Math.abs(i - hoveredAddon)
-                        : n - i
-                    const isFirst = i === 0
-                    const isLast = i === n - 1
-                    return (
+        {/* Peek-stack columns: DLC | Series | Dev */}
+        {(() => {
+          const PEEK_STACK_MAX = 8
+          const seriesPick = pickBestSeries(game.name, game.franchises, game.collections)
+          const dlcStack = addonCount > 0 ? addonPreviews.slice(0, PEEK_STACK_MAX) : []
+          const seriesStack = seriesPick ? franchiseGames.slice(0, PEEK_STACK_MAX) : []
+          const devStack = primaryDeveloper ? developerGames.slice(0, PEEK_STACK_MAX) : []
+          const hasDlc = dlcStack.length > 0
+          const hasSeries = seriesStack.length > 0
+          const hasDev = devStack.length > 0
+          const presentCount = (hasDlc ? 1 : 0) + (hasSeries ? 1 : 0) + (hasDev ? 1 : 0)
+          if (presentCount === 0) return null
+          return (
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {hasDlc && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
+                    <button
+                      onClick={handleOpenAddons}
+                      className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
+                    >
+                      View all {addonCount} →
+                    </button>
+                  </div>
+                  <PeekStack
+                    items={dlcStack}
+                    onItemClick={(p) => navigate(`/games/${p.igdbId}`)}
+                    resetKey={igdbId}
+                    renderBadge={(p) => p._kind ? (
+                      <span className="absolute top-1.5 left-1.5 text-[9px] px-1 py-0.5 rounded font-medium tracking-wider bg-[#111220cc] backdrop-blur-sm text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]">
+                        {p._kind}
+                      </span>
+                    ) : null}
+                  />
+                </div>
+              )}
+              {hasSeries && seriesPick && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-lg font-medium text-[#e8e4dc]">{seriesPick.name} series</h2>
+                    {franchiseGames.length > PEEK_STACK_MAX && (
                       <button
-                        key={p.igdbId}
-                        onClick={() => navigate(`/games/${p.igdbId}`)}
-                        onMouseEnter={() => setHoveredAddon(i)}
-                        title={p.name}
-                        aria-label={p.name}
-                        style={{
-                          left: `${leftPct}%`,
-                          zIndex,
-                        }}
-                        className={`absolute top-0 h-full aspect-[3/4] border-l border-r border-[#0a0b14] bg-[#1e2035] overflow-hidden cursor-pointer transition-[transform,filter,box-shadow] duration-200 ${
-                          isFirst ? 'rounded-l-lg' : ''
-                        } ${
-                          isLast ? 'rounded-r-lg' : ''
-                        } ${
-                          isBright ? '' : 'brightness-50'
-                        } ${
-                          isHovered ? 'scale-[1.04] [box-shadow:0_0_18px_#f7258560,0_0_2px_#f72585]' : ''
-                        }`}
+                        onClick={() => setShowFranchiseModal(true)}
+                        className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
                       >
-                        {(p.coverImageUrl || p.backgroundImage) ? (
-                          <img
-                            src={p.coverImageUrl || p.backgroundImage}
-                            alt={p.name}
-                            loading="lazy"
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-[#4a5068] text-xs">No cover</span>
-                          </div>
-                        )}
-                        {p._kind && (
-                          <span className="absolute top-1.5 left-1.5 text-[9px] px-1 py-0.5 rounded font-medium tracking-wider bg-[#111220cc] backdrop-blur-sm text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]">
-                            {p._kind}
-                          </span>
-                        )}
+                        View all {franchiseGames.length} →
                       </button>
-                    )
-                  })
-                })()}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* More from franchise */}
-        {franchiseGames.length > 0 && pickBestSeries(game.name, game.franchises, game.collections) && (() => {
-          const CARD_W = 176
-          const GAP = 12
-          const SLOT = CARD_W + GAP
-          const fits = Math.max(1, Math.floor((franchiseRowWidth + GAP) / SLOT))
-          const needViewAll = franchiseGames.length > fits
-          const visible = needViewAll ? franchiseGames.slice(0, fits) : franchiseGames
-          const dynamicGap = fits > 1 && franchiseRowWidth > 0
-            ? Math.max(GAP, (franchiseRowWidth - fits * CARD_W) / (fits - 1))
-            : GAP
-          return (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-medium text-[#e8e4dc]">{pickBestSeries(game.name, game.franchises, game.collections)?.name} series</h2>
-                {needViewAll && (
-                  <button
-                    onClick={() => setShowFranchiseModal(true)}
-                    className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
-                  >
-                    View all {franchiseGames.length} →
-                  </button>
-                )}
-              </div>
-              <div
-                ref={franchiseRowRef}
-                className="flex overflow-hidden"
-                style={{ gap: `${dynamicGap}px` }}
-              >
-                {visible.map((g) => (
-                  <GameCard
-                    key={g.igdbId}
-                    game={g}
-                    onClick={() => navigate(`/games/${g.igdbId}`)}
+                    )}
+                  </div>
+                  <PeekStack
+                    items={seriesStack}
+                    onItemClick={(g) => navigate(`/games/${g.igdbId}`)}
+                    resetKey={igdbId}
                   />
-                ))}
-              </div>
-            </section>
-          )
-        })()}
-
-        {/* More from developer */}
-        {developerGames.length > 0 && primaryDeveloper && (() => {
-          const CARD_W = 176
-          const GAP = 12
-          const SLOT = CARD_W + GAP
-          const fits = Math.max(1, Math.floor((developerRowWidth + GAP) / SLOT))
-          const needViewAll = developerGames.length > fits
-          const visible = needViewAll ? developerGames.slice(0, fits) : developerGames
-          const dynamicGap = fits > 1 && developerRowWidth > 0
-            ? Math.max(GAP, (developerRowWidth - fits * CARD_W) / (fits - 1))
-            : GAP
-          return (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
-                {needViewAll && (
-                  <button
-                    onClick={() => setShowDeveloperModal(true)}
-                    className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97] flex-shrink-0"
-                  >
-                    View all {developerGames.length} →
-                  </button>
-                )}
-              </div>
-              <div
-                ref={developerRowRef}
-                className="flex overflow-hidden"
-                style={{ gap: `${dynamicGap}px` }}
-              >
-                {visible.map((g) => (
-                  <GameCard
-                    key={g.igdbId}
-                    game={g}
-                    onClick={() => navigate(`/games/${g.igdbId}`)}
+                </div>
+              )}
+              {hasDev && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-lg font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
+                    {developerGames.length > PEEK_STACK_MAX && (
+                      <button
+                        onClick={() => setShowDeveloperModal(true)}
+                        className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97] flex-shrink-0"
+                      >
+                        View all {developerGames.length} →
+                      </button>
+                    )}
+                  </div>
+                  <PeekStack
+                    items={devStack}
+                    onItemClick={(g) => navigate(`/games/${g.igdbId}`)}
+                    resetKey={igdbId}
                   />
-                ))}
-              </div>
+                </div>
+              )}
             </section>
           )
         })()}

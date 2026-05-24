@@ -40,9 +40,7 @@ export default function Login() {
       const userInfo = await loginMutation.mutateAsync({ username, password })
       login(userInfo)
 
-      // Prime the dashboard "current" buffer slot so the post-login mount renders instantly.
-      // Dashboard maintains a separate "next" buffer that's queued after first render so
-      // the user's first refresh click is also instant. See Dashboard.tsx.
+      // Prime the dashboard current-slot so post-login mount renders instantly.
       const dashboardPromise = queryClient.prefetchQuery({
         queryKey: [...recommendationKeys.dashboard(), 'current'],
         queryFn: () => getDashboard().then((r) => r.data),
@@ -63,7 +61,7 @@ export default function Login() {
 
       markFirstLoginDone()
       setTransitionState('leaving')
-      // Match LoginTransition's fade-out duration so the cross-fade reads.
+      // Matches LoginTransition fade-out so the cross-fade reads cleanly.
       setTimeout(() => navigate('/dashboard'), 250)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

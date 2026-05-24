@@ -26,7 +26,6 @@ export interface GetUserGamesParams {
   genre?: string
 }
 
-// Collection
 export const getUserGames = (params?: GetUserGamesParams): Promise<AxiosResponse<UserGameDTO[]>> =>
   api.get('/api/v1/library/games', { params })
 
@@ -45,7 +44,6 @@ export const updateGame = (gameId: number, data: UpdateGameRequest): Promise<Axi
 export const removeGame = (gameId: number): Promise<AxiosResponse<void>> =>
   api.delete<void>(`/api/v1/library/games/${gameId}`)
 
-// Filtered views
 export const getBacklog = (): Promise<AxiosResponse<UserGameDTO[]>> =>
   api.get('/api/v1/library/backlog')
 
@@ -58,7 +56,6 @@ export const getPlaying = (): Promise<AxiosResponse<UserGameDTO[]>> =>
 export const getCompleted = (): Promise<AxiosResponse<UserGameDTO[]>> =>
   api.get('/api/v1/library/completed')
 
-// Special
 export const getStats = (): Promise<AxiosResponse<UserStatsDTO>> =>
   api.get('/api/v1/library/stats')
 
@@ -68,7 +65,6 @@ export const getDustyGames = (): Promise<AxiosResponse<UserGameDTO[]>> =>
 export const getLibraryGenres = (): Promise<AxiosResponse<string[]>> =>
   api.get('/api/v1/library/genres')
 
-// Platforms (used in onboarding + recommendations)
 export const getUserPlatforms = (): Promise<AxiosResponse<UserPlatformDTO[]>> =>
   api.get('/api/v1/library/platforms')
 
@@ -84,7 +80,6 @@ export const setPlatformPrimary = (
 ): Promise<AxiosResponse<UserPlatformDTO>> =>
   api.patch(`/api/v1/library/platforms/${platformId}/primary`, data)
 
-// Genre preferences (cold-start signal collected during onboarding)
 export const getGenrePreferences = (): Promise<AxiosResponse<UserGenrePreferenceDTO[]>> =>
   api.get('/api/v1/library/genre-preferences')
 
@@ -93,7 +88,6 @@ export const updateGenrePreferences = (
 ): Promise<AxiosResponse<UserGenrePreferenceDTO[]>> =>
   api.put('/api/v1/library/genre-preferences', data)
 
-// Tag preferences (Profile-only equivalent of genre preferences for the tag dimension)
 export const getTagPreferences = (): Promise<AxiosResponse<UserTagPreferenceDTO[]>> =>
   api.get('/api/v1/library/tag-preferences')
 
@@ -102,7 +96,6 @@ export const updateTagPreferences = (
 ): Promise<AxiosResponse<UserTagPreferenceDTO[]>> =>
   api.put('/api/v1/library/tag-preferences', data)
 
-// Release-year preferences (declared decade buckets; boost candidates whose release falls in)
 export const getReleaseYearPreferences = (): Promise<AxiosResponse<UserReleaseYearPreferenceDTO[]>> =>
   api.get('/api/v1/library/release-year-preferences')
 
@@ -110,8 +103,6 @@ export const updateReleaseYearPreferences = (
   data: UpdateReleaseYearPreferencesRequest
 ): Promise<AxiosResponse<UserReleaseYearPreferenceDTO[]>> =>
   api.put('/api/v1/library/release-year-preferences', data)
-
-// ─── TanStack Query hooks ───────────────────────────────────────────────────
 
 export const libraryKeys = {
   all: ['library'] as const,

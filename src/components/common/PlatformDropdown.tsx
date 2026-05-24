@@ -14,19 +14,8 @@ interface FlyoutPosition {
   left: number
 }
 
-/**
- * Hierarchical platform picker for the Explore page. The backend
- * `/api/v1/games/platforms` endpoint returns Big-4 umbrellas (PlayStation, PC,
- * Nintendo, Xbox) plus an alphabetical "others" tail. Picking an umbrella label
- * fires {@code onChange} with all of its child platform names joined by ","; the
- * search spec OR-matches the IN-clause server-side. Picking a child fires
- * {@code onChange} with that child's name only.
- *
- * Umbrella children expand as a sideways flyout on hover (right of the main
- * panel). The flyout is rendered with {@code position: fixed} so it can escape
- * the main panel's vertical scroll area. `overflow-y` clips both axes, so an
- * absolutely-positioned flyout inside the panel would get cut off horizontally.
- */
+// Umbrella select fires onChange with CSV of child names; backend OR-matches via IN clause.
+// Flyout uses position:fixed because the panel's overflow-y clips both axes.
 export default function PlatformDropdown({ value, groups, others, onChange }: PlatformDropdownProps) {
   const [open, setOpen] = useState(false)
   const [hoveredUmbrella, setHoveredUmbrella] = useState<string | null>(null)
