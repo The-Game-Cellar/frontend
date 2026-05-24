@@ -91,6 +91,15 @@ export const getByCollection = (
     params: { limit, ...(excludeIgdbId ? { excludeIgdbId } : {}) },
   })
 
+export const getByDeveloper = (
+  name: string,
+  limit: number = 20,
+  excludeIgdbId?: number
+): Promise<AxiosResponse<GameResponse[]>> =>
+  api.get(`/api/v1/games/by-developer/${encodeURIComponent(name)}`, {
+    params: { limit, ...(excludeIgdbId ? { excludeIgdbId } : {}) },
+  })
+
 export const getEditions = (igdbId: number): Promise<AxiosResponse<GameResponse[]>> =>
   api.get(`/api/v1/games/${igdbId}/editions`)
 
@@ -111,6 +120,8 @@ export const gameKeys = {
     [...gameKeys.all, 'byFranchise', name, limit, excludeIgdbId] as const,
   byCollection: (name: string, limit: number, excludeIgdbId?: number) =>
     [...gameKeys.all, 'byCollection', name, limit, excludeIgdbId] as const,
+  byDeveloper: (name: string, limit: number, excludeIgdbId?: number) =>
+    [...gameKeys.all, 'byDeveloper', name, limit, excludeIgdbId] as const,
   editions: (igdbId: number) => [...gameKeys.all, 'editions', igdbId] as const,
 }
 
@@ -183,6 +194,13 @@ export const useByCollection = (name: string, limit = 20, excludeIgdbId?: number
   useQuery({
     queryKey: gameKeys.byCollection(name, limit, excludeIgdbId),
     queryFn: () => getByCollection(name, limit, excludeIgdbId).then((r) => r.data),
+    enabled: enabled && name.length > 0,
+  })
+
+export const useByDeveloper = (name: string, limit = 20, excludeIgdbId?: number, enabled = true) =>
+  useQuery({
+    queryKey: gameKeys.byDeveloper(name, limit, excludeIgdbId),
+    queryFn: () => getByDeveloper(name, limit, excludeIgdbId).then((r) => r.data),
     enabled: enabled && name.length > 0,
   })
 

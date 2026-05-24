@@ -294,7 +294,7 @@ export default function Preferences() {
                   type="button"
                   onClick={() => toggleGenre(genre)}
                   title={genre}
-                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
                     active
                       ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                       : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -364,7 +364,7 @@ export default function Preferences() {
                   type="button"
                   onClick={() => toggleTag(tag)}
                   title={tag}
-                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
                     active
                       ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                       : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -429,7 +429,7 @@ export default function Preferences() {
                 type="button"
                 onClick={() => toggleBucket(bucket)}
                 title={bucket}
-                className={`px-3 py-1.5 rounded text-xs text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                className={`px-3 py-1.5 rounded text-xs text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
                   active
                     ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                     : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'

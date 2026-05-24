@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useUserGames, useUserPlatforms, useLibraryGenres, useRemoveGame } from '../services/libraryService'
 import type { GetUserGamesParams } from '../services/libraryService'
@@ -42,7 +43,7 @@ const emptyMessages: Record<StatusTab, string> = {
   COMPLETED: 'No completed games yet.',
   DROPPED:   'No dropped games.',
   WISHLIST:  'Wishlist is empty.',
-  DUSTY:     'No dusty games — everything has been played recently.',
+  DUSTY:     'No dusty games. Everything has been played recently.',
 }
 
 function isStatusTab(value: string): value is StatusTab {
@@ -150,8 +151,8 @@ export default function Library() {
 
   const viewBtnClass = (active: boolean): string =>
     active
-      ? 'p-1.5 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-[border-color,color,background-color,box-shadow] duration-150'
-      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow] duration-150'
+      ? 'p-1.5 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]'
+      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]'
 
   return (
     <div className="space-y-6">
@@ -183,7 +184,7 @@ export default function Library() {
             <button
               key={tab}
               onClick={() => setActiveStatus(tab)}
-              className={`text-xs px-3 py-1.5 rounded border transition-[border-color,color,background-color,box-shadow] duration-150 ${
+              className={`text-xs px-3 py-1.5 rounded border transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                 activeStatus === tab
                   ? tabActiveStyles[tab]
                   : `border-[#2a2d45] text-[#4a5068] ${tabHoverStyles[tab]}`
@@ -254,7 +255,7 @@ export default function Library() {
           {isFiltered && (
             <button
               onClick={resetFilters}
-              className="ml-auto self-end text-xs px-3 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color] duration-150"
+              className="ml-auto self-end text-xs px-3 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]"
             >
               Reset filter
             </button>
@@ -284,23 +285,27 @@ export default function Library() {
 
       {!gamesPending && !gamesError && displayedGames.length > 0 && (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 animate-enter">
-            {displayedGames.map((entry) => (
-              <LibraryGameCard
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4">
+            {displayedGames.map((entry, i) => (
+              <div
                 key={entry.id}
-                entry={entry}
-                onRemove={handleRemove}
-              />
+                className="animate-stagger-in"
+                style={{ '--i': Math.min(i, 20) } as CSSProperties}
+              >
+                <LibraryGameCard entry={entry} onRemove={handleRemove} />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-2 animate-enter">
-            {displayedGames.map((entry) => (
-              <GameListItem
+          <div className="space-y-2">
+            {displayedGames.map((entry, i) => (
+              <div
                 key={entry.id}
-                entry={entry}
-                onRemove={handleRemove}
-              />
+                className="animate-stagger-in"
+                style={{ '--i': Math.min(i, 20) } as CSSProperties}
+              >
+                <GameListItem entry={entry} onRemove={handleRemove} />
+              </div>
             ))}
           </div>
         )

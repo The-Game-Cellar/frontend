@@ -20,7 +20,7 @@ export default function Layout() {
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0a0b14]/90 backdrop-blur-sm border-b border-[#1e2035] flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
-          {/* Hamburger — mobile only. Toggles open/close on the same button so the user
+          {/* Hamburger, mobile only. Toggles open/close on the same button so the user
               never has to dig for the close affordance. The three bars morph to an × when
               open: top bar rotates 45°, bottom bar rotates -45°, middle bar fades. The bars
               live in a fixed-height column so the morph happens in place rather than nudging
@@ -61,7 +61,7 @@ export default function Layout() {
         </button>
       </nav>
 
-      {/* Mobile backdrop — always mounted, fades via opacity so it animates in sync with the
+      {/* Mobile backdrop, always mounted, fades via opacity so it animates in sync with the
           sidebar's translate-x transition. pointer-events toggle keeps the layer click-through
           when hidden. */}
       <div

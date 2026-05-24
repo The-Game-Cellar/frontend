@@ -24,7 +24,7 @@ interface FlyoutPosition {
  *
  * Umbrella children expand as a sideways flyout on hover (right of the main
  * panel). The flyout is rendered with {@code position: fixed} so it can escape
- * the main panel's vertical scroll area — `overflow-y` clips both axes, so an
+ * the main panel's vertical scroll area. `overflow-y` clips both axes, so an
  * absolutely-positioned flyout inside the panel would get cut off horizontally.
  */
 export default function PlatformDropdown({ value, groups, others, onChange }: PlatformDropdownProps) {

@@ -45,12 +45,12 @@ export default function LibraryGameCard({ entry, onRemove }: LibraryGameCardProp
           <CoverFallback platforms={entry.platform ? [entry.platform] : []} />
         )}
 
-        {/* Status badge — bottom left */}
+        {/* Status badge, bottom left */}
         <span className={`absolute bottom-1.5 left-1.5 text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}`}>
           {entry.status}
         </span>
 
-        {/* Confirm overlay — cross-fades with default state */}
+        {/* Confirm overlay, cross-fades with default state */}
         <div
           className={`absolute inset-0 bg-[#0a0b14cc] flex flex-col items-center justify-center gap-2 transition-opacity duration-200 ${confirming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           onClick={(e) => e.stopPropagation()}
@@ -74,7 +74,7 @@ export default function LibraryGameCard({ entry, onRemove }: LibraryGameCardProp
           </div>
         </div>
 
-        {/* Remove button — top right, visible on hover, hides when confirming */}
+        {/* Remove button. Top right, visible on hover, hides when confirming. */}
         <button
           type="button"
           onClick={(e: ReactMouseEvent<HTMLButtonElement>) => { e.stopPropagation(); setConfirming(true) }}
@@ -94,7 +94,7 @@ export default function LibraryGameCard({ entry, onRemove }: LibraryGameCardProp
             <span className="text-[#4a5068]">/10</span>
           </p>
         ) : (
-          <p className="text-xs text-[#4a5068]">—</p>
+          <p className="text-xs text-[#4a5068]">-</p>
         )}
       </div>
     </div>

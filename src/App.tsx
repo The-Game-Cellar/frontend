@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes — redirect to /login if not authenticated */}
+          {/* Protected routes. Redirect to /login if not authenticated. */}
           <Route element={<ProtectedRoute />}>
             <Route path="/onboarding" element={<Onboarding />} />
             <Route element={<Layout />}>

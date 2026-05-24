@@ -18,7 +18,7 @@ import type {
 // Dashboard recommendations buffer. `current` holds what's rendered; an
 // in-memory queue holds N pre-fetched batches that are ready to swap in
 // instantly when the user clicks Refresh. After every consume, a fresh batch
-// is queued in the background so the buffer stays topped up — rapid refresh
+// is queued in the background so the buffer stays topped up; rapid refresh
 // clicks burn through the queue without ever waiting on the network until the
 // queue genuinely empties.
 const DASHBOARD_CURRENT_KEY = [...recommendationKeys.dashboard(), 'current'] as const
@@ -110,6 +110,15 @@ function GameScroll<T extends GameCardData>({ games, getKey, onClick, loading = 
   const ref = useRef<HTMLDivElement | null>(null)
   const [visibleCount, setVisibleCount] = useState(6)
   const [cardWidth, setCardWidth] = useState(CARD_WIDTH)
+  const [staggerTick, setStaggerTick] = useState(0)
+  const prevGamesRef = useRef<T[]>(games)
+
+  useEffect(() => {
+    if (prevGamesRef.current !== games) {
+      prevGamesRef.current = games
+      setStaggerTick((t) => t + 1)
+    }
+  }, [games])
 
   useEffect(() => {
     const update = () => {
@@ -137,14 +146,19 @@ function GameScroll<T extends GameCardData>({ games, getKey, onClick, loading = 
 
   return (
     <div ref={ref} className="flex gap-3">
-      {games.slice(0, visibleCount).map((game) => (
-        <GameCard
-          key={getKey(game)}
-          game={game}
-          onClick={() => onClick(game)}
-          style={{ width: cardWidth }}
-          subtitle={getSubtitle ? getSubtitle(game) : undefined}
-        />
+      {games.slice(0, visibleCount).map((game, i) => (
+        <div
+          key={`${staggerTick}-${getKey(game)}`}
+          className="animate-stagger-in"
+          style={{ '--i': i } as CSSProperties}
+        >
+          <GameCard
+            game={game}
+            onClick={() => onClick(game)}
+            style={{ width: cardWidth }}
+            subtitle={getSubtitle ? getSubtitle(game) : undefined}
+          />
+        </div>
       ))}
     </div>
   )
@@ -176,7 +190,7 @@ export default function Dashboard() {
       .then((res) => {
         if (res.data) bufferRef.current.push(res.data)
       })
-      .catch(() => { /* swallow — refill is best-effort, refresh button still works */ })
+      .catch(() => { /* swallow: refill is best-effort, refresh button still works */ })
       .finally(() => {
         inFlightRef.current -= 1
       })
@@ -205,12 +219,12 @@ export default function Dashboard() {
       // useEffect on dashData will trigger refillBuffer.
       return
     }
-    // Cold buffer — fetch directly, swap when it lands.
+    // Cold buffer. Fetch directly, swap when it lands.
     setDashRefreshing(true)
     try {
       const res = await getDashboard()
       if (res.data) queryClient.setQueryData(DASHBOARD_CURRENT_KEY, res.data)
-    } catch { /* ignore — keep showing current */ }
+    } catch { /* ignore, keep showing current */ }
     setDashRefreshing(false)
   }, [queryClient])
   const recommendations: RecommendationDTO[] = dashData?.recommendations ?? []
@@ -286,7 +300,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Coming Soon — platform-filtered to user's owned platforms, default 90-day window. */}
+      {/* Coming Soon: platform-filtered to user's owned platforms, default 90-day window. */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium text-[#e8e4dc]">Coming soon</h2>

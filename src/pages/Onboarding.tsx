@@ -1,16 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAddPlatform, useUpdateGenrePreferences } from '../services/libraryService'
-import { useGenres } from '../services/gameService'
-
-const PLATFORMS: string[] = [
-  'PC',
-  'PlayStation 5',
-  'PlayStation 4',
-  'Xbox Series S/X',
-  'Xbox One',
-  'Nintendo Switch',
-]
+import { useGenres, usePlatformCatalog } from '../services/gameService'
+import OnboardingPlatformPicker from '../components/common/OnboardingPlatformPicker'
 
 type Step = 'platforms' | 'genres'
 
@@ -31,6 +23,8 @@ export default function Onboarding() {
 
   const { data: genresData, isLoading: genresLoading } = useGenres()
   const genreList: string[] = Array.isArray(genresData?.genres) ? genresData.genres : []
+
+  const { data: platformCatalog, isLoading: catalogLoading } = usePlatformCatalog()
 
   function togglePlatform(platform: string) {
     setSelectedPlatforms((prev) =>
@@ -103,15 +97,15 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-[#0a0b14] flex items-center justify-center font-mono p-6">
-      <div className="bg-[#111220] border border-[#1e2035] rounded-xl p-8 w-full max-w-lg space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-xl font-semibold text-[#e8e4dc] tracking-wider">
+      <div className="bg-[#111220] border border-[#1e2035] rounded-xl p-10 w-full max-w-2xl space-y-8">
+        <div className="text-center space-y-3">
+          <h1 className="text-2xl font-semibold text-[#e8e4dc] tracking-wider">
             Welcome to the Cellar
           </h1>
-          <p className="text-xs text-[#4a5068]">{stepCopy}</p>
+          <p className="text-base text-[#4a5068]">{stepCopy}</p>
         </div>
 
-        <div className="flex items-center justify-center gap-3 text-[10px] uppercase tracking-[0.25em] text-[#4a5068]">
+        <div className="flex items-center justify-center gap-3 text-xs uppercase tracking-[0.25em] text-[#4a5068]">
           <span
             className={
               step === 'platforms'
@@ -135,27 +129,25 @@ export default function Onboarding() {
 
         {step === 'platforms' && (
           <>
-            <div className="grid grid-cols-2 gap-2">
-              {PLATFORMS.map((platform) => {
-                const active = selectedPlatforms.includes(platform)
-                return (
-                  <button
-                    key={platform}
-                    onClick={() => togglePlatform(platform)}
-                    className={`px-3 py-2.5 rounded text-xs text-left border transition-[border-color,color,background-color,box-shadow] duration-200 ${
-                      active
-                        ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_8px_#f7258540]'
-                        : 'bg-[#0a0b14] border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
-                    }`}
-                  >
-                    {platform}
-                  </button>
-                )
-              })}
-            </div>
+            {catalogLoading ? (
+              <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585] text-center py-8 tracking-wider">
+                [ LOADING... ]
+              </p>
+            ) : !platformCatalog || platformCatalog.length === 0 ? (
+              <p className="text-sm text-[#8891a8] text-center py-8">
+                Couldn't load the platform catalog. Refresh and try again.
+              </p>
+            ) : (
+              <OnboardingPlatformPicker
+                catalog={platformCatalog}
+                selected={selectedPlatforms}
+                onToggle={togglePlatform}
+                isBusy={platformLoading}
+              />
+            )}
 
             {platformError && (
-              <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+              <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
                 {platformError}
               </p>
             )}
@@ -163,7 +155,7 @@ export default function Onboarding() {
             <button
               onClick={handlePlatformContinue}
               disabled={selectedPlatforms.length === 0 || platformLoading}
-              className="w-full px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200 active:scale-[0.97]"
+              className="w-full px-5 py-3 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-base rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200 active:scale-[0.97]"
             >
               {platformLoading
                 ? '[ SAVING... ]'
@@ -175,17 +167,17 @@ export default function Onboarding() {
         {step === 'genres' && (
           <>
             {genresLoading ? (
-              <p className="text-xs text-[#f72585] [text-shadow:0_0_8px_#f72585] text-center py-8 tracking-wider">
+              <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585] text-center py-8 tracking-wider">
                 [ LOADING... ]
               </p>
             ) : genreList.length === 0 ? (
-              <p className="text-xs text-[#8891a8] text-center py-8">
-                Couldn't load the genre catalog. Skip this step — you can set preferences later from Profile.
+              <p className="text-sm text-[#8891a8] text-center py-8">
+                Couldn't load the genre catalog. Skip this step; you can set preferences later from Profile.
               </p>
             ) : (
               <div
-                className="grid gap-2 max-h-72 overflow-y-auto styled-scrollbar pr-1 -mr-1"
-                style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}
+                className="grid gap-2 max-h-80 overflow-y-auto styled-scrollbar pr-1 -mr-1"
+                style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}
               >
                 {genreList.map((genre) => {
                   const active = selectedGenres.includes(genre)
@@ -194,7 +186,7 @@ export default function Onboarding() {
                       key={genre}
                       onClick={() => toggleGenre(genre)}
                       title={genre}
-                      className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                      className={`px-3 py-2 rounded text-sm text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
                         active
                           ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                           : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -207,7 +199,7 @@ export default function Onboarding() {
               </div>
             )}
 
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-[#4a5068] pt-1">
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-[#4a5068] pt-1">
               <span>Optional · skip ok</span>
               <span>
                 Selected{' '}
@@ -224,7 +216,7 @@ export default function Onboarding() {
             </div>
 
             {genreError && (
-              <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+              <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
                 {genreError}
               </p>
             )}
@@ -233,14 +225,14 @@ export default function Onboarding() {
               <button
                 onClick={handleSkipGenres}
                 disabled={genreLoading}
-                className="flex-1 px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 disabled:cursor-not-allowed transition-[border-color,color] duration-200 active:scale-[0.97]"
+                className="flex-1 px-5 py-3 border border-[#2a2d45] text-[#8891a8] text-base rounded hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 disabled:cursor-not-allowed transition-[border-color,color] duration-200 active:scale-[0.97]"
               >
                 {genreLoading ? '[ ... ]' : 'Skip for now'}
               </button>
               <button
                 onClick={handleGenreContinue}
                 disabled={selectedGenres.length === 0 || genreLoading}
-                className="flex-1 px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200 active:scale-[0.97]"
+                className="flex-1 px-5 py-3 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-base rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200 active:scale-[0.97]"
               >
                 {genreLoading
                   ? '[ SAVING... ]'

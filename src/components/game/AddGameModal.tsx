@@ -151,7 +151,7 @@ export default function AddGameModal({ game, onClose, onAdded }: AddGameModalPro
           )}
         </div>
 
-        {/* Rating (optional, only for PLAYING / COMPLETED) — animated reveal */}
+        {/* Rating (optional, only for PLAYING / COMPLETED). Animated reveal. */}
         <div
           className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
             showRating ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
