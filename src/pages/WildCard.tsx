@@ -12,7 +12,7 @@ export default function WildCard() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Wild Card</h1>
-          <p className="text-xs text-[#4a5068]">Random picks from the cellar — roll again for a new hand</p>
+          <p className="text-xs text-[#4a5068]">Random picks from the cellar. Roll again for a new hand.</p>
         </div>
         <button
           onClick={() => refetch()}

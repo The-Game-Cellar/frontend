@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
+import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -148,7 +148,7 @@ export default function Explore() {
   // PlatformDropdown's groups[].platforms and others arrays are flat strings (not objects),
   // so the filter compares against String(p) directly. Drops empty umbrella groups so the
   // dropdown stays tight. While the upcoming-platforms list is still loading we keep the
-  // full list — narrowing only kicks in once we have data, so the dropdown is never empty.
+  // full list. Narrowing only kicks in once we have data, so the dropdown is never empty.
   const upcomingPlatformSet = new Set(upcomingPlatformNames.map((n) => String(n).toLowerCase()))
   const hasUpcomingPlatformData = upcomingPlatformNames.length > 0
   const filteredPlatformGroups: PlatformGroup[] = hasUpcomingPlatformData
@@ -376,18 +376,18 @@ function BrowseView({
         <button
           type="button"
           onClick={() => setGameType((t) => (t === 'variant' ? 'main' : 'variant'))}
-          className={`text-xs px-3 py-1.5 rounded border transition-[border-color,box-shadow,color] duration-150 ${
+          className={`text-xs px-3 py-1.5 rounded border transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97] ${
             gameType === 'variant'
               ? 'border-[#f72585] text-[#f72585] [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540]'
               : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
           }`}
-          title={gameType === 'variant' ? 'Showing variants only — click to return to main games' : 'Showing main games — click to switch to variants only'}
+          title={gameType === 'variant' ? 'Showing variants only. Click to return to main games.' : 'Showing main games. Click to switch to variants only.'}
         >
           {gameType === 'variant' ? 'Variants only ✓' : 'Variants only'}
         </button>
 
         {isFiltered && (
-          <button onClick={handleReset} className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color] duration-150">
+          <button onClick={handleReset} className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]">
             Reset filter
           </button>
         )}
@@ -409,13 +409,18 @@ function BrowseView({
       )}
 
       {games.length > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4 animate-enter">
-          {games.map((game) => (
-            <GameCard
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-4">
+          {games.map((game, i) => (
+            <div
               key={game.igdbId}
-              game={game}
-              onClick={() => navigate(`/games/${game.igdbId}`)}
-            />
+              className="animate-stagger-in"
+              style={{ '--i': Math.min(i, 20) } as CSSProperties}
+            >
+              <GameCard
+                game={game}
+                onClick={() => navigate(`/games/${game.igdbId}`)}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -426,7 +431,7 @@ function BrowseView({
           <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 0}
-            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color] duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Prev
           </button>
@@ -437,7 +442,7 @@ function BrowseView({
               <button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
-                className={`px-3 py-1.5 text-xs rounded border transition-[border-color,box-shadow,color,background-color] duration-150 ${
+                className={`px-3 py-1.5 text-xs rounded border transition-[border-color,box-shadow,color,background-color,transform] duration-150 active:scale-[0.97] ${
                   pageNum === page
                     ? 'border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258560]'
                     : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -450,7 +455,7 @@ function BrowseView({
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page === totalPages - 1}
-            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color] duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next →
           </button>

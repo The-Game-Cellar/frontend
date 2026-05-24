@@ -157,7 +157,7 @@ export default function Statistics() {
               <button
                 type="button"
                 onClick={() => setShowAllGenres((v) => !v)}
-                className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
+                className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97]"
               >
                 {showAllGenres ? 'Show fewer' : `Show all ${sortedGenres.length} →`}
               </button>
@@ -193,7 +193,7 @@ export default function Statistics() {
               <button
                 type="button"
                 onClick={() => setShowAllPlatforms((v) => !v)}
-                className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
+                className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97]"
               >
                 {showAllPlatforms ? 'Show fewer' : `Show all ${sortedPlatforms.length} →`}
               </button>

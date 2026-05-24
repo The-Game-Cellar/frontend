@@ -10,7 +10,7 @@ import type {
 // ─── Recently-shown set (localStorage) ──────────────────────────────────────
 // Session-scoped set of IGDB ids the user has been shown on the Recommendations
 // page. Sent as `recentlyShownIds` on every /personalized fetch so the backend
-// applies a soft score penalty — recently-shown games drop out of MMR top picks
+// applies a soft score penalty; recently-shown games drop out of MMR top picks
 // but resurface if the candidate pool runs dry, so the system never returns
 // truly empty. Cleared on logout / deleteAccount; otherwise grows for the
 // length of the session. Hard ceiling at 2000 ids as a runaway-guard against
@@ -46,7 +46,7 @@ export const addRecentlyShownIds = (ids: number[]): void => {
   try {
     localStorage.setItem(SHOWN_KEY, JSON.stringify(trimmed))
   } catch {
-    // localStorage full / disabled — ignore
+    // localStorage full / disabled, ignore
   }
 }
 
@@ -58,7 +58,7 @@ export const clearRecentlyShownIds = (): void => {
   }
 }
 
-// Row-based variant — returns { rows: [{ label, genre, fallback, games[] }], tier, emptyMessage }.
+// Row-based variant. Returns { rows: [{ label, genre, fallback, games[] }], tier, emptyMessage }.
 // POST rather than GET because recentlyShownIds grows uncapped with session activity and
 // would blow Tomcat's default 8KB header buffer on the URL path. Body has no such limit.
 export const getPersonalizedGrouped = (): Promise<AxiosResponse<GroupedRecommendationsResponse>> => {
@@ -91,7 +91,7 @@ export const getDashboard = async (): Promise<AxiosResponse<DashboardDTO>> => {
 
 export const recommendationKeys = {
   all: ['recommendations'] as const,
-  // Note: recentlyShownIds intentionally excluded from grouped() — it's tracking
+  // Note: recentlyShownIds intentionally excluded from grouped(); it's tracking
   // state, not query identity. Including it would invalidate cache on every refresh.
   grouped: () => [...recommendationKeys.all, 'grouped'] as const,
   wildcard: (limit: number) => [...recommendationKeys.all, 'wildcard', limit] as const,

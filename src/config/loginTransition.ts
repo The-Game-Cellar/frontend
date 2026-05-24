@@ -21,6 +21,6 @@ export const markFirstLoginDone = (): void => {
   try {
     localStorage.setItem(FIRST_LOGIN_FLAG, '1')
   } catch {
-    // localStorage unavailable — silently skip; user just sees the long version every time
+    // localStorage unavailable, silently skip; user just sees the long version every time
   }
 }

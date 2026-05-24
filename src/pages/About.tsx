@@ -3,7 +3,7 @@ export default function About() {
     <div className="max-w-2xl mx-auto space-y-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">About</h1>
-        <p className="text-sm text-[#8891a8]">The Game Cellar — your personal backlog &amp; recommendation companion.</p>
+        <p className="text-sm text-[#8891a8]">The Game Cellar, your personal backlog &amp; recommendation companion.</p>
       </header>
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-3">
@@ -27,7 +27,7 @@ export default function About() {
           >
             IGDB
           </a>
-          {' '}— the Internet Game Database, owned by Twitch / Amazon. The Game Cellar accesses IGDB&apos;s public
+          {' '}(the Internet Game Database, owned by Twitch / Amazon). The Game Cellar accesses IGDB&apos;s public
           API under the standard Twitch Developer Services Agreement.
         </p>
         <p className="text-sm text-[#e8e4dc] leading-relaxed">

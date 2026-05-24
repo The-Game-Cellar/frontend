@@ -79,7 +79,7 @@ function PlatformChip({
       type="button"
       onClick={() => onAdd(name)}
       disabled={isBusy}
-      className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 transition-colors"
+      className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 transition-[border-color,color,background-color,transform] duration-150 active:scale-[0.97]"
     >
       + {name}
     </button>

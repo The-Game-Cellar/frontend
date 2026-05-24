@@ -124,8 +124,8 @@ export async function exportAccountData(): Promise<AccountExportDTO> {
 }
 
 // ─── TanStack Query mutation hooks ──────────────────────────────────────────
-// Auth bootstrap (getMe / refreshAccessToken) stays imperative inside AuthProvider —
-// see TanStackQueryAdoption design doc, Decision 5. Only write-operations are mutations.
+// Auth bootstrap (getMe / refreshAccessToken) stays imperative inside AuthProvider.
+// See TanStackQueryAdoption design doc, Decision 5. Only write-operations are mutations.
 
 export const useLogin = () =>
   useMutation({

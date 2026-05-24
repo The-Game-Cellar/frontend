@@ -7,6 +7,7 @@ import {
   useGameById,
   useByFranchise,
   useByCollection,
+  useByDeveloper,
   useEditions,
 } from '../services/gameService'
 import { useUserGameByIgdb, useUpdateGame, useRemoveGame } from '../services/libraryService'
@@ -220,6 +221,15 @@ export default function GameDetail() {
   const { data: franchiseDataC } = useByCollection(seriesName, 50, numericId, !!series && !isFranchise)
   const franchiseGames: GameResponse[] = (franchiseDataF ?? franchiseDataC ?? [])
 
+  const primaryDeveloper = Array.isArray(game?.developers) && game.developers.length > 0 ? game.developers[0] : ''
+  const { data: developerData } = useByDeveloper(primaryDeveloper, 50, numericId, !!primaryDeveloper)
+  const developerGames: GameResponse[] = useMemo(() => {
+    const raw = developerData ?? []
+    if (franchiseGames.length === 0) return raw
+    const franchiseIds = new Set(franchiseGames.map((g) => g.igdbId).filter((id): id is number => id != null))
+    return raw.filter((g) => g.igdbId == null || !franchiseIds.has(g.igdbId))
+  }, [developerData, franchiseGames])
+
   const editionsEnabled = isValidId && !!game && (game.category === 0 || game.category == null)
   const { data: editionsData } = useEditions(numericId, editionsEnabled)
   const editions: GameResponse[] = editionsData ?? []
@@ -267,6 +277,9 @@ export default function GameDetail() {
   const franchiseRowRef = useRef<HTMLDivElement | null>(null)
   const [similarRowWidth, setSimilarRowWidth] = useState(0)
   const similarRowRef = useRef<HTMLDivElement | null>(null)
+  const [developerRowWidth, setDeveloperRowWidth] = useState(0)
+  const developerRowRef = useRef<HTMLDivElement | null>(null)
+  const [showDeveloperModal, setShowDeveloperModal] = useState(false)
   const [releaseExpanded, setReleaseExpanded] = useState(false)
   const [editionsExpanded, setEditionsExpanded] = useState(false)
 
@@ -340,6 +353,13 @@ export default function GameDetail() {
   }, [showFranchiseModal])
 
   useEffect(() => {
+    if (!showDeveloperModal) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowDeveloperModal(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showDeveloperModal])
+
+  useEffect(() => {
     const el = franchiseRowRef.current
     if (!el) return
     setFranchiseRowWidth(el.clientWidth)
@@ -362,6 +382,18 @@ export default function GameDetail() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [similar.length])
+
+  useEffect(() => {
+    const el = developerRowRef.current
+    if (!el) return
+    setDeveloperRowWidth(el.clientWidth)
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width
+      if (w) setDeveloperRowWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [developerGames.length])
 
   useEffect(() => {
     if (lightboxIndex === null) return
@@ -560,6 +592,44 @@ export default function GameDetail() {
         </div>
       )}
 
+      {/* Developer modal */}
+      {showDeveloperModal && primaryDeveloper && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-enter"
+          onClick={() => setShowDeveloperModal(false)}
+        >
+          <div
+            className="bg-[#111220] border border-[#1e2035] rounded-lg w-fit max-w-5xl max-h-[85vh] flex flex-col animate-enter"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
+              <div className="space-y-0.5">
+                <h2 className="text-lg font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
+                <p className="text-xs text-[#4a5068]">{developerGames.length} games</p>
+              </div>
+              <button
+                onClick={() => setShowDeveloperModal(false)}
+                className="text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] text-xl leading-none transition-[color,text-shadow] duration-200"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5">
+              <div className="flex flex-wrap gap-4 justify-center">
+                {developerGames.map((g) => (
+                  <GameCard
+                    key={g.igdbId}
+                    game={g}
+                    onClick={() => { setShowDeveloperModal(false); navigate(`/games/${g.igdbId}`) }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Remove confirm modal */}
       {showRemoveConfirm && (
         <div
@@ -710,6 +780,16 @@ export default function GameDetail() {
                   </div>
                 )}
 
+                {game.developers && game.developers.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {game.developers.map((d) => (
+                      <span key={d} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {game.genres && game.genres.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {game.genres.map((g) => (
@@ -765,7 +845,7 @@ export default function GameDetail() {
                       </button>
 
                       {showStatusMenu && (
-                        <div className="absolute top-full left-0 mt-1 flex flex-col gap-1 z-20">
+                        <div className="absolute top-full left-0 mt-1 flex flex-col gap-1 z-20 origin-top animate-dropdown-reveal">
                           {ALL_STATUSES.filter((s) => s !== libraryEntry.status).map((s) => (
                             <button
                               key={s}
@@ -1045,6 +1125,47 @@ export default function GameDetail() {
               </div>
               <div
                 ref={franchiseRowRef}
+                className="flex overflow-hidden"
+                style={{ gap: `${dynamicGap}px` }}
+              >
+                {visible.map((g) => (
+                  <GameCard
+                    key={g.igdbId}
+                    game={g}
+                    onClick={() => navigate(`/games/${g.igdbId}`)}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        })()}
+
+        {/* More from developer */}
+        {developerGames.length > 0 && primaryDeveloper && (() => {
+          const CARD_W = 176
+          const GAP = 12
+          const SLOT = CARD_W + GAP
+          const fits = Math.max(1, Math.floor((developerRowWidth + GAP) / SLOT))
+          const needViewAll = developerGames.length > fits
+          const visible = needViewAll ? developerGames.slice(0, fits) : developerGames
+          const dynamicGap = fits > 1 && developerRowWidth > 0
+            ? Math.max(GAP, (developerRowWidth - fits * CARD_W) / (fits - 1))
+            : GAP
+          return (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
+                {needViewAll && (
+                  <button
+                    onClick={() => setShowDeveloperModal(true)}
+                    className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97] flex-shrink-0"
+                  >
+                    View all {developerGames.length} →
+                  </button>
+                )}
+              </div>
+              <div
+                ref={developerRowRef}
                 className="flex overflow-hidden"
                 style={{ gap: `${dynamicGap}px` }}
               >

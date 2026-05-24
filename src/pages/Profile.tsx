@@ -203,19 +203,19 @@ export default function Profile() {
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-3">
         <p className="text-xs text-[#8891a8] uppercase tracking-wider">Account</p>
-        <p className="text-sm text-[#e8e4dc]">{email ?? '—'}</p>
+        <p className="text-sm text-[#e8e4dc]">{email ?? '-'}</p>
         <div className="flex flex-wrap gap-2 pt-1">
           <button
             type="button"
             onClick={() => setEmailModalOpen(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow] duration-200"
+            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
           >
             Change email
           </button>
           <button
             type="button"
             onClick={() => setPwModalOpen(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow] duration-200"
+            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
           >
             Change password
           </button>
@@ -230,14 +230,14 @@ export default function Profile() {
             type="button"
             onClick={handleExportData}
             disabled={exportAccountDataMutation.isPending}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] disabled:opacity-40 disabled:cursor-not-allowed transition-[color,border-color,text-shadow] duration-200"
+            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] disabled:opacity-40 disabled:cursor-not-allowed transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
           >
             {exportAccountDataMutation.isPending ? '[ EXPORTING... ]' : 'Download my data'}
           </button>
           <button
             type="button"
             onClick={() => setDeleteModalOpen(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444415] hover:[box-shadow:0_0_10px_#ef444460] transition-[background-color,box-shadow] duration-200"
+            className="text-xs px-3 py-1.5 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444415] hover:[box-shadow:0_0_10px_#ef444460] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
           >
             Delete account
           </button>
@@ -251,7 +251,7 @@ export default function Profile() {
 
       <button
         onClick={() => setConfirmOpen(true)}
-        className="px-4 py-2 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow] duration-200"
+        className="px-4 py-2 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
       >
         Sign out
       </button>
@@ -267,7 +267,7 @@ export default function Profile() {
           >
             <div className="space-y-1">
               <p className="text-sm font-medium text-[#e8e4dc]">Change email</p>
-              <p className="text-xs text-[#4a5068]">Current: {email ?? '—'}</p>
+              <p className="text-xs text-[#4a5068]">Current: {email ?? '-'}</p>
             </div>
             <form onSubmit={handleChangeEmail} className="space-y-3">
               <div className="space-y-1">
@@ -308,7 +308,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={closeEmailModal}
-                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
                 >
                   Cancel
                 </button>
@@ -389,7 +389,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={closePwModal}
-                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
                 >
                   Cancel
                 </button>
@@ -478,13 +478,13 @@ export default function Profile() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setConfirmOpen(false)}
-                className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
+                className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleLogout}
-                className="px-4 py-1.5 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow] duration-200"
+                className="px-4 py-1.5 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
               >
                 Sign out
               </button>
