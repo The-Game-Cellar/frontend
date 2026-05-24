@@ -1,11 +1,6 @@
 import { Link } from 'react-router-dom'
 
-/**
- * Persistent IGDB attribution. Required by the Twitch / IGDB Terms of Service:
- * any view that displays IGDB-sourced data must include a discoverable credit.
- * Shown sitewide via Layout, and on Login/Register since unauthenticated users
- * can already see "The Game Cellar" branding before they reach the API.
- */
+// Twitch/IGDB ToS requires a discoverable credit on every view that surfaces IGDB-sourced data.
 export default function AttributionFooter() {
   return (
     <footer className="text-center text-xs text-[#4a5068] py-3 px-4">

@@ -42,12 +42,12 @@ html.is-scrolling::-webkit-scrollbar-thumb {
 
 @layer utilities {
   .neon-card {
-    box-shadow: 0 0 0px rgba(247, 37, 133, 0);
-    transition: border-color 250ms ease, box-shadow 250ms ease;
+    box-shadow: 0 0 0 rgba(247, 37, 133, 0), 0 0 0 rgba(247, 37, 133, 0);
+    transition: border-color 400ms ease, box-shadow 400ms ease;
   }
 
   .neon-card:hover {
-    box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+    box-shadow: 0 0 18px rgba(247, 37, 133, 0.6), 0 0 45px rgba(247, 37, 133, 0.35);
     border-color: #f72585;
   }
 
@@ -132,7 +132,6 @@ html.is-scrolling::-webkit-scrollbar-thumb {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }

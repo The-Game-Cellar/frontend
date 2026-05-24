@@ -101,7 +101,6 @@ export default function Explore() {
   const platformGroups: PlatformGroup[] = Array.isArray(platformsData?.groups) ? platformsData.groups : []
   const platformOthers: string[] = Array.isArray(platformsData?.others) ? platformsData.others : []
 
-  // Browse view query
   const browseParams: SearchGamesParams = {
     query: searchQuery,
     genre,
@@ -121,7 +120,6 @@ export default function Explore() {
   const games: GameResponse[] = Array.isArray(browseData?.games) ? browseData.games : []
   const totalPages = Math.ceil((browseData?.totalCount ?? 0) / PAGE_SIZE)
 
-  // Upcoming view queries
   const { data: ownedIdsData } = useOwnedIgdbIds()
   const ownedIds = ownedIdsData ?? []
 
@@ -144,11 +142,7 @@ export default function Explore() {
     ? upcomingPlatformsResponse.platforms.filter((s): s is string => typeof s === 'string')
     : []
 
-  // Filter the full platform list to those that have at least one upcoming release.
-  // PlatformDropdown's groups[].platforms and others arrays are flat strings (not objects),
-  // so the filter compares against String(p) directly. Drops empty umbrella groups so the
-  // dropdown stays tight. While the upcoming-platforms list is still loading we keep the
-  // full list. Narrowing only kicks in once we have data, so the dropdown is never empty.
+  // While upcoming-platforms is loading, keep the full list so the dropdown is never empty.
   const upcomingPlatformSet = new Set(upcomingPlatformNames.map((n) => String(n).toLowerCase()))
   const hasUpcomingPlatformData = upcomingPlatformNames.length > 0
   const filteredPlatformGroups: PlatformGroup[] = hasUpcomingPlatformData

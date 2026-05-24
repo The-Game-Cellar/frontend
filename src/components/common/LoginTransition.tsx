@@ -4,9 +4,7 @@ interface LoginTransitionProps {
 }
 
 export default function LoginTransition({ leaving = false, durationMs = 700 }: LoginTransitionProps) {
-  // Pad the bar so it visibly reaches 100% and rests there for ~120ms before
-  // the leaving fade. With no padding, the cross-fade clips the final frames
-  // and the bar reads as "not quite full."
+  // Pad so the bar visibly hits 100% before the leaving fade; without padding the cross-fade clips it short.
   const barMs = Math.max(durationMs - 120, 150)
   return (
     <div
