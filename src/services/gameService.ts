@@ -21,6 +21,10 @@ export interface SearchGamesParams {
   page?: number
   pageSize?: number
   dbOnly?: boolean
+  releasedFrom?: number
+  releasedTo?: number
+  tags?: string
+  ratingFrom?: number
 }
 
 export interface PopularGamesParams {

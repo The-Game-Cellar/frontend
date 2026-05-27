@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/games/by-developer/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getByDeveloper"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/games/by-collection/{name}": {
         parameters: {
             query?: never;
@@ -447,6 +463,18 @@ export interface components {
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            availableTagCounts?: {
+                [key: string]: number;
+            };
+            availableGenreCounts?: {
+                [key: string]: number;
+            };
+            availableGameModeCounts?: {
+                [key: string]: number;
+            };
+            availablePerspectiveCounts?: {
+                [key: string]: number;
+            };
         };
         PopularTagsResponse: {
             tags?: string[];
@@ -766,6 +794,10 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
                 dbOnly?: boolean;
+                releasedFrom?: number;
+                releasedTo?: number;
+                tags?: string;
+                ratingFrom?: number;
             };
             header?: never;
             path?: never;
@@ -895,6 +927,31 @@ export interface operations {
         };
     };
     getByFranchise: {
+        parameters: {
+            query?: {
+                limit?: number;
+                excludeIgdbId?: number;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GameResponse"][];
+                };
+            };
+        };
+    };
+    getByDeveloper: {
         parameters: {
             query?: {
                 limit?: number;

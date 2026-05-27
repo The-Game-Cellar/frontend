@@ -40,6 +40,45 @@ html.is-scrolling::-webkit-scrollbar-thumb {
   background: #2a2d45;
 }
 
+.year-range-thumb {
+  z-index: 2;
+}
+.year-range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0a0b14;
+  border: 2px solid var(--thumb-color, #8891a8);
+  cursor: pointer;
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.year-range-thumb::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 8px var(--thumb-color, #8891a8);
+  transform: scale(1.1);
+}
+.year-range-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0a0b14;
+  border: 2px solid var(--thumb-color, #8891a8);
+  cursor: pointer;
+}
+.year-range-thumb::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 18px;
+  border: none;
+}
+.year-range-thumb::-moz-range-track {
+  background: transparent;
+  height: 18px;
+  border: none;
+}
+
 @layer utilities {
   .neon-card {
     box-shadow: 0 0 0 rgba(247, 37, 133, 0), 0 0 0 rgba(247, 37, 133, 0);
