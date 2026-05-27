@@ -1,10 +1,12 @@
 import type { AxiosResponse } from 'axios'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from './api'
 import type {
+  BecauseYouLikedDTO,
   DashboardDTO,
   GroupedRecommendationsResponse,
   RecommendationDTO,
+  RecommendationRow,
 } from '../types/api'
 
 // Session-scoped IGDB ids; backend uses this as a soft-penalty input, not an exclusion.
@@ -56,6 +58,31 @@ export const getPersonalizedGrouped = (): Promise<AxiosResponse<GroupedRecommend
   const recentlyShownIds = getRecentlyShownIds()
   return api.post('/api/v1/recommendations/personalized/grouped', { recentlyShownIds })
 }
+
+// Single-row refresh on /recommendations. Backend enqueues a per-genre top-up so the next
+// click serves strictly fresh ids; current bucket parks in pool_holding for ~60s.
+export const refreshGenreRow = (genre: string): Promise<AxiosResponse<RecommendationRow>> => {
+  const recentlyShownIds = getRecentlyShownIds()
+  return api.post('/api/v1/recommendations/personalized/grouped/genre', { genre, recentlyShownIds })
+}
+
+// Per-section refresh on /dashboard. /personalized returns a flat top-N (not the grouped layout).
+// recentlyShownIds + limit are sent through the body.
+export const getPersonalized = (limit: number = 10): Promise<AxiosResponse<RecommendationDTO[]>> => {
+  const recentlyShownIds = getRecentlyShownIds()
+  return api.post('/api/v1/recommendations/personalized', { limit, recentlyShownIds })
+}
+
+// Refresh button on dashboard "Because you liked X" rotates seed to a different rated >= 7 game.
+// excludeSeedIgdbIds covers BOTH currently-shown BYL sections so the new pick doesn't collide
+// with either. Backend re-rolls and returns one fresh section.
+export const rollBecauseYouLiked = (
+  excludeSeedIgdbIds: number[],
+): Promise<AxiosResponse<BecauseYouLikedDTO | ''>> =>
+  api.get('/api/v1/recommendations/dashboard/because-you-liked', {
+    params: { excludeSeedIgdbIds },
+    paramsSerializer: { indexes: null },
+  })
 
 export const getWildCard = (limit: number = 10): Promise<AxiosResponse<RecommendationDTO[]>> =>
   api.get('/api/v1/recommendations/wildcard', { params: { limit } })
@@ -124,3 +151,25 @@ export const useBasedOn = (gameId: number, limit = 10, enabled = true) =>
     queryFn: () => getBasedOn(gameId, limit).then((r) => (Array.isArray(r.data) ? r.data : [])),
     enabled: enabled && Number.isFinite(gameId),
   })
+
+// Replaces only the matching row in the cached grouped query. Tracks the new ids in the
+// recently-shown set so the next refresh keeps biasing toward fresh content.
+export const useRefreshGenreRow = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (genre: string) => refreshGenreRow(genre).then((r) => r.data),
+    onSuccess: (row, genre) => {
+      if (!row) return
+      const ids = (row.games ?? []).map((g) => g.igdbId).filter((id): id is number => id != null)
+      addRecentlyShownIds(ids)
+      queryClient.setQueryData<GroupedRecommendationsResponse | undefined>(
+        recommendationKeys.grouped(),
+        (prev) => {
+          if (!prev) return prev
+          const rows = (prev.rows ?? []).map((r) => (r.genre === genre ? row : r))
+          return { ...prev, rows }
+        },
+      )
+    },
+  })
+}

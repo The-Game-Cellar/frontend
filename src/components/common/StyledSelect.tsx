@@ -12,6 +12,7 @@ interface StyledSelectProps {
   disabled?: boolean
   alwaysActive?: boolean
   className?: string
+  counts?: Record<string, number>
 }
 
 export default function StyledSelect({
@@ -21,6 +22,7 @@ export default function StyledSelect({
   disabled = false,
   alwaysActive = false,
   className = '',
+  counts,
 }: StyledSelectProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -72,22 +74,50 @@ export default function StyledSelect({
           style={{ width: 'max-content', maxWidth: '20rem' }}
           className="styled-scrollbar absolute z-40 top-full left-0 mt-1 max-h-72 overflow-y-auto bg-[#111220] border border-[#2a2d45] rounded shadow-[0_4px_12px_rgba(0,0,0,0.6)] py-1 text-xs"
         >
-          {options.map((opt) => (
-            <button
-              type="button"
-              key={opt.value}
-              onClick={() => select(opt.value)}
-              className={`block w-full text-left px-4 py-1.5 transition-colors whitespace-nowrap ${
-                opt.value === value
-                  ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
-                  : 'text-[#e8e4dc] hover:bg-[#181a2e]'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {sortByAvailability(options, value, counts).map((opt) => {
+            const isPicked = opt.value === value
+            const count = counts?.[opt.value]
+            const unavailable = counts !== undefined && !isPicked && opt.value !== '' && (count ?? 0) === 0
+            const stateClass = isPicked
+              ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
+              : unavailable
+                ? 'text-[#3a3f5a]'
+                : 'text-[#e8e4dc] hover:bg-[#181a2e]'
+            return (
+              <button
+                type="button"
+                key={opt.value}
+                onClick={() => !unavailable && select(opt.value)}
+                disabled={unavailable}
+                aria-disabled={unavailable}
+                className={`flex w-full items-center justify-between gap-3 px-4 py-1.5 transition-colors whitespace-nowrap ${stateClass}`}
+              >
+                <span className="truncate">{opt.label}</span>
+                {counts !== undefined && opt.value !== '' && (
+                  unavailable ? (
+                    <span className="italic text-[#4a5068]">no match</span>
+                  ) : (
+                    <span className={isPicked ? 'opacity-80' : 'text-[#8891a8]'}>{count ?? 0}</span>
+                  )
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
   )
+}
+
+function sortByAvailability(
+  options: StyledSelectOption[],
+  value: string,
+  counts?: Record<string, number>,
+): StyledSelectOption[] {
+  if (!counts) return options
+  return [...options].sort((a, b) => {
+    const aOut = a.value !== '' && a.value !== value && (counts[a.value] ?? 0) === 0 ? 1 : 0
+    const bOut = b.value !== '' && b.value !== value && (counts[b.value] ?? 0) === 0 ? 1 : 0
+    return aOut - bOut
+  })
 }

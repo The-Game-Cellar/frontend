@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { usePersonalizedGrouped } from '../services/recommendationService'
+import { usePersonalizedGrouped, useRefreshGenreRow } from '../services/recommendationService'
 import GameCard from '../components/common/GameCard'
 import type { RecommendationDTO, RecommendationRow } from '../types/api'
 
@@ -48,9 +48,11 @@ interface RowProps {
   row: RecommendationRow
   onGameClick: (g: RecommendationDTO) => void
   onLabelClick: (genre: string) => void
+  onRefresh: (genre: string) => void
+  refreshing: boolean
 }
 
-function Row({ row, onGameClick, onLabelClick }: RowProps) {
+function Row({ row, onGameClick, onLabelClick, onRefresh, refreshing }: RowProps) {
   if (!row.games || row.games.length === 0) return null
   return (
     <section className="space-y-3">
@@ -65,6 +67,16 @@ function Row({ row, onGameClick, onLabelClick }: RowProps) {
             {row.label} →
           </button>
         )}
+        {!row.fallback && row.genre && (
+          <button
+            onClick={() => row.genre && onRefresh(row.genre)}
+            disabled={refreshing}
+            className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Refresh this row"
+          >
+            {refreshing ? '↻ ...' : 'Refresh'}
+          </button>
+        )}
       </div>
       <AdaptiveRail games={row.games} onGameClick={onGameClick} />
     </section>
@@ -73,22 +85,18 @@ function Row({ row, onGameClick, onLabelClick }: RowProps) {
 
 export default function Recommendations() {
   const navigate = useNavigate()
-  const { data, isFetching, error, refetch } = usePersonalizedGrouped()
+  const { data, isFetching, error } = usePersonalizedGrouped()
+  const refreshRow = useRefreshGenreRow()
 
   const handleGameClick = (g: RecommendationDTO) => navigate(`/games/${g.igdbId}`)
   const handleLabelClick = (genre: string) => navigate(`/explore?genre=${encodeURIComponent(genre)}`)
+  const handleRowRefresh = (genre: string) => refreshRow.mutate(genre)
+  const refreshingGenre = refreshRow.isPending ? (refreshRow.variables ?? null) : null
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Recommendations</h1>
-        <button
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_6px_#f7258560] active:scale-[0.97] transition-[border-color,color,box-shadow,transform] duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          [ REFRESH ]
-        </button>
       </div>
 
       {isFetching && (
@@ -120,7 +128,14 @@ export default function Recommendations() {
       {!isFetching && !error && data && (data.rows ?? []).length > 0 && (
         <div className="space-y-10 animate-enter">
           {(data.rows ?? []).map((row, i) => (
-            <Row key={`${row.label}-${i}`} row={row} onGameClick={handleGameClick} onLabelClick={handleLabelClick} />
+            <Row
+              key={`${row.label}-${i}`}
+              row={row}
+              onGameClick={handleGameClick}
+              onLabelClick={handleLabelClick}
+              onRefresh={handleRowRefresh}
+              refreshing={refreshingGenre === row.genre}
+            />
           ))}
         </div>
       )}

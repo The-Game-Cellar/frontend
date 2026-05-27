@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import GameCard from '../components/common/GameCard'
 import type { GameCardData } from '../components/common/GameCard'
-import { recommendationKeys } from '../services/recommendationService'
-import { getDashboard } from '../services/recommendationService'
+import { recommendationKeys, addRecentlyShownIds } from '../services/recommendationService'
+import { getDashboard, getPersonalized, getWildCard, rollBecauseYouLiked } from '../services/recommendationService'
+import type { BecauseYouLikedDTO } from '../types/api'
 import { useBacklog, useDustyGames, useUserPlatforms, useOwnedIgdbIds } from '../services/libraryService'
 import { useUpcomingGames } from '../services/gameService'
 import type {
@@ -15,9 +16,7 @@ import type {
   UserGameDTO,
 } from '../types/api'
 
-// Pre-fetch N batches so Refresh swaps instantly until the queue empties.
 const DASHBOARD_CURRENT_KEY = [...recommendationKeys.dashboard(), 'current'] as const
-const DASHBOARD_BUFFER_TARGET = 4
 
 type LibraryDashboardEntry = UserGameDTO & { name: string }
 
@@ -172,56 +171,84 @@ export default function Dashboard() {
     queryFn: () => getDashboard().then((r) => r.data),
   })
 
-  // Refs (not state): buffer mutations don't need to trigger renders.
-  const bufferRef = useRef<DashboardDTO[]>([])
-  const inFlightRef = useRef(0)
+  const [recsRefreshing, setRecsRefreshing] = useState(false)
+  const [wildcardRefreshing, setWildcardRefreshing] = useState(false)
+  const [bylRefreshing, setBylRefreshing] = useState<Record<number, boolean>>({})
 
-  const fetchOne = useCallback(() => {
-    inFlightRef.current += 1
-    return getDashboard()
-      .then((res) => {
-        if (res.data) bufferRef.current.push(res.data)
+  const updateDashSlice = useCallback(
+    (mutator: (prev: DashboardDTO) => DashboardDTO) => {
+      queryClient.setQueryData<DashboardDTO | undefined>(DASHBOARD_CURRENT_KEY, (prev) => {
+        if (!prev) return prev
+        return mutator(prev)
       })
-      .catch(() => { /* best-effort refill */ })
-      .finally(() => {
-        inFlightRef.current -= 1
-      })
-  }, [])
+    },
+    [queryClient],
+  )
 
-  const refillBuffer = useCallback(() => {
-    while (bufferRef.current.length + inFlightRef.current < DASHBOARD_BUFFER_TARGET) {
-      fetchOne()
-    }
-  }, [fetchOne])
-
-  useEffect(() => {
-    if (dashData) refillBuffer()
-  }, [dashData, refillBuffer])
-
-  const [dashRefreshing, setDashRefreshing] = useState(false)
-
-  const loadDashboard = useCallback(async () => {
-    if (bufferRef.current.length > 0) {
-      const next = bufferRef.current.shift()!
-      queryClient.setQueryData(DASHBOARD_CURRENT_KEY, next)
-      return
-    }
-    setDashRefreshing(true)
+  const refreshRecommendations = useCallback(async () => {
+    setRecsRefreshing(true)
     try {
-      const res = await getDashboard()
-      if (res.data) queryClient.setQueryData(DASHBOARD_CURRENT_KEY, res.data)
-    } catch { /* keep showing current */ }
-    setDashRefreshing(false)
-  }, [queryClient])
+      const res = await getPersonalized(20)
+      const fresh: RecommendationDTO[] = Array.isArray(res.data) ? res.data : []
+      const ids = fresh.map((r) => r.igdbId).filter((id): id is number => id != null)
+      addRecentlyShownIds(ids)
+      updateDashSlice((prev) => ({ ...prev, recommendations: fresh }))
+    } catch { /* keep current */ }
+    setRecsRefreshing(false)
+  }, [updateDashSlice])
+
+  const refreshWildcard = useCallback(async () => {
+    setWildcardRefreshing(true)
+    try {
+      const res = await getWildCard(12)
+      const fresh: RecommendationDTO[] = Array.isArray(res.data) ? res.data : []
+      updateDashSlice((prev) => ({ ...prev, wildcard: fresh }))
+    } catch { /* keep current */ }
+    setWildcardRefreshing(false)
+  }, [updateDashSlice])
+
+  const refreshBecauseYouLiked = useCallback(
+    async (basedOnIgdbId: number) => {
+      setBylRefreshing((m) => ({ ...m, [basedOnIgdbId]: true }))
+      try {
+        const currentSections = (queryClient.getQueryData<DashboardDTO>(DASHBOARD_CURRENT_KEY)?.becauseYouLiked ?? [])
+        const excludes = currentSections
+          .map((s) => s.basedOnIgdbId)
+          .filter((id): id is number => id != null)
+        const res = await rollBecauseYouLiked(excludes)
+        const fresh = res.data && typeof res.data === 'object' ? (res.data as BecauseYouLikedDTO) : null
+        if (fresh) {
+          updateDashSlice((prev) => {
+            const sections = (prev.becauseYouLiked ?? []).map((s) =>
+              s.basedOnIgdbId === basedOnIgdbId ? fresh : s,
+            )
+            return { ...prev, becauseYouLiked: sections }
+          })
+        }
+      } catch { /* keep current */ }
+      setBylRefreshing((m) => ({ ...m, [basedOnIgdbId]: false }))
+    },
+    [updateDashSlice, queryClient],
+  )
+
   const recommendations: RecommendationDTO[] = dashData?.recommendations ?? []
   const becauseYouLiked = dashData?.becauseYouLiked ?? []
   const wildcard: RecommendationDTO[] = dashData?.wildcard ?? []
 
   const { data: backlogData, isError: backlogError, refetch: refetchBacklog } = useBacklog()
-  const backlog: LibraryDashboardEntry[] = (backlogData ?? []).map((g) => ({ ...g, name: g.gameName ?? '' }))
+  // Memoize so reference stays stable across renders triggered by sibling-section refreshes.
+  // GameScroll's prevGamesRef check otherwise sees a new .map() array every render and replays
+  // the stagger-in animation.
+  const backlog: LibraryDashboardEntry[] = useMemo(
+    () => (backlogData ?? []).map((g) => ({ ...g, name: g.gameName ?? '' })),
+    [backlogData],
+  )
 
   const { data: dustyData, isError: dustyError, refetch: refetchDusty } = useDustyGames()
-  const dusty: LibraryDashboardEntry[] = (dustyData ?? []).map((g) => ({ ...g, name: g.gameName ?? '' }))
+  const dusty: LibraryDashboardEntry[] = useMemo(
+    () => (dustyData ?? []).map((g) => ({ ...g, name: g.gameName ?? '' })),
+    [dustyData],
+  )
 
   const { data: platformsData } = useUserPlatforms()
   const platformNames = (platformsData ?? [])
@@ -256,17 +283,17 @@ export default function Dashboard() {
               View all →
             </Link>
             <button
-              onClick={loadDashboard}
-              disabled={dashRefreshing}
+              onClick={refreshRecommendations}
+              disabled={recsRefreshing}
               className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Re-shuffle"
+              title="Refresh recommendations"
             >
-              {dashRefreshing ? '↻ Refreshing...' : 'Refresh'}
+              {recsRefreshing ? '↻ Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
         {recsError ? (
-          <ErrorBanner message="Could not load recommendations." onRetry={loadDashboard} />
+          <ErrorBanner message="Could not load recommendations." onRetry={refreshRecommendations} />
         ) : !dashLoading && recommendations.length === 0 ? (
           <p className="text-sm text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
         ) : (
@@ -319,27 +346,43 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Because you liked... */}
-      {!recsError && !dashLoading && becauseYouLiked.map((section) => (
-        <section key={section.basedOnIgdbId}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-[#e8e4dc]">
-              Because you liked{' '}
-              <Link
-                to={`/games/${section.basedOnIgdbId}`}
-                className="text-[#f72585] [text-shadow:0_0_8px_#f72585] hover:underline"
-              >
-                {section.basedOnGame}
-              </Link>
-            </h2>
-          </div>
-          <GameScroll
-            games={section.recommendations ?? []}
-            getKey={(g) => g.igdbId ?? 0}
-            onClick={(g) => navigate(`/games/${g.igdbId}`)}
-          />
-        </section>
-      ))}
+      {/* Because you liked X | Because you liked Y -- two sections share one row, 50/50 split. */}
+      {!recsError && !dashLoading && becauseYouLiked.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {becauseYouLiked.map((section: BecauseYouLikedDTO) => {
+            const sectionId = section.basedOnIgdbId ?? 0
+            const refreshing = !!bylRefreshing[sectionId]
+            return (
+              <section key={sectionId} className="min-w-0">
+                <div className="flex items-center justify-between mb-4 gap-3">
+                  <h2 className="text-lg font-medium text-[#e8e4dc] truncate">
+                    Because you liked{' '}
+                    <Link
+                      to={`/games/${sectionId}`}
+                      className="text-[#f72585] [text-shadow:0_0_8px_#f72585] hover:underline"
+                    >
+                      {section.basedOnGame}
+                    </Link>
+                  </h2>
+                  <button
+                    onClick={() => refreshBecauseYouLiked(sectionId)}
+                    disabled={refreshing || !sectionId}
+                    className="flex-shrink-0 text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Refresh this row"
+                  >
+                    {refreshing ? '↻ ...' : 'Refresh'}
+                  </button>
+                </div>
+                <GameScroll
+                  games={section.recommendations ?? []}
+                  getKey={(g) => g.igdbId ?? 0}
+                  onClick={(g) => navigate(`/games/${g.igdbId}`)}
+                />
+              </section>
+            )
+          })}
+        </div>
+      )}
 
       {/* Backlog */}
       <section>
@@ -377,7 +420,22 @@ export default function Dashboard() {
       {/* Wild Card */}
       {!recsError && !dashLoading && wildcard.length > 0 && (
         <section>
-          <SectionHeader title="Wild Card" linkText="More →" linkTo="/wildcard" />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium text-[#e8e4dc]">Wild Card</h2>
+            <div className="flex items-center gap-3">
+              <Link to="/wildcard" className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+                More →
+              </Link>
+              <button
+                onClick={refreshWildcard}
+                disabled={wildcardRefreshing}
+                className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Refresh wild card"
+              >
+                {wildcardRefreshing ? '↻ Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
           <GameScroll
             games={wildcard}
             getKey={(g) => g.igdbId ?? 0}

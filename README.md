@@ -35,7 +35,7 @@
 | `/dashboard`              | Yes       | Recommendations, "Because you liked" seed, Wild Card, Coming Soon, DUSTY strip, backlog snapshot.      |
 | `/library`                | Yes       | Game collection. Status tabs, platform / genre / tags / rating filters, list + grid view toggle.       |
 | `/recommendations`        | Yes       | Personalized recommendations grid, grouped by genre row.                                               |
-| `/explore`                | Yes       | Browse the catalog. Search, genre / platform filters, "Coming soon" view.                              |
+| `/explore`                | Yes       | Browse the catalog. Search, genre / platform / gamemodes / camera / release-year filters, "Coming soon" view. |
 | `/wildcard`               | Yes       | Dedicated Wild Card discovery page with a Roll Again button.                                           |
 | `/games/:igdbId`          | Yes       | Game detail. Hero, Add / Change status, `RatingWidget`, similar games scroll, addons.                  |
 | `/profile`                | Yes       | Account: email, change email / password, export data, delete account, sign out.                        |

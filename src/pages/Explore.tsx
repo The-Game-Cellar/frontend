@@ -6,6 +6,7 @@ import {
   useSearchGames,
   useGenres,
   useGamePlatforms,
+  usePopularTags,
   useUpcomingGames,
   useUpcomingPlatforms,
 } from '../services/gameService'
@@ -14,6 +15,8 @@ import { useOwnedIgdbIds } from '../services/libraryService'
 import GameCard from '../components/common/GameCard'
 import PlatformDropdown from '../components/common/PlatformDropdown'
 import StyledSelect from '../components/common/StyledSelect'
+import TagDropdown from '../components/common/TagDropdown'
+import YearRangeSlider from '../components/common/YearRangeSlider'
 import type { GameResponse, PlatformGroup } from '../types/api'
 
 type ViewKey = 'browse' | 'upcoming'
@@ -38,7 +41,6 @@ function formatReleaseDate(epochSeconds: number | null | undefined): string {
 }
 
 const GAME_MODES = [
-  { value: '',                          label: 'All' },
   { value: 'Single player',             label: 'Single-player' },
   { value: 'Multiplayer',               label: 'Multiplayer' },
   { value: 'Co-operative',              label: 'Co-operative' },
@@ -48,7 +50,6 @@ const GAME_MODES = [
 ]
 
 const PERSPECTIVES = [
-  { value: '',                  label: 'All' },
   { value: 'First person',      label: 'First-person' },
   { value: 'Third person',      label: 'Third-person' },
   { value: 'Bird view / Isometric', label: 'Bird-view / Isometric' },
@@ -68,6 +69,30 @@ const ORDERINGS: { value: OrderingFilter; label: string }[] = [
 
 const PAGE_SIZE = 20
 
+const YEAR_MIN = 1970
+const YEAR_MAX = new Date().getFullYear() + 5
+
+const RATING_OPTIONS = [
+  { value: '',  label: 'All' },
+  { value: '1', label: '1+' },
+  { value: '2', label: '2+' },
+  { value: '3', label: '3+' },
+  { value: '4', label: '4+' },
+  { value: '5', label: '5+' },
+  { value: '6', label: '6+' },
+  { value: '7', label: '7+' },
+  { value: '8', label: '8+' },
+  { value: '9', label: '9+' },
+]
+
+function yearToEpochStart(year: number): number {
+  return Math.floor(new Date(Date.UTC(year, 0, 1)).getTime() / 1000)
+}
+
+function yearToEpochEnd(year: number): number {
+  return Math.floor(new Date(Date.UTC(year, 11, 31, 23, 59, 59)).getTime() / 1000)
+}
+
 export default function Explore() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -82,12 +107,16 @@ export default function Explore() {
 
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [genre, setGenre] = useState(searchParams.get('genre') ?? '')
+  const initialGenreParam = searchParams.get('genre') ?? ''
+  const [genreFilters, setGenreFilters] = useState<string[]>(initialGenreParam ? initialGenreParam.split(',').filter(Boolean) : [])
   const [platform, setPlatform] = useState('')
-  const [gameMode, setGameMode] = useState('')
-  const [perspective, setPerspective] = useState('')
+  const [gameModeFilters, setGameModeFilters] = useState<string[]>([])
+  const [perspectiveFilters, setPerspectiveFilters] = useState<string[]>([])
   const [gameType, setGameType] = useState<GameTypeFilter>('main')
   const [ordering, setOrdering] = useState<OrderingFilter>('-rating')
+  const [yearRange, setYearRange] = useState<[number, number]>([YEAR_MIN, YEAR_MAX])
+  const [tagFilters, setTagFilters] = useState<string[]>([])
+  const [ratingFrom, setRatingFrom] = useState<number | null>(null)
   const [page, setPage] = useState(0)
 
   const [upcomingHorizon, setUpcomingHorizon] = useState('90')
@@ -101,16 +130,29 @@ export default function Explore() {
   const platformGroups: PlatformGroup[] = Array.isArray(platformsData?.groups) ? platformsData.groups : []
   const platformOthers: string[] = Array.isArray(platformsData?.others) ? platformsData.others : []
 
+  const { data: popularTagsData } = usePopularTags(50)
+  const tagOptions: string[] = Array.isArray(popularTagsData) ? popularTagsData : []
+
+  const [yearFrom, yearTo] = yearRange
+  const yearActive = yearFrom > YEAR_MIN || yearTo < YEAR_MAX
+  const tagsActive = tagFilters.length > 0
+  const genreActive = genreFilters.length > 0
+  const gameModesActive = gameModeFilters.length > 0
+  const perspectiveActive = perspectiveFilters.length > 0
+  const ratingActive = ratingFrom !== null
   const browseParams: SearchGamesParams = {
     query: searchQuery,
-    genre,
     platform,
-    gameMode,
-    perspective,
     gameType,
     ordering,
     page,
     pageSize: PAGE_SIZE,
+    ...(genreActive ? { genre: genreFilters.join(',') } : {}),
+    ...(gameModesActive ? { gameMode: gameModeFilters.join(',') } : {}),
+    ...(perspectiveActive ? { perspective: perspectiveFilters.join(',') } : {}),
+    ...(yearActive ? { releasedFrom: yearToEpochStart(yearFrom), releasedTo: yearToEpochEnd(yearTo) } : {}),
+    ...(tagsActive ? { tags: tagFilters.join(',') } : {}),
+    ...(ratingActive ? { ratingFrom } : {}),
   }
   const {
     data: browseData,
@@ -119,6 +161,10 @@ export default function Explore() {
   } = useSearchGames(browseParams, view === 'browse')
   const games: GameResponse[] = Array.isArray(browseData?.games) ? browseData.games : []
   const totalPages = Math.ceil((browseData?.totalCount ?? 0) / PAGE_SIZE)
+  const tagCounts = (browseData?.availableTagCounts ?? undefined) as Record<string, number> | undefined
+  const genreCounts = (browseData?.availableGenreCounts ?? undefined) as Record<string, number> | undefined
+  const gameModeCounts = (browseData?.availableGameModeCounts ?? undefined) as Record<string, number> | undefined
+  const perspectiveCounts = (browseData?.availablePerspectiveCounts ?? undefined) as Record<string, number> | undefined
 
   const { data: ownedIdsData } = useOwnedIgdbIds()
   const ownedIds = ownedIdsData ?? []
@@ -172,17 +218,20 @@ export default function Explore() {
     }, 300)
   }
 
-  const isFiltered = !!(searchQuery || genre || platform || gameMode || perspective || gameType !== 'main' || ordering !== '-rating')
+  const isFiltered = !!(searchQuery || genreActive || platform || gameModesActive || perspectiveActive || gameType !== 'main' || ordering !== '-rating' || yearActive || tagsActive || ratingActive)
 
   const handleReset = () => {
     setSearchInput('')
     setSearchQuery('')
-    setGenre('')
+    setGenreFilters([])
     setPlatform('')
-    setGameMode('')
-    setPerspective('')
+    setGameModeFilters([])
+    setPerspectiveFilters([])
     setGameType('main')
     setOrdering('-rating')
+    setYearRange([YEAR_MIN, YEAR_MAX])
+    setTagFilters([])
+    setRatingFrom(null)
     setPage(0)
   }
 
@@ -263,13 +312,17 @@ export default function Explore() {
         <BrowseView
           searchInput={searchInput}
           handleSearchChange={handleSearchChange}
-          genre={genre} setGenre={(v) => { setGenre(v); setPage(0) }} genres={genres}
+          genreFilters={genreFilters} setGenreFilters={(v) => { setGenreFilters(v); setPage(0) }} genres={genres}
           platform={platform} setPlatform={(v) => { setPlatform(v); setPage(0) }}
           platformGroups={platformGroups} platformOthers={platformOthers}
-          gameMode={gameMode} setGameMode={(v) => { setGameMode(v); setPage(0) }}
-          perspective={perspective} setPerspective={(v) => { setPerspective(v); setPage(0) }}
+          gameModeFilters={gameModeFilters} setGameModeFilters={(v) => { setGameModeFilters(v); setPage(0) }}
+          perspectiveFilters={perspectiveFilters} setPerspectiveFilters={(v) => { setPerspectiveFilters(v); setPage(0) }}
           gameType={gameType} setGameType={setGameType}
           ordering={ordering} setOrdering={(v) => { setOrdering(v); setPage(0) }}
+          yearRange={yearRange} setYearRange={(v) => { setYearRange(v); setPage(0) }}
+          tagFilters={tagFilters} setTagFilters={(v) => { setTagFilters(v); setPage(0) }} tagOptions={tagOptions} tagCounts={tagCounts}
+          genreCounts={genreCounts} gameModeCounts={gameModeCounts} perspectiveCounts={perspectiveCounts}
+          ratingFrom={ratingFrom} setRatingFrom={(v) => { setRatingFrom(v); setPage(0) }}
           isFiltered={isFiltered} handleReset={handleReset}
           loading={browseLoading} error={browseError ? 'Failed to load games.' : null} games={games} navigate={navigate}
           page={page} totalPages={totalPages} handlePageChange={handlePageChange}
@@ -282,21 +335,32 @@ export default function Explore() {
 interface BrowseViewProps {
   searchInput: string
   handleSearchChange: (e: ChangeEvent<HTMLInputElement>) => void
-  genre: string
-  setGenre: (v: string) => void
+  genreFilters: string[]
+  setGenreFilters: (v: string[]) => void
   genres: string[]
   platform: string
   setPlatform: (v: string) => void
   platformGroups: PlatformGroup[]
   platformOthers: string[]
-  gameMode: string
-  setGameMode: (v: string) => void
-  perspective: string
-  setPerspective: (v: string) => void
+  gameModeFilters: string[]
+  setGameModeFilters: (v: string[]) => void
+  perspectiveFilters: string[]
+  setPerspectiveFilters: (v: string[]) => void
   gameType: GameTypeFilter
   setGameType: Dispatch<SetStateAction<GameTypeFilter>>
   ordering: OrderingFilter
   setOrdering: (v: OrderingFilter) => void
+  yearRange: [number, number]
+  setYearRange: (v: [number, number]) => void
+  tagFilters: string[]
+  setTagFilters: (v: string[]) => void
+  tagOptions: string[]
+  tagCounts: Record<string, number> | undefined
+  genreCounts: Record<string, number> | undefined
+  gameModeCounts: Record<string, number> | undefined
+  perspectiveCounts: Record<string, number> | undefined
+  ratingFrom: number | null
+  setRatingFrom: (v: number | null) => void
   isFiltered: boolean
   handleReset: () => void
   loading: boolean
@@ -310,10 +374,14 @@ interface BrowseViewProps {
 
 function BrowseView({
   searchInput, handleSearchChange,
-  genre, setGenre, genres,
+  genreFilters, setGenreFilters, genres,
   platform, setPlatform, platformGroups, platformOthers,
-  gameMode, setGameMode, perspective, setPerspective,
+  gameModeFilters, setGameModeFilters, perspectiveFilters, setPerspectiveFilters,
   gameType, setGameType, ordering, setOrdering,
+  yearRange, setYearRange,
+  tagFilters, setTagFilters, tagOptions, tagCounts,
+  genreCounts, gameModeCounts, perspectiveCounts,
+  ratingFrom, setRatingFrom,
   isFiltered, handleReset,
   loading, error, games, navigate,
   page, totalPages, handlePageChange,
@@ -321,7 +389,7 @@ function BrowseView({
   return (
     <>
       {/* Search + filters */}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-start gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-[#4a5068] uppercase tracking-wider">Search</label>
           <input
@@ -335,10 +403,23 @@ function BrowseView({
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-[#4a5068] uppercase tracking-wider">Genre</label>
-          <StyledSelect
-            value={genre}
-            onChange={setGenre}
-            options={[{ value: '', label: 'All' }, ...genres.map((g) => ({ value: g, label: g }))]}
+          <TagDropdown
+            value={genreFilters}
+            options={genres.map((g) => ({ value: g, label: g }))}
+            onChange={setGenreFilters}
+            counts={genreCounts}
+            emptyLabel="No genres available."
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Tags</label>
+          <TagDropdown
+            value={tagFilters}
+            options={tagOptions.map((t) => ({ value: t, label: t }))}
+            onChange={setTagFilters}
+            counts={tagCounts}
+            emptyLabel="No tags available."
           />
         </div>
 
@@ -354,12 +435,31 @@ function BrowseView({
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-[#4a5068] uppercase tracking-wider">Gamemodes</label>
-          <StyledSelect value={gameMode} onChange={setGameMode} options={GAME_MODES} />
+          <TagDropdown
+            value={gameModeFilters}
+            options={GAME_MODES}
+            onChange={setGameModeFilters}
+            counts={gameModeCounts}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs text-[#4a5068] uppercase tracking-wider">Camera</label>
-          <StyledSelect value={perspective} onChange={setPerspective} options={PERSPECTIVES} />
+          <TagDropdown
+            value={perspectiveFilters}
+            options={PERSPECTIVES}
+            onChange={setPerspectiveFilters}
+            counts={perspectiveCounts}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Rating</label>
+          <StyledSelect
+            value={ratingFrom === null ? '' : String(ratingFrom)}
+            onChange={(v) => setRatingFrom(v === '' ? null : Number(v))}
+            options={RATING_OPTIONS}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -367,10 +467,15 @@ function BrowseView({
           <StyledSelect alwaysActive value={ordering} onChange={(v) => setOrdering(v as OrderingFilter)} options={ORDERINGS} />
         </div>
 
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Release Year</label>
+          <YearRangeSlider min={YEAR_MIN} max={YEAR_MAX} value={yearRange} onChange={setYearRange} />
+        </div>
+
         <button
           type="button"
           onClick={() => setGameType((t) => (t === 'variant' ? 'main' : 'variant'))}
-          className={`text-xs px-3 py-1.5 rounded border transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97] ${
+          className={`mt-5 text-xs px-3 py-1.5 rounded border transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97] ${
             gameType === 'variant'
               ? 'border-[#f72585] text-[#f72585] [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540]'
               : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -381,7 +486,7 @@ function BrowseView({
         </button>
 
         {isFiltered && (
-          <button onClick={handleReset} className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]">
+          <button onClick={handleReset} className="mt-5 text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]">
             Reset filter
           </button>
         )}
