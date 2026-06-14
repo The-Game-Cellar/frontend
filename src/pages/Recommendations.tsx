@@ -58,11 +58,11 @@ function Row({ row, onGameClick, onLabelClick, onRefresh, refreshing }: RowProps
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         {row.fallback ? (
-          <h2 className="text-lg font-medium text-[#e8e4dc]">{row.label}</h2>
+          <h2 className="text-xl font-medium text-[#e8e4dc]">{row.label}</h2>
         ) : (
           <button
             onClick={() => row.genre && onLabelClick(row.genre)}
-            className="text-lg font-medium text-[#e8e4dc] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
+            className="text-xl font-medium text-[#e8e4dc] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200"
           >
             {row.label} →
           </button>
@@ -71,7 +71,7 @@ function Row({ row, onGameClick, onLabelClick, onRefresh, refreshing }: RowProps
           <button
             onClick={() => row.genre && onRefresh(row.genre)}
             disabled={refreshing}
-            className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-sm px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
             title="Refresh this row"
           >
             {refreshing ? '↻ ...' : 'Refresh'}
@@ -100,28 +100,28 @@ export default function Recommendations() {
       </div>
 
       {isFetching && (
-        <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+        <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       )}
 
       {!isFetching && error && (
-        <p className="text-sm text-[#ef4444]">Failed to load recommendations.</p>
+        <p className="text-base text-[#ef4444]">Failed to load recommendations.</p>
       )}
 
       {!isFetching && !error && data && data.tier === 3 && (
-        <div className="inline-flex px-4 py-3 rounded-lg border border-[#2a2d45] bg-[#12152a] text-xs text-[#8891a8] animate-enter">
+        <div className="inline-flex px-4 py-3 rounded-lg border border-[#2a2d45] bg-[#12152a] text-sm text-[#8891a8] animate-enter">
           {data.emptyMessage ?? 'Rate games in your library to unlock personalized recommendations.'}
         </div>
       )}
 
       {!isFetching && !error && data && data.tier !== 3 && data.emptyMessage && (
-        <div className="inline-flex px-4 py-3 rounded-lg border border-[#2a2d45] bg-[#12152a] text-xs text-[#8891a8] animate-enter">
+        <div className="inline-flex px-4 py-3 rounded-lg border border-[#2a2d45] bg-[#12152a] text-sm text-[#8891a8] animate-enter">
           {data.emptyMessage}
         </div>
       )}
 
       {!isFetching && !error && data && (data.rows ?? []).length === 0 && (
         <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
-          <p className="text-sm text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
+          <p className="text-base text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
         </div>
       )}
 

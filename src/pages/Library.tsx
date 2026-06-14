@@ -52,7 +52,7 @@ function isStatusTab(value: string): value is StatusTab {
 
 function ListIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <rect x="0" y="1" width="3" height="3" rx="0.5" />
       <rect x="5" y="1" width="11" height="3" rx="0.5" />
       <rect x="0" y="6.5" width="3" height="3" rx="0.5" />
@@ -65,7 +65,7 @@ function ListIcon() {
 
 function GridIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <rect x="0" y="0" width="7" height="7" rx="1" />
       <rect x="9" y="0" width="7" height="7" rx="1" />
       <rect x="0" y="9" width="7" height="7" rx="1" />
@@ -151,8 +151,8 @@ export default function Library() {
 
   const viewBtnClass = (active: boolean): string =>
     active
-      ? 'p-1.5 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]'
-      : 'p-1.5 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]'
+      ? 'p-2 rounded border border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258540] transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]'
+      : 'p-2 rounded border border-transparent text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#2a2d45] transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]'
 
   return (
     <div className="space-y-6">
@@ -161,7 +161,7 @@ export default function Library() {
         <div className="flex items-center gap-3 flex-shrink-0">
           <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Library</h1>
           {!gamesPending && (
-            <span className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#2a2d45]">
+            <span className="text-sm px-2.5 py-1 rounded bg-[#1e2035] text-[#8891a8] border border-[#2a2d45]">
               {displayedGames.length}
             </span>
           )}
@@ -184,10 +184,10 @@ export default function Library() {
             <button
               key={tab}
               onClick={() => setActiveStatus(tab)}
-              className={`text-xs px-3 py-1.5 rounded border transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
+              className={`text-sm px-4 py-2 rounded border transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97] ${
                 activeStatus === tab
                   ? tabActiveStyles[tab]
-                  : `border-[#2a2d45] text-[#4a5068] ${tabHoverStyles[tab]}`
+                  : `border-[#2a2d45] text-[#8891a8] ${tabHoverStyles[tab]}`
               }`}
             >
               {tab}
@@ -197,7 +197,7 @@ export default function Library() {
 
         <div className="flex flex-wrap gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-[#4a5068] uppercase tracking-wider">Platform</label>
+            <label className="text-sm text-[#8891a8] uppercase tracking-wider">Platform</label>
             <StyledSelect
               value={activePlatform}
               onChange={setActivePlatform}
@@ -207,7 +207,7 @@ export default function Library() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-[#4a5068] uppercase tracking-wider">Genre</label>
+            <label className="text-sm text-[#8891a8] uppercase tracking-wider">Genre</label>
             <StyledSelect
               value={activeGenre}
               onChange={setActiveGenre}
@@ -217,7 +217,7 @@ export default function Library() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-[#4a5068] uppercase tracking-wider">Tags</label>
+            <label className="text-sm text-[#8891a8] uppercase tracking-wider">Tags</label>
             <StyledSelect
               value={activeTag}
               onChange={setActiveTag}
@@ -227,7 +227,7 @@ export default function Library() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-[#4a5068] uppercase tracking-wider">Rating</label>
+            <label className="text-sm text-[#8891a8] uppercase tracking-wider">Rating</label>
             <StyledSelect
               value={activeRating}
               onChange={setActiveRating}
@@ -236,7 +236,7 @@ export default function Library() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-[#4a5068] uppercase tracking-wider">Order By</label>
+            <label className="text-sm text-[#8891a8] uppercase tracking-wider">Order By</label>
             <StyledSelect
               alwaysActive
               value={activeSort}
@@ -255,7 +255,7 @@ export default function Library() {
           {isFiltered && (
             <button
               onClick={resetFilters}
-              className="ml-auto self-end text-xs px-3 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]"
+              className="ml-auto self-end text-sm px-4 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]"
             >
               Reset filter
             </button>
@@ -270,16 +270,16 @@ export default function Library() {
       )}
 
       {gamesPending && (
-        <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+        <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       )}
 
       {!gamesPending && gamesError && (
-        <p className="text-sm text-[#ef4444]">Failed to load library.</p>
+        <p className="text-base text-[#ef4444]">Failed to load library.</p>
       )}
 
       {!gamesPending && !gamesError && displayedGames.length === 0 && (
         <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
-          <p className="text-sm text-[#8891a8]">{emptyMessages[activeStatus] ?? 'No games match your filters.'}</p>
+          <p className="text-base text-[#8891a8]">{emptyMessages[activeStatus] ?? 'No games match your filters.'}</p>
         </div>
       )}
 

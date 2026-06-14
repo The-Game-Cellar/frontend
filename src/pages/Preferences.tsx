@@ -205,40 +205,40 @@ export default function Preferences() {
     <div className="max-w-xl mx-auto space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Preferences</h1>
-        <p className="text-xs text-[#8891a8]">
+        <p className="text-sm text-[#8891a8]">
           The platforms you play on, plus the genres and gameplay tags that shape your recommendations.
         </p>
       </div>
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="space-y-1.5">
-          <p className="text-xs text-[#8891a8] uppercase tracking-wider">Platforms</p>
-          <p className="text-xs text-[#4a5068]">
+          <p className="text-sm text-[#8891a8] uppercase tracking-wider">Platforms</p>
+          <p className="text-sm text-[#8891a8]">
             Pick the platforms you play on. Star one to mark it as primary.
           </p>
         </div>
         {platformsError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-base text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to load your platforms.
           </p>
         )}
         {catalogError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-base text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to load the platform catalog.
           </p>
         )}
         {removePlatformError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-base text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to remove platform. Please try again.
           </p>
         )}
         {addPlatformError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-base text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to add platform. Please try again.
           </p>
         )}
         {primaryError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-base text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to update primary platform. Please try again.
           </p>
         )}
@@ -260,8 +260,8 @@ export default function Preferences() {
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-xs text-[#8891a8] uppercase tracking-wider">Genre preferences</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#4a5068]">
+          <p className="text-sm text-[#8891a8] uppercase tracking-wider">Genre preferences</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8891a8]">
             Selected{' '}
             <span
               className={
@@ -274,11 +274,11 @@ export default function Preferences() {
             </span>
           </p>
         </div>
-        <p className="text-xs text-[#4a5068]">
+        <p className="text-sm text-[#8891a8]">
           Game genres you enjoy.
         </p>
         {genreList.length === 0 ? (
-          <p className="text-xs text-[#8891a8] text-center py-4">
+          <p className="text-base text-[#8891a8] text-center py-4">
             Couldn't load the genre catalog. Try again in a moment.
           </p>
         ) : (
@@ -294,7 +294,7 @@ export default function Preferences() {
                   type="button"
                   onClick={() => toggleGenre(genre)}
                   title={genre}
-                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
+                  className={`px-3.5 py-2 rounded text-sm text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
                     active
                       ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                       : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -307,12 +307,12 @@ export default function Preferences() {
           </div>
         )}
         {genreError && (
-          <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to save genre preferences. Please try again.
           </p>
         )}
         {genreSuccess && (
-          <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+          <p className="text-sm text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
             Genre preferences saved.
           </p>
         )}
@@ -321,7 +321,7 @@ export default function Preferences() {
             type="button"
             onClick={saveGenrePreferences}
             disabled={!genresDirty || genreSaving}
-            className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+            className="mt-3 px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
           >
             {genreSaving ? '[ SAVING... ]' : 'Save preferences'}
           </button>
@@ -330,8 +330,8 @@ export default function Preferences() {
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-xs text-[#8891a8] uppercase tracking-wider">Tag preferences</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#4a5068]">
+          <p className="text-sm text-[#8891a8] uppercase tracking-wider">Tag preferences</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8891a8]">
             Selected{' '}
             <span
               className={
@@ -344,11 +344,11 @@ export default function Preferences() {
             </span>
           </p>
         </div>
-        <p className="text-xs text-[#4a5068]">
+        <p className="text-sm text-[#8891a8]">
           Gameplay styles, atmospheres, and settings you enjoy.
         </p>
         {tagList.length === 0 ? (
-          <p className="text-xs text-[#8891a8] text-center py-4">
+          <p className="text-base text-[#8891a8] text-center py-4">
             Couldn't load the tag catalog. Try again in a moment.
           </p>
         ) : (
@@ -364,7 +364,7 @@ export default function Preferences() {
                   type="button"
                   onClick={() => toggleTag(tag)}
                   title={tag}
-                  className={`px-3 py-1.5 rounded text-xs text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
+                  className={`px-3.5 py-2 rounded text-sm text-center truncate border capitalize transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
                     active
                       ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                       : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -377,12 +377,12 @@ export default function Preferences() {
           </div>
         )}
         {tagError && (
-          <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to save tag preferences. Please try again.
           </p>
         )}
         {tagSuccess && (
-          <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+          <p className="text-sm text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
             Tag preferences saved.
           </p>
         )}
@@ -391,7 +391,7 @@ export default function Preferences() {
             type="button"
             onClick={saveTagPreferences}
             disabled={!tagsDirty || tagSaving}
-            className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+            className="mt-3 px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
           >
             {tagSaving ? '[ SAVING... ]' : 'Save preferences'}
           </button>
@@ -400,8 +400,8 @@ export default function Preferences() {
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-xs text-[#8891a8] uppercase tracking-wider">Release era preferences</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#4a5068]">
+          <p className="text-sm text-[#8891a8] uppercase tracking-wider">Release era preferences</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-[#8891a8]">
             Selected{' '}
             <span
               className={
@@ -414,7 +414,7 @@ export default function Preferences() {
             </span>
           </p>
         </div>
-        <p className="text-xs text-[#4a5068]">
+        <p className="text-sm text-[#8891a8]">
           Game eras you enjoy.
         </p>
         <div
@@ -429,7 +429,7 @@ export default function Preferences() {
                 type="button"
                 onClick={() => toggleBucket(bucket)}
                 title={bucket}
-                className={`px-3 py-1.5 rounded text-xs text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
+                className={`px-3.5 py-2 rounded text-sm text-center truncate border transition-[border-color,color,background-color,box-shadow,text-shadow,transform] duration-150 active:scale-[0.97] ${
                   active
                     ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
                     : 'bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -441,12 +441,12 @@ export default function Preferences() {
           })}
         </div>
         {bucketError && (
-          <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Failed to save release era preferences. Please try again.
           </p>
         )}
         {bucketSuccess && (
-          <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+          <p className="text-sm text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
             Release era preferences saved.
           </p>
         )}
@@ -455,7 +455,7 @@ export default function Preferences() {
             type="button"
             onClick={saveReleaseYearPreferences}
             disabled={!bucketsDirty || bucketSaving}
-            className="mt-3 px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+            className="mt-3 px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
           >
             {bucketSaving ? '[ SAVING... ]' : 'Save preferences'}
           </button>

@@ -46,7 +46,7 @@ export default function LibraryGameCard({ entry, onRemove }: LibraryGameCardProp
         )}
 
         {/* Status badge, bottom left */}
-        <span className={`absolute bottom-1.5 left-1.5 text-[10px] px-1.5 py-0.5 rounded border font-medium ${badgeStyle}`}>
+        <span className={`absolute bottom-1.5 left-1.5 text-xs px-1.5 py-0.5 rounded border font-medium ${badgeStyle}`}>
           {entry.status}
         </span>
 
@@ -55,19 +55,19 @@ export default function LibraryGameCard({ entry, onRemove }: LibraryGameCardProp
           className={`absolute inset-0 bg-[#0a0b14cc] flex flex-col items-center justify-center gap-2 transition-opacity duration-200 ${confirming ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-xs text-[#e8e4dc]">Remove?</p>
+          <p className="text-sm text-[#e8e4dc]">Remove?</p>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => entry.id != null && onRemove(entry.id)}
-              className="text-xs px-2.5 py-1 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
+              className="text-sm px-2.5 py-1 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
             >
               Yes
             </button>
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
+              className="text-sm px-2.5 py-1 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
             >
               No
             </button>
@@ -87,14 +87,14 @@ export default function LibraryGameCard({ entry, onRemove }: LibraryGameCardProp
 
       {/* Info */}
       <div className="p-2 space-y-0.5">
-        <TruncatedText as="p" text={entry.gameName ?? ''} className="text-xs font-medium text-[#e8e4dc]" />
+        <TruncatedText as="p" text={entry.gameName ?? ''} className="text-sm font-medium text-[#e8e4dc]" />
         {entry.rating != null ? (
-          <p className="text-xs">
+          <p className="text-sm">
             <span className="text-[#f72585] [text-shadow:0_0_6px_#f72585]">{entry.rating}</span>
             <span className="text-[#4a5068]">/10</span>
           </p>
         ) : (
-          <p className="text-xs text-[#4a5068]">-</p>
+          <p className="text-sm text-[#4a5068]">-</p>
         )}
       </div>
     </div>

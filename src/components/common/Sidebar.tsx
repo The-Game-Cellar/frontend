@@ -36,7 +36,7 @@ const profileGroup: NavGroup = {
 }
 
 const linkBase =
-  'flex items-center gap-3 px-3 py-2 rounded text-sm active:scale-[0.97] transition-[colors,transform] duration-150'
+  'flex items-center gap-3 px-4 py-3 text-base active:scale-[0.97] transition-[colors,transform] duration-150'
 const linkActive = 'text-[#f72585] bg-[#f7258510] [text-shadow:0_0_8px_#f72585]'
 const linkInactive = 'text-[#8891a8] hover:text-[#e8e4dc] hover:bg-[#181a2e]'
 
@@ -57,7 +57,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         md:translate-x-0
       `}
     >
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 space-y-1">
         {navItems.map(({ label, to }) => (
           <NavLink
             key={to}
@@ -74,7 +74,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           type="button"
           onClick={() => setManualOpen(!profileOpen)}
           aria-expanded={profileOpen}
-          className={`w-full ${linkBase} ${linkInactive}`}
+          className={`w-full ${linkBase} ${linkInactive} text-base!`}
         >
           {profileGroup.label}
         </button>
@@ -88,7 +88,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 end
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `${linkBase} text-xs ${isActive ? linkActive : linkInactive}`
+                  `${linkBase} ${isActive ? linkActive : linkInactive}`
                 }
               >
                 {label}

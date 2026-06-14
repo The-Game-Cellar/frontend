@@ -12,7 +12,7 @@ import type { UserInfo } from '../services/authService'
 
 const inputClass =
   'w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none focus:[box-shadow:0_0_8px_#f7258540] transition-[border-color,box-shadow] duration-200'
-const labelClass = 'block text-xs text-[#4a5068] uppercase tracking-wider'
+const labelClass = 'block text-sm text-[#8891a8] uppercase tracking-wider'
 
 interface EmailFormState { newEmail: string; currentPassword: string }
 interface PwFormState { currentPassword: string; newPassword: string; confirmPassword: string }
@@ -196,26 +196,26 @@ export default function Profile() {
     <div className="max-w-xl mx-auto space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Account</h1>
-        <p className="text-xs text-[#8891a8]">
+        <p className="text-sm text-[#8891a8]">
           Manage your account credentials, exported data, and sign-out.
         </p>
       </div>
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-3">
-        <p className="text-xs text-[#8891a8] uppercase tracking-wider">Account</p>
-        <p className="text-sm text-[#e8e4dc]">{email ?? '-'}</p>
+        <p className="text-sm text-[#8891a8] uppercase tracking-wider">Account</p>
+        <p className="text-base text-[#e8e4dc]">{email ?? '-'}</p>
         <div className="flex flex-wrap gap-2 pt-1">
           <button
             type="button"
             onClick={() => setEmailModalOpen(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
+            className="text-sm px-4 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
           >
             Change email
           </button>
           <button
             type="button"
             onClick={() => setPwModalOpen(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
+            className="text-sm px-4 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
           >
             Change password
           </button>
@@ -223,27 +223,27 @@ export default function Profile() {
       </section>
 
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-3">
-        <p className="text-xs text-[#8891a8] uppercase tracking-wider">Your data</p>
-        <p className="text-xs text-[#4a5068]">Export a JSON copy of everything we hold for you, or delete your account permanently.</p>
+        <p className="text-sm text-[#8891a8] uppercase tracking-wider">Your data</p>
+        <p className="text-sm text-[#8891a8]">Export a JSON copy of everything we hold for you, or delete your account permanently.</p>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleExportData}
             disabled={exportAccountDataMutation.isPending}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] disabled:opacity-40 disabled:cursor-not-allowed transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
+            className="text-sm px-4 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f7258560] disabled:opacity-40 disabled:cursor-not-allowed transition-[color,border-color,text-shadow,transform] duration-200 active:scale-[0.97]"
           >
             {exportAccountDataMutation.isPending ? '[ EXPORTING... ]' : 'Download my data'}
           </button>
           <button
             type="button"
             onClick={() => setDeleteModalOpen(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444415] hover:[box-shadow:0_0_10px_#ef444460] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
+            className="text-sm px-4 py-2 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444415] hover:[box-shadow:0_0_10px_#ef444460] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
           >
             Delete account
           </button>
         </div>
         {exportError && (
-          <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             Export failed. Please try again.
           </p>
         )}
@@ -251,7 +251,7 @@ export default function Profile() {
 
       <button
         onClick={() => setConfirmOpen(true)}
-        className="px-4 py-2 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
+        className="px-4 py-2 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-sm rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
       >
         Sign out
       </button>
@@ -266,8 +266,8 @@ export default function Profile() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#e8e4dc]">Change email</p>
-              <p className="text-xs text-[#4a5068]">Current: {email ?? '-'}</p>
+              <p className="text-base font-medium text-[#e8e4dc]">Change email</p>
+              <p className="text-sm text-[#8891a8]">Current: {email ?? '-'}</p>
             </div>
             <form onSubmit={handleChangeEmail} className="space-y-3">
               <div className="space-y-1">
@@ -295,12 +295,12 @@ export default function Profile() {
                 />
               </div>
               {emailError && (
-                <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+                <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
                   {emailError}
                 </p>
               )}
               {emailSuccess && (
-                <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+                <p className="text-sm text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
                   Email updated.
                 </p>
               )}
@@ -308,14 +308,14 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={closeEmailModal}
-                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
+                  className="px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={emailSaving}
-                  className="px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+                  className="px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
                 >
                   {emailSaving ? '[ SAVING... ]' : 'Save'}
                 </button>
@@ -335,8 +335,8 @@ export default function Profile() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#e8e4dc]">Change password</p>
-              <p className="text-xs text-[#4a5068]">Min 8 characters, at least one letter and one digit.</p>
+              <p className="text-base font-medium text-[#e8e4dc]">Change password</p>
+              <p className="text-sm text-[#8891a8]">Min 8 characters, at least one letter and one digit.</p>
             </div>
             <form onSubmit={handleChangePassword} className="space-y-3">
               <div className="space-y-1">
@@ -376,12 +376,12 @@ export default function Profile() {
                 />
               </div>
               {pwError && (
-                <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+                <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
                   {pwError}
                 </p>
               )}
               {pwSuccess && (
-                <p className="text-xs text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
+                <p className="text-sm text-[#22c55e] bg-[#22c55e10] border border-[#22c55e30] rounded px-3 py-2">
                   Password updated.
                 </p>
               )}
@@ -389,14 +389,14 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={closePwModal}
-                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
+                  className="px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pwSaving}
-                  className="px-4 py-1.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-xs rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+                  className="px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[box-shadow,transform] duration-200"
                 >
                   {pwSaving ? '[ SAVING... ]' : 'Save'}
                 </button>
@@ -416,8 +416,8 @@ export default function Profile() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#ef4444]">Delete account?</p>
-              <p className="text-xs text-[#8891a8]">
+              <p className="text-base font-medium text-[#ef4444]">Delete account?</p>
+              <p className="text-sm text-[#8891a8]">
                 Your library, ratings, and platforms will be permanently removed. Your Keycloak account will be deleted. <span className="text-[#ef4444]">This cannot be undone.</span>
               </p>
             </div>
@@ -436,7 +436,7 @@ export default function Profile() {
                 />
               </div>
               {deleteError && (
-                <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+                <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
                   {deleteError}
                 </p>
               )}
@@ -445,14 +445,14 @@ export default function Profile() {
                   type="button"
                   onClick={closeDeleteModal}
                   disabled={deleteSaving}
-                  className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 border border-[#2a2d45] text-[#8891a8] text-sm rounded hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={deleteSaving}
-                  className="px-4 py-1.5 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_10px_#ef4444,0_0_28px_#ef444460] hover:bg-[#ef444425] hover:[box-shadow:0_0_14px_#ef4444,0_0_36px_#ef444480] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[background-color,box-shadow,transform] duration-200"
+                  className="px-4 py-2 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-sm rounded [box-shadow:0_0_10px_#ef4444,0_0_28px_#ef444460] hover:bg-[#ef444425] hover:[box-shadow:0_0_14px_#ef4444,0_0_36px_#ef444480] disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] transition-[background-color,box-shadow,transform] duration-200"
                 >
                   {deleteSaving ? '[ DELETING... ]' : 'Delete forever'}
                 </button>
@@ -472,8 +472,8 @@ export default function Profile() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#e8e4dc]">Sign out?</p>
-              <p className="text-xs text-[#4a5068]">You will be returned to the login page.</p>
+              <p className="text-base font-medium text-[#e8e4dc]">Sign out?</p>
+              <p className="text-sm text-[#8891a8]">You will be returned to the login page.</p>
             </div>
             <div className="flex gap-3 justify-end">
               <button
@@ -484,7 +484,7 @@ export default function Profile() {
               </button>
               <button
                 onClick={handleLogout}
-                className="px-4 py-1.5 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
+                className="px-4 py-2 bg-[#ef444410] border border-[#ef4444] text-[#ef4444] text-sm rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444420] hover:[box-shadow:0_0_12px_#ef444450,0_0_25px_#ef444430] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.97]"
               >
                 Sign out
               </button>

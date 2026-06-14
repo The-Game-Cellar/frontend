@@ -48,14 +48,14 @@ export default function Layout() {
             />
           </button>
 
-          <span className="text-base md:text-lg font-semibold text-[#e8e4dc] tracking-wider">
+          <span className="text-lg md:text-xl font-semibold text-[#e8e4dc] tracking-wider">
             THE GAME CELLAR
           </span>
         </div>
 
         <button
           onClick={() => setConfirmOpen(true)}
-          className="text-xs text-[#8891a8] border border-[#4a5068] rounded px-3 py-1 hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_12px_#f72585,0_0_24px_#f7258540] transition-[border-color,box-shadow,color] duration-200"
+          className="text-sm text-[#8891a8] border border-[#4a5068] rounded px-4 py-1.5 hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_12px_#f72585,0_0_24px_#f7258540] transition-[border-color,box-shadow,color] duration-200"
         >
           Sign out
         </button>

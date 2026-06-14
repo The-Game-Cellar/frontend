@@ -37,9 +37,60 @@ export interface UpcomingGamesParams {
   windowDays?: number
   limit?: number
   excludeIds?: number[]
+  // Presence of page switches the backend from sample mode (Dashboard rotation, recently-shown
+  // penalty applied) to deterministic sort-by-date pagination (Explore browse view, stable across refreshes).
+  page?: number
+  pageSize?: number
 }
 
 export type UpcomingPlatformsResponse = Record<string, string[]>
+
+// Session-scoped IGDB ids for Coming Soon; backend uses this as a soft-penalty input on the
+// inverse-days weighted sample. Separate localStorage key from Recommendations so the two
+// rotation flows do not bleed into each other. Hard cap at 2000 mirrors the backend @Size.
+const UPCOMING_SHOWN_KEY = 'cellar:upcoming:shown'
+const UPCOMING_SHOWN_HARD_CAP = 2000
+
+export const getRecentlyShownUpcomingIds = (): number[] => {
+  try {
+    const raw = localStorage.getItem(UPCOMING_SHOWN_KEY)
+    if (!raw) return []
+    const arr: unknown = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.filter((n): n is number => Number.isInteger(n)) : []
+  } catch {
+    return []
+  }
+}
+
+export const addRecentlyShownUpcomingIds = (ids: number[]): void => {
+  if (!Array.isArray(ids) || ids.length === 0) return
+  const fresh = ids.filter((n): n is number => Number.isInteger(n))
+  if (fresh.length === 0) return
+  const current = getRecentlyShownUpcomingIds()
+  const seen = new Set<number>(current)
+  const merged = [...current]
+  for (const id of fresh) {
+    if (seen.has(id)) continue
+    merged.push(id)
+    seen.add(id)
+  }
+  const trimmed = merged.length > UPCOMING_SHOWN_HARD_CAP
+    ? merged.slice(merged.length - UPCOMING_SHOWN_HARD_CAP)
+    : merged
+  try {
+    localStorage.setItem(UPCOMING_SHOWN_KEY, JSON.stringify(trimmed))
+  } catch {
+    // localStorage full or disabled
+  }
+}
+
+export const clearRecentlyShownUpcomingIds = (): void => {
+  try {
+    localStorage.removeItem(UPCOMING_SHOWN_KEY)
+  } catch {
+    // ignore
+  }
+}
 
 export const searchGames = (params: SearchGamesParams): Promise<AxiosResponse<GameSearchResponse>> =>
   api.get('/api/v1/games/search', { params })
@@ -50,16 +101,29 @@ export const getGameById = (igdbId: number): Promise<AxiosResponse<GameResponse>
 export const getPopularGames = (params: PopularGamesParams): Promise<AxiosResponse<GameSearchResponse>> =>
   api.get('/api/v1/games/popular', { params })
 
+// POST because recentlyShownIds grows uncapped per session (up to 2000 ids) and would blow Tomcat's
+// 8KB header buffer over a query string. Mirrors the /personalized POST decision.
+// page present => deterministic sort-by-release-date pagination; recentlyShownIds skipped on the
+// wire so Explore browsing does not pollute Dashboard's rotation penalty set.
 export const getUpcomingGames = ({
   platforms = [],
   windowDays = 90,
   limit = 20,
   excludeIds = [],
+  page,
+  pageSize,
 }: UpcomingGamesParams = {}): Promise<AxiosResponse<GameSearchResponse>> => {
-  const params: Record<string, string | number> = { windowDays, limit }
-  if (platforms.length > 0) params.platform = platforms.join(',')
-  if (excludeIds.length > 0) params.excludeIds = excludeIds.join(',')
-  return api.get('/api/v1/games/upcoming', { params })
+  const paginated = page != null
+  const recentlyShownIds = paginated ? [] : getRecentlyShownUpcomingIds()
+  return api.post('/api/v1/games/upcoming', {
+    platform: platforms.length > 0 ? platforms.join(',') : undefined,
+    windowDays,
+    limit,
+    excludeIds: excludeIds.length > 0 ? excludeIds : undefined,
+    recentlyShownIds,
+    page,
+    pageSize,
+  })
 }
 
 export const getUpcomingPlatforms = (): Promise<AxiosResponse<UpcomingPlatformsResponse>> =>
@@ -152,7 +216,18 @@ export const usePopularGames = (params: PopularGamesParams) =>
 export const useUpcomingGames = (params: UpcomingGamesParams = {}, enabled = true) =>
   useQuery({
     queryKey: gameKeys.upcoming(params),
-    queryFn: () => getUpcomingGames(params).then((r) => r.data),
+    queryFn: () =>
+      getUpcomingGames(params).then((r) => {
+        // Only the sample-mode (Dashboard) feeds the rotation penalty set. Paginated browse
+        // visits are deterministic and would taint Dashboard variety with stale ids.
+        if (params.page == null) {
+          const ids = (r.data?.games ?? [])
+            .map((g) => g.igdbId)
+            .filter((id): id is number => id != null)
+          addRecentlyShownUpcomingIds(ids)
+        }
+        return r.data
+      }),
     enabled,
   })
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -12,6 +12,7 @@ import {
 } from '../services/gameService'
 import type { SearchGamesParams } from '../services/gameService'
 import { useOwnedIgdbIds } from '../services/libraryService'
+import { useGridPageSize } from '../hooks/useGridPageSize'
 import GameCard from '../components/common/GameCard'
 import PlatformDropdown from '../components/common/PlatformDropdown'
 import StyledSelect from '../components/common/StyledSelect'
@@ -67,8 +68,6 @@ const ORDERINGS: { value: OrderingFilter; label: string }[] = [
   { value: '-name',     label: 'Z → A' },
 ]
 
-const PAGE_SIZE = 20
-
 const YEAR_MIN = 1970
 const YEAR_MAX = new Date().getFullYear() + 5
 
@@ -120,6 +119,16 @@ export default function Explore() {
   const [page, setPage] = useState(0)
 
   const [upcomingHorizon, setUpcomingHorizon] = useState('90')
+  const [upcomingPage, setUpcomingPage] = useState(0)
+
+  const gridContainerRef = useRef<HTMLDivElement | null>(null)
+  const pageSize = useGridPageSize(gridContainerRef)
+  // Reset both feeds to page 0 when the viewport-derived pageSize changes; otherwise the
+  // user can land on an out-of-range page after a resize.
+  useEffect(() => {
+    setPage(0)
+    setUpcomingPage(0)
+  }, [pageSize])
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -146,7 +155,7 @@ export default function Explore() {
     gameType,
     ordering,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     ...(genreActive ? { genre: genreFilters.join(',') } : {}),
     ...(gameModesActive ? { gameMode: gameModeFilters.join(',') } : {}),
     ...(perspectiveActive ? { perspective: perspectiveFilters.join(',') } : {}),
@@ -160,7 +169,7 @@ export default function Explore() {
     error: browseError,
   } = useSearchGames(browseParams, view === 'browse')
   const games: GameResponse[] = Array.isArray(browseData?.games) ? browseData.games : []
-  const totalPages = Math.ceil((browseData?.totalCount ?? 0) / PAGE_SIZE)
+  const totalPages = Math.ceil((browseData?.totalCount ?? 0) / pageSize)
   const tagCounts = (browseData?.availableTagCounts ?? undefined) as Record<string, number> | undefined
   const genreCounts = (browseData?.availableGenreCounts ?? undefined) as Record<string, number> | undefined
   const gameModeCounts = (browseData?.availableGameModeCounts ?? undefined) as Record<string, number> | undefined
@@ -175,12 +184,23 @@ export default function Explore() {
     data: upcomingData,
     isFetching: upcomingLoading,
     error: upcomingError,
-    refetch: refetchUpcoming,
   } = useUpcomingGames(
-    { platforms: upcomingPlatforms, windowDays: upcomingWindowDays, limit: 60, excludeIds: ownedIds },
+    {
+      platforms: upcomingPlatforms,
+      windowDays: upcomingWindowDays,
+      excludeIds: ownedIds,
+      page: upcomingPage,
+      pageSize,
+    },
     view === 'upcoming',
   )
   const upcomingGames: GameResponse[] = Array.isArray(upcomingData?.games) ? upcomingData.games : []
+  const upcomingTotalPages = Math.ceil((upcomingData?.totalCount ?? 0) / pageSize)
+
+  const handleUpcomingPageChange = (p: number) => {
+    setUpcomingPage(p)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const { data: upcomingPlatformsRaw } = useUpcomingPlatforms()
   const upcomingPlatformsResponse = upcomingPlatformsRaw as { platforms?: unknown } | undefined
@@ -236,7 +256,7 @@ export default function Explore() {
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={gridContainerRef} className="space-y-6">
       <div className="flex items-end justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Explore</h1>
         <div className="flex gap-2">
@@ -247,7 +267,7 @@ export default function Explore() {
             <button
               key={tab.id}
               onClick={() => setView(tab.id)}
-              className={`text-xs px-3 py-1.5 rounded border transition-[border-color,box-shadow,color,background-color] duration-150 active:scale-[0.97] ${
+              className={`text-sm px-4 py-2 rounded border transition-[border-color,box-shadow,color,background-color] duration-150 active:scale-[0.97] ${
                 view === tab.id
                   ? 'border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258560]'
                   : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -263,36 +283,34 @@ export default function Explore() {
         <>
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-[#4a5068] uppercase tracking-wider">Horizon</label>
-              <StyledSelect alwaysActive value={upcomingHorizon} onChange={setUpcomingHorizon} options={HORIZON_OPTIONS} />
+              <label className="text-sm text-[#8891a8] uppercase tracking-wider">Horizon</label>
+              <StyledSelect
+                alwaysActive
+                value={upcomingHorizon}
+                onChange={(v) => { setUpcomingHorizon(v); setUpcomingPage(0) }}
+                options={HORIZON_OPTIONS}
+              />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-[#4a5068] uppercase tracking-wider">Platform</label>
+              <label className="text-sm text-[#8891a8] uppercase tracking-wider">Platform</label>
               <PlatformDropdown
                 value={platform}
                 groups={filteredPlatformGroups}
                 others={filteredPlatformOthers}
-                onChange={setPlatform}
+                onChange={(v) => { setPlatform(v); setUpcomingPage(0) }}
               />
             </div>
-            <button
-              onClick={() => refetchUpcoming()}
-              className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform]"
-              title="Re-shuffle"
-            >
-              Refresh
-            </button>
           </div>
 
           {upcomingLoading && (
-            <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+            <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
           )}
           {!upcomingLoading && upcomingError && (
-            <p className="text-sm text-[#ef4444]">Failed to load upcoming releases.</p>
+            <p className="text-base text-[#ef4444]">Failed to load upcoming releases.</p>
           )}
           {!upcomingLoading && !upcomingError && upcomingGames.length === 0 && (
             <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
-              <p className="text-sm text-[#8891a8]">No upcoming releases match your filters.</p>
+              <p className="text-base text-[#8891a8]">No upcoming releases match your filters.</p>
             </div>
           )}
           {upcomingGames.length > 0 && (
@@ -305,6 +323,42 @@ export default function Explore() {
                   onClick={() => navigate(`/games/${g.igdbId}`)}
                 />
               ))}
+            </div>
+          )}
+
+          {!upcomingLoading && !upcomingError && upcomingTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2 pb-4">
+              <button
+                onClick={() => handleUpcomingPageChange(upcomingPage - 1)}
+                disabled={upcomingPage === 0}
+                className="px-4 py-2 text-sm rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ← Prev
+              </button>
+              {Array.from({ length: Math.min(5, upcomingTotalPages) }, (_, i) => {
+                const start = Math.max(0, Math.min(upcomingPage - 2, upcomingTotalPages - 5))
+                const pageNum = start + i
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handleUpcomingPageChange(pageNum)}
+                    className={`px-4 py-2 text-sm rounded border transition-[border-color,box-shadow,color,background-color,transform] duration-150 active:scale-[0.97] ${
+                      pageNum === upcomingPage
+                        ? 'border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258560]'
+                        : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
+                    }`}
+                  >
+                    {pageNum + 1}
+                  </button>
+                )
+              })}
+              <button
+                onClick={() => handleUpcomingPageChange(upcomingPage + 1)}
+                disabled={upcomingPage === upcomingTotalPages - 1}
+                className="px-4 py-2 text-sm rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
             </div>
           )}
         </>
@@ -391,18 +445,18 @@ function BrowseView({
       {/* Search + filters */}
       <div className="flex flex-wrap items-start gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Search</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Search</label>
           <input
             type="text"
             value={searchInput}
             onChange={handleSearchChange}
             placeholder="Search games..."
-            className="w-64 bg-[#111220] border border-[#2a2d45] rounded px-3 py-1.5 text-xs text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none transition-colors"
+            className="w-64 bg-[#111220] border border-[#2a2d45] rounded px-3.5 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none transition-colors"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Genre</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Genre</label>
           <TagDropdown
             value={genreFilters}
             options={genres.map((g) => ({ value: g, label: g }))}
@@ -413,7 +467,7 @@ function BrowseView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Tags</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Tags</label>
           <TagDropdown
             value={tagFilters}
             options={tagOptions.map((t) => ({ value: t, label: t }))}
@@ -424,7 +478,7 @@ function BrowseView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Platform</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Platform</label>
           <PlatformDropdown
             value={platform}
             groups={platformGroups}
@@ -434,7 +488,7 @@ function BrowseView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Gamemodes</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Gamemodes</label>
           <TagDropdown
             value={gameModeFilters}
             options={GAME_MODES}
@@ -444,7 +498,7 @@ function BrowseView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Camera</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Camera</label>
           <TagDropdown
             value={perspectiveFilters}
             options={PERSPECTIVES}
@@ -454,7 +508,7 @@ function BrowseView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Rating</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Rating</label>
           <StyledSelect
             value={ratingFrom === null ? '' : String(ratingFrom)}
             onChange={(v) => setRatingFrom(v === '' ? null : Number(v))}
@@ -463,19 +517,19 @@ function BrowseView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Order By</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Order By</label>
           <StyledSelect alwaysActive value={ordering} onChange={(v) => setOrdering(v as OrderingFilter)} options={ORDERINGS} />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-[#4a5068] uppercase tracking-wider">Release Year</label>
+          <label className="text-sm text-[#8891a8] uppercase tracking-wider">Release Year</label>
           <YearRangeSlider min={YEAR_MIN} max={YEAR_MAX} value={yearRange} onChange={setYearRange} />
         </div>
 
         <button
           type="button"
           onClick={() => setGameType((t) => (t === 'variant' ? 'main' : 'variant'))}
-          className={`mt-5 text-xs px-3 py-1.5 rounded border transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97] ${
+          className={`self-end text-sm px-4 py-2 rounded border transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97] ${
             gameType === 'variant'
               ? 'border-[#f72585] text-[#f72585] [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540]'
               : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -486,7 +540,7 @@ function BrowseView({
         </button>
 
         {isFiltered && (
-          <button onClick={handleReset} className="mt-5 text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]">
+          <button onClick={handleReset} className="self-end text-sm px-4 py-2 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] transition-[border-color,box-shadow,color,transform] duration-150 active:scale-[0.97]">
             Reset filter
           </button>
         )}
@@ -494,16 +548,16 @@ function BrowseView({
 
       {/* States */}
       {loading && (
-        <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+        <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       )}
 
       {!loading && error && (
-        <p className="text-sm text-[#ef4444]">{error}</p>
+        <p className="text-base text-[#ef4444]">{error}</p>
       )}
 
       {!loading && !error && games.length === 0 && (
         <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
-          <p className="text-sm text-[#8891a8]">No games found.</p>
+          <p className="text-base text-[#8891a8]">No games found.</p>
         </div>
       )}
 
@@ -530,7 +584,7 @@ function BrowseView({
           <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 0}
-            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Prev
           </button>
@@ -541,7 +595,7 @@ function BrowseView({
               <button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
-                className={`px-3 py-1.5 text-xs rounded border transition-[border-color,box-shadow,color,background-color,transform] duration-150 active:scale-[0.97] ${
+                className={`px-4 py-2 text-sm rounded border transition-[border-color,box-shadow,color,background-color,transform] duration-150 active:scale-[0.97] ${
                   pageNum === page
                     ? 'border-[#f72585] text-[#f72585] bg-[#f7258515] [box-shadow:0_0_6px_#f7258560]'
                     : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
@@ -554,7 +608,7 @@ function BrowseView({
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page === totalPages - 1}
-            className="px-3 py-1.5 text-xs rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Next →
           </button>

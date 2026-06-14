@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryClient } from './queryClient'
 import { clearRecentlyShownIds } from './recommendationService'
+import { clearRecentlyShownUpcomingIds } from './gameService'
 import type { AccountExportDTO } from '../types/api'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -45,6 +46,7 @@ export async function refreshAccessToken(): Promise<UserInfo> {
 export async function logout(): Promise<void> {
   queryClient.clear()
   clearRecentlyShownIds()
+  clearRecentlyShownUpcomingIds()
   await fetch(`${API_URL}/api/v1/auth/logout`, {
     method: 'POST',
     credentials: 'include',
@@ -101,6 +103,7 @@ export async function changeEmail(currentPassword: string, newEmail: string): Pr
 export async function deleteAccount(currentPassword: string): Promise<Record<string, unknown>> {
   queryClient.clear()
   clearRecentlyShownIds()
+  clearRecentlyShownUpcomingIds()
   const res = await fetch(`${API_URL}/api/v1/auth/account`, {
     method: 'DELETE',
     credentials: 'include',

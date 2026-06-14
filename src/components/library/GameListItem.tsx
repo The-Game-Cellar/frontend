@@ -45,11 +45,11 @@ export default function GameListItem({ entry, onRemove }: GameListItemProps) {
 
   return (
     <div
-      className={`bg-[#111220] border border-[#2a2d45] rounded-lg flex items-center gap-4 px-4 py-3 transition-[border-color,box-shadow] duration-150 cursor-pointer ${hoverStyle}`}
+      className={`bg-[#111220] border border-[#2a2d45] rounded-lg flex items-center gap-5 px-5 py-4 transition-[border-color,box-shadow] duration-150 cursor-pointer ${hoverStyle}`}
       onClick={() => { if (!confirming) navigate(`/games/${entry.igdbGameId}`) }}
     >
       {/* Thumbnail */}
-      <div className="w-8 flex-shrink-0 aspect-[3/4] bg-[#1e2035] rounded overflow-hidden">
+      <div className="w-12 flex-shrink-0 aspect-[3/4] bg-[#1e2035] rounded overflow-hidden">
         {entry.backgroundImage ? (
           <img
             src={entry.backgroundImage}
@@ -60,27 +60,27 @@ export default function GameListItem({ entry, onRemove }: GameListItemProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-[#4a5068] text-[8px]">?</span>
+            <span className="text-[#4a5068] text-xs">?</span>
           </div>
         )}
       </div>
 
       {/* Name + meta */}
       <div className="flex-1 min-w-0">
-        <TruncatedText as="p" text={entry.gameName ?? ''} className="text-sm text-[#e8e4dc]" />
+        <TruncatedText as="p" text={entry.gameName ?? ''} className="text-base text-[#e8e4dc]" />
         <div className="flex items-center gap-3 mt-0.5">
           {entry.platform && (
-            <span className="text-xs text-[#4a5068]">{entry.platform}</span>
+            <span className="text-sm text-[#4a5068]">{entry.platform}</span>
           )}
           {dateAdded && (
-            <span className="text-xs text-[#4a5068]">{dateAdded}</span>
+            <span className="text-sm text-[#4a5068]">{dateAdded}</span>
           )}
         </div>
       </div>
 
       {/* Rating */}
       {entry.rating != null && (
-        <div className="flex-shrink-0 text-xs">
+        <div className="flex-shrink-0 text-sm">
           <span className="text-[#f72585] [text-shadow:0_0_6px_#f72585]">{entry.rating}</span>
           <span className="text-[#4a5068]">/10</span>
         </div>
@@ -88,7 +88,7 @@ export default function GameListItem({ entry, onRemove }: GameListItemProps) {
 
       {/* Status badge */}
       <span
-        className={`flex-shrink-0 text-xs px-2 py-0.5 rounded border font-medium ${badgeStyle}`}
+        className={`flex-shrink-0 text-sm px-2 py-0.5 rounded border font-medium ${badgeStyle}`}
       >
         {entry.status}
       </span>
@@ -96,18 +96,18 @@ export default function GameListItem({ entry, onRemove }: GameListItemProps) {
       {/* Remove / confirm */}
       {confirming ? (
         <div className="flex-shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <span className="text-xs text-[#8891a8]">Remove?</span>
+          <span className="text-sm text-[#8891a8]">Remove?</span>
           <button
             type="button"
             onClick={() => entry.id != null && onRemove(entry.id)}
-            className="text-xs px-2 py-0.5 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
+            className="text-sm px-2.5 py-1 rounded border border-[#ef4444] text-[#ef4444] hover:bg-[#ef444420] transition-colors"
           >
             Yes
           </button>
           <button
             type="button"
             onClick={() => setConfirming(false)}
-            className="text-xs px-2 py-0.5 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
+            className="text-sm px-2.5 py-1 rounded border border-[#2a2d45] text-[#4a5068] hover:text-[#e8e4dc] hover:border-[#8891a8] transition-colors"
           >
             No
           </button>
@@ -116,7 +116,7 @@ export default function GameListItem({ entry, onRemove }: GameListItemProps) {
         <button
           type="button"
           onClick={(e: ReactMouseEvent<HTMLButtonElement>) => { e.stopPropagation(); setConfirming(true) }}
-          className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-[#4a5068] hover:text-[#ef4444] transition-colors text-xl leading-none"
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-[#4a5068] hover:text-[#ef4444] transition-colors text-2xl leading-none"
           title="Remove from library"
         >
           ×

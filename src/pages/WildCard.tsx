@@ -1,39 +1,43 @@
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWildCard } from '../services/recommendationService'
+import { useGridPageSize } from '../hooks/useGridPageSize'
 import GameCard from '../components/common/GameCard'
 
 export default function WildCard() {
   const navigate = useNavigate()
-  const { data, isFetching, error, refetch, dataUpdatedAt } = useWildCard(12)
+  const gridContainerRef = useRef<HTMLDivElement | null>(null)
+  const pageSize = useGridPageSize(gridContainerRef, { max: 50 })
+  const { data, isFetching, error, refetch, dataUpdatedAt } = useWildCard(pageSize)
   const games = data ?? []
 
   return (
-    <div className="space-y-6">
+    <div ref={gridContainerRef} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Wild Card</h1>
-          <p className="text-xs text-[#4a5068]">Random picks from the cellar. Roll again for a new hand.</p>
+          <p className="text-sm text-[#8891a8]">Random picks from the cellar. Roll again for a new hand.</p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200"
+          className="px-5 py-2.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-base rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-[box-shadow,transform] duration-200"
         >
           ↺ Roll Again
         </button>
       </div>
 
       {isFetching && (
-        <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+        <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       )}
 
       {!isFetching && error && (
-        <p className="text-sm text-[#ef4444]">Failed to load Wild Card.</p>
+        <p className="text-base text-[#ef4444]">Failed to load Wild Card.</p>
       )}
 
       {!isFetching && !error && games.length === 0 && (
         <div className="flex items-center justify-center h-48 bg-[#111220] border border-[#1e2035] rounded-lg animate-enter">
-          <p className="text-sm text-[#8891a8]">No games found. Try rolling again.</p>
+          <p className="text-base text-[#8891a8]">No games found. Try rolling again.</p>
         </div>
       )}
 
