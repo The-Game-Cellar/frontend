@@ -389,7 +389,7 @@ export default function GameDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+        <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
       </div>
     )
   }
@@ -397,7 +397,7 @@ export default function GameDetail() {
   if (error || !game) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-sm text-[#ef4444]">{error ?? 'Game not found.'}</p>
+        <p className="text-base text-[#ef4444]">{error ?? 'Game not found.'}</p>
       </div>
     )
   }
@@ -484,7 +484,7 @@ export default function GameDetail() {
           >
             <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
               <div className="space-y-0.5">
-                <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
+                <h2 className="text-xl font-medium text-[#e8e4dc]">DLC & Expansions</h2>
                 <TruncatedText as="p" text={game.name ?? ''} className="text-xs text-[#4a5068]" />
               </div>
               <button
@@ -498,18 +498,18 @@ export default function GameDetail() {
             <div className="overflow-y-auto p-5">
               {addonsLoading && (
                 <div className="flex items-center justify-center h-32">
-                  <p className="text-sm text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
+                  <p className="text-base text-[#f72585] [text-shadow:0_0_8px_#f72585]">[ LOADING... ]</p>
                 </div>
               )}
               {!addonsLoading && addons && addons.length === 0 && (
-                <p className="text-sm text-[#8891a8] text-center py-8">No add-ons available in cache.</p>
+                <p className="text-base text-[#8891a8] text-center py-8">No add-ons available in cache.</p>
               )}
               {!addonsLoading && addons && addons.length > 0 && (
                 <div className="flex flex-wrap gap-4 justify-center">
                   {addons.map((a) => (
                     <div key={a.igdbId} className="relative">
                       <span
-                        className="absolute top-2 left-2 z-10 text-[10px] px-1.5 py-0.5 rounded font-medium tracking-wider bg-[#111220] text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]"
+                        className="absolute top-2 left-2 z-10 text-xs px-1.5 py-0.5 rounded font-medium tracking-wider bg-[#111220] text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]"
                       >
                         {a._kind}
                       </span>
@@ -538,8 +538,8 @@ export default function GameDetail() {
           >
             <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
               <div className="space-y-0.5">
-                <h2 className="text-lg font-medium text-[#e8e4dc]">{pickBestSeries(game.name, game.franchises, game.collections)?.name} series</h2>
-                <p className="text-xs text-[#4a5068]">{franchiseGames.length} games</p>
+                <h2 className="text-xl font-medium text-[#e8e4dc]">{pickBestSeries(game.name, game.franchises, game.collections)?.name} series</h2>
+                <p className="text-sm text-[#4a5068]">{franchiseGames.length} games</p>
               </div>
               <button
                 onClick={() => setShowFranchiseModal(false)}
@@ -576,8 +576,8 @@ export default function GameDetail() {
           >
             <div className="flex items-center justify-between p-5 border-b border-[#1e2035]">
               <div className="space-y-0.5">
-                <h2 className="text-lg font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
-                <p className="text-xs text-[#4a5068]">{developerGames.length} games</p>
+                <h2 className="text-xl font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
+                <p className="text-sm text-[#4a5068]">{developerGames.length} games</p>
               </div>
               <button
                 onClick={() => setShowDeveloperModal(false)}
@@ -609,12 +609,12 @@ export default function GameDetail() {
           onClick={() => setShowRemoveConfirm(false)}
         >
           <div
-            className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
+            className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-[600px] space-y-4 animate-enter"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-1">
-              <p className="text-sm font-medium text-[#e8e4dc]">Remove from library?</p>
-              <p className="text-xs text-[#4a5068] truncate" title={game.name}>{game.name}</p>
+              <p className="text-base font-medium text-[#e8e4dc]">Remove from library?</p>
+              <p className="text-sm text-[#4a5068] truncate" title={game.name}>{game.name}</p>
             </div>
             <div className="flex gap-3 justify-end">
               <button
@@ -636,7 +636,7 @@ export default function GameDetail() {
 
       <div className="space-y-8 animate-enter">
         {actionError && (
-          <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+          <p className="text-base text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
             {actionError}
           </p>
         )}
@@ -659,7 +659,7 @@ export default function GameDetail() {
                 <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">{game.name}</h1>
 
                 {categoryLabel(game.category) && (game.parentGameId || game.parentGameName) && (
-                  <p className="text-xs text-[#8891a8]">
+                  <p className="text-sm text-[#8891a8]">
                     {categoryLabel(game.category)}{' '}
                     {game.parentGameId ? (
                       <button
@@ -680,14 +680,14 @@ export default function GameDetail() {
                   const expandable = hasVariedReleaseDates(game.releaseDates)
                   if (!baseLine && !expandable) return null
                   if (!expandable) {
-                    return baseLine ? <p className="text-xs text-[#8891a8]">Released {baseLine}</p> : null
+                    return baseLine ? <p className="text-sm text-[#8891a8]">Released {baseLine}</p> : null
                   }
                   return (
                     <div className="space-y-1">
                       <button
                         type="button"
                         onClick={() => setReleaseExpanded((v) => !v)}
-                        className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
+                        className="text-sm text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
                         aria-expanded={releaseExpanded}
                       >
                         Released {baseLine ?? formatReleaseDateRow(game.releaseDates?.[0])}
@@ -699,7 +699,7 @@ export default function GameDetail() {
                         </span>
                       </button>
                       {releaseExpanded && (
-                        <ul className="text-xs text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
+                        <ul className="text-sm text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
                           {[...(game.releaseDates ?? [])]
                             .sort((a, b) => (a?.date ?? '').localeCompare(b?.date ?? ''))
                             .map((rd, i) => (
@@ -719,7 +719,7 @@ export default function GameDetail() {
                     <button
                       type="button"
                       onClick={() => setEditionsExpanded((v) => !v)}
-                      className="text-xs text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
+                      className="text-sm text-[#8891a8] hover:text-[#e8e4dc] transition-colors duration-200 inline-flex items-center gap-1"
                       aria-expanded={editionsExpanded}
                     >
                       {editions.length} {editions.length === 1 ? 'edition' : 'editions'}
@@ -731,7 +731,7 @@ export default function GameDetail() {
                       </span>
                     </button>
                     {editionsExpanded && (
-                      <ul className="text-xs text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
+                      <ul className="text-sm text-[#8891a8] space-y-0.5 pl-3 motion-safe:animate-enter">
                         {editions.map((e) => (
                           <li key={e.igdbId}>
                             <button
@@ -755,7 +755,7 @@ export default function GameDetail() {
                 {game.developers && game.developers.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {game.developers.map((d) => (
-                      <span key={d} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
+                      <span key={d} className="text-sm px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
                         {d}
                       </span>
                     ))}
@@ -765,7 +765,7 @@ export default function GameDetail() {
                 {game.genres && game.genres.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {game.genres.map((g) => (
-                      <span key={g} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
+                      <span key={g} className="text-sm px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
                         {g}
                       </span>
                     ))}
@@ -774,7 +774,7 @@ export default function GameDetail() {
                 {game.platforms && game.platforms.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {game.platforms.map((p) => (
-                      <span key={p} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">{p}</span>
+                      <span key={p} className="text-sm px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">{p}</span>
                     ))}
                   </div>
                 )}
@@ -785,7 +785,7 @@ export default function GameDetail() {
                   return (
                     <div className="flex flex-wrap gap-1.5">
                       {chips.map((c) => (
-                        <span key={c} className="text-xs px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
+                        <span key={c} className="text-sm px-2 py-0.5 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]">
                           {c}
                         </span>
                       ))}
@@ -799,7 +799,7 @@ export default function GameDetail() {
                 {!libraryEntry ? (
                   <button
                     onClick={() => setShowModal(true)}
-                    className="px-4 py-2 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-sm rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] active:scale-[0.97] transition-[box-shadow,transform] duration-200"
+                    className="px-5 py-2.5 bg-[#f7258515] border border-[#f72585] text-[#f72585] text-base rounded [box-shadow:0_0_8px_#f72585,0_0_20px_#f7258540] hover:[box-shadow:0_0_12px_#f72585,0_0_30px_#f7258550] active:scale-[0.97] transition-[box-shadow,transform] duration-200"
                   >
                     + Add to Library
                   </button>
@@ -809,7 +809,7 @@ export default function GameDetail() {
                       <button
                         onClick={() => setShowStatusMenu((v) => !v)}
                         disabled={updating}
-                        className={`text-xs px-2 py-0.5 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${libraryEntry.status ? statusStyles[libraryEntry.status] : ''}`}
+                        className={`text-sm px-3 py-1 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${libraryEntry.status ? statusStyles[libraryEntry.status] : ''}`}
                         onMouseEnter={(e) => { e.currentTarget.style.boxShadow = libraryEntry.status ? statusGlowShadow[libraryEntry.status] : '' }}
                         onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
                       >
@@ -823,7 +823,7 @@ export default function GameDetail() {
                               key={s}
                               onClick={() => handleStatusChange(s)}
                               disabled={updating}
-                              className={`text-xs px-2 py-0.5 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${statusStyles[s]}`}
+                              className={`text-sm px-3 py-1 rounded border font-medium transition-[background-color,color,border-color,box-shadow] duration-200 disabled:opacity-40 ${statusStyles[s]}`}
                               onMouseEnter={(e) => { e.currentTarget.style.boxShadow = statusGlowShadow[s] }}
                               onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '' }}
                             >
@@ -840,7 +840,7 @@ export default function GameDetail() {
 
                     <button
                       onClick={() => setShowRemoveConfirm(true)}
-                      className="px-3 py-1.5 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-xs rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444425] hover:[box-shadow:0_0_16px_#ef4444,0_0_36px_#ef444460] transition-[background-color,box-shadow] duration-200"
+                      className="px-4 py-2 bg-[#ef444415] border border-[#ef4444] text-[#ef4444] text-sm rounded [box-shadow:0_0_8px_#ef444440,0_0_20px_#ef444420] hover:bg-[#ef444425] hover:[box-shadow:0_0_16px_#ef4444,0_0_36px_#ef444460] transition-[background-color,box-shadow] duration-200"
                     >
                       Remove
                     </button>
@@ -860,7 +860,7 @@ export default function GameDetail() {
                       {ageRating && (
                         <span
                           title={ageRating.body === 'PEGI' ? 'Pan European Game Information rating' : 'Entertainment Software Rating Board rating'}
-                          className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]"
+                          className="inline-flex items-center gap-1 text-sm px-2.5 py-1 rounded bg-[#1e2035] text-[#8891a8] border border-[#3a3d58]"
                         >
                           <span className="font-medium text-[#e8e4dc]">{ageRating.body}</span>
                           <span>{ageRating.label}</span>
@@ -869,7 +869,7 @@ export default function GameDetail() {
                       {game.rating != null && (
                         <span
                           title="Critic score"
-                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-[#f59e0b] bg-[#f59e0b30] [box-shadow:0_0_4px_#f59e0b80] text-[#f59e0b] [text-shadow:0_0_6px_#f59e0b]"
+                          className="inline-flex items-center gap-1.5 text-sm px-2.5 py-1 rounded border border-[#f59e0b] bg-[#f59e0b30] [box-shadow:0_0_4px_#f59e0b80] text-[#f59e0b] [text-shadow:0_0_6px_#f59e0b]"
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <circle cx="12" cy="8" r="6" />
@@ -881,7 +881,7 @@ export default function GameDetail() {
                       {game.totalRating != null && (
                         <span
                           title="User score"
-                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-[#f72585] bg-[#f7258530] [box-shadow:0_0_4px_#f7258580] text-[#f72585] [text-shadow:0_0_6px_#f72585]"
+                          className="inline-flex items-center gap-1.5 text-sm px-2.5 py-1 rounded border border-[#f72585] bg-[#f7258530] [box-shadow:0_0_4px_#f7258580] text-[#f72585] [text-shadow:0_0_6px_#f72585]"
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -896,7 +896,7 @@ export default function GameDetail() {
                   )}
                   {showRating && (
                     <div className="space-y-1.5">
-                      <p className="text-xs text-[#8891a8] uppercase tracking-wider">Your Rating</p>
+                      <p className="text-sm text-[#8891a8] uppercase tracking-wider">Your Rating</p>
                       <RatingWidget value={libraryEntry.rating} onChange={handleRatingChange} />
                     </div>
                   )}
@@ -905,16 +905,16 @@ export default function GameDetail() {
               })()}
             </div>
 
-            <div className="md:col-span-1">
+            <div className="md:col-span-1 md:justify-self-end">
               {(game.coverImageUrl || game.backgroundImage) ? (
                 <img
                   src={game.coverImageUrl || game.backgroundImage}
                   alt={game.name}
-                  className="w-full rounded-lg border border-[#1e2035]"
+                  className="w-full max-w-[600px] rounded-lg border border-[#1e2035]"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-full aspect-[3/4] rounded-lg overflow-hidden border border-[#1e2035]">
+                <div className="w-full max-w-[600px] aspect-[3/4] rounded-lg overflow-hidden border border-[#1e2035]">
                   <CoverFallback platforms={game.platforms} />
                 </div>
               )}
@@ -936,8 +936,8 @@ export default function GameDetail() {
                     : 'border-[#1e2035] hover:border-[#f72585] hover:[box-shadow:0_0_15px_#f7258530]'
                 }`}
               >
-                <h2 className="text-lg font-medium text-[#e8e4dc]">About</h2>
-                <p className={`text-sm text-[#8891a8] leading-relaxed ${descExpanded ? '' : 'line-clamp-[8]'}`}>
+                <h2 className="text-xl font-medium text-[#e8e4dc]">About</h2>
+                <p className={`text-base text-[#8891a8] leading-relaxed ${descExpanded ? '' : 'line-clamp-[8]'}`}>
                   {description}
                 </p>
               </div>
@@ -1008,10 +1008,10 @@ export default function GameDetail() {
               {hasDlc && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-medium text-[#e8e4dc]">DLC & Expansions</h2>
+                    <h2 className="text-xl font-medium text-[#e8e4dc]">DLC & Expansions</h2>
                     <button
                       onClick={handleOpenAddons}
-                      className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
+                      className="text-sm text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
                     >
                       View all {addonCount} →
                     </button>
@@ -1021,7 +1021,7 @@ export default function GameDetail() {
                     onItemClick={(p) => navigate(`/games/${p.igdbId}`)}
                     resetKey={igdbId}
                     renderBadge={(p) => p._kind ? (
-                      <span className="absolute top-1.5 left-1.5 text-[9px] px-1 py-0.5 rounded font-medium tracking-wider bg-[#111220cc] backdrop-blur-sm text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]">
+                      <span className="absolute top-1.5 left-1.5 text-xs px-1 py-0.5 rounded font-medium tracking-wider bg-[#111220cc] backdrop-blur-sm text-[#f59e0b] border border-[#f59e0b] [box-shadow:0_0_4px_#f59e0b]">
                         {p._kind}
                       </span>
                     ) : null}
@@ -1031,11 +1031,11 @@ export default function GameDetail() {
               {hasSeries && seriesPick && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-medium text-[#e8e4dc]">{seriesPick.name} series</h2>
+                    <h2 className="text-xl font-medium text-[#e8e4dc]">{seriesPick.name} series</h2>
                     {franchiseGames.length > PEEK_STACK_MAX && (
                       <button
                         onClick={() => setShowFranchiseModal(true)}
-                        className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
+                        className="text-sm text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow] duration-200 flex-shrink-0"
                       >
                         View all {franchiseGames.length} →
                       </button>
@@ -1051,11 +1051,11 @@ export default function GameDetail() {
               {hasDev && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
+                    <h2 className="text-xl font-medium text-[#e8e4dc]">More from {primaryDeveloper}</h2>
                     {developerGames.length > PEEK_STACK_MAX && (
                       <button
                         onClick={() => setShowDeveloperModal(true)}
-                        className="text-xs text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97] flex-shrink-0"
+                        className="text-sm text-[#8891a8] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] transition-[color,text-shadow,transform] duration-200 active:scale-[0.97] flex-shrink-0"
                       >
                         View all {developerGames.length} →
                       </button>
@@ -1084,7 +1084,7 @@ export default function GameDetail() {
             : GAP
           return (
             <section className="space-y-3">
-              <h2 className="text-lg font-medium text-[#e8e4dc]">Similar Games</h2>
+              <h2 className="text-xl font-medium text-[#e8e4dc]">Similar Games</h2>
               <div
                 ref={similarRowRef}
                 className="flex overflow-hidden"

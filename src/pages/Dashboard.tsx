@@ -29,9 +29,9 @@ interface SectionHeaderProps {
 function SectionHeader({ title, linkText, linkTo }: SectionHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-lg font-medium text-[#e8e4dc]">{title}</h2>
+      <h2 className="text-xl font-medium text-[#e8e4dc]">{title}</h2>
       {linkText && linkTo && (
-        <Link to={linkTo} className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+        <Link to={linkTo} className="text-sm text-[#8891a8] hover:text-[#f72585] transition-colors">
           {linkText} →
         </Link>
       )}
@@ -277,15 +277,15 @@ export default function Dashboard() {
       {/* Recommendations for you */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-[#e8e4dc]">Recommendations for you</h2>
+          <h2 className="text-xl font-medium text-[#e8e4dc]">Recommendations for you</h2>
           <div className="flex items-center gap-3">
-            <Link to="/recommendations" className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+            <Link to="/recommendations" className="text-sm text-[#8891a8] hover:text-[#f72585] transition-colors">
               View all →
             </Link>
             <button
               onClick={refreshRecommendations}
               disabled={recsRefreshing}
-              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-sm px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
               title="Refresh recommendations"
             >
               {recsRefreshing ? '↻ Refreshing...' : 'Refresh'}
@@ -295,11 +295,11 @@ export default function Dashboard() {
         {recsError ? (
           <ErrorBanner message="Could not load recommendations." onRetry={refreshRecommendations} />
         ) : !dashLoading && recommendations.length === 0 ? (
-          <p className="text-sm text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
+          <p className="text-base text-[#8891a8]">Couldn't load recommendations right now. Try refreshing in a moment.</p>
         ) : (
           <>
             {!dashLoading && recommendations.length > 0 && recommendations[0].tier === 3 && (
-              <div className="inline-flex mb-3 px-4 py-2 rounded-lg border border-[#2a2d45] bg-[#12152a] text-xs text-[#8891a8]">
+              <div className="inline-flex mb-3 px-4 py-2 rounded-lg border border-[#2a2d45] bg-[#12152a] text-sm text-[#8891a8]">
                 Popular on your platforms. Rate games in your library to personalize.
               </div>
             )}
@@ -316,15 +316,15 @@ export default function Dashboard() {
       {/* Coming Soon: platform-filtered to user's owned platforms, default 90-day window. */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-[#e8e4dc]">Coming soon</h2>
+          <h2 className="text-xl font-medium text-[#e8e4dc]">Coming soon</h2>
           <div className="flex items-center gap-3">
-            <Link to="/explore?view=upcoming" className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+            <Link to="/explore?view=upcoming" className="text-sm text-[#8891a8] hover:text-[#f72585] transition-colors">
               View all →
             </Link>
             <button
               onClick={loadUpcoming}
               disabled={upcomingRefreshing}
-              className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-sm px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
               title="Re-shuffle"
             >
               {upcomingRefreshing ? '↻ Refreshing...' : 'Refresh'}
@@ -334,7 +334,7 @@ export default function Dashboard() {
         {upcomingError ? (
           <ErrorBanner message="Could not load upcoming releases." onRetry={loadUpcoming} />
         ) : !upcomingLoading && upcoming.length === 0 ? (
-          <p className="text-sm text-[#8891a8]">No upcoming releases on your platforms in the next 90 days.</p>
+          <p className="text-base text-[#8891a8]">No upcoming releases on your platforms in the next 90 days.</p>
         ) : (
           <GameScroll
             games={upcoming}
@@ -355,7 +355,7 @@ export default function Dashboard() {
             return (
               <section key={sectionId} className="min-w-0">
                 <div className="flex items-center justify-between mb-4 gap-3">
-                  <h2 className="text-lg font-medium text-[#e8e4dc] truncate">
+                  <h2 className="text-xl font-medium text-[#e8e4dc] truncate">
                     Because you liked{' '}
                     <Link
                       to={`/games/${sectionId}`}
@@ -390,7 +390,7 @@ export default function Dashboard() {
         {backlogError ? (
           <ErrorBanner message="Could not load your backlog." onRetry={loadBacklog} />
         ) : backlog.length === 0 ? (
-          <p className="text-sm text-[#8891a8]">Your backlog is empty.</p>
+          <p className="text-base text-[#8891a8]">Your backlog is empty.</p>
         ) : (
           <GameScroll
             games={backlog}
@@ -421,15 +421,15 @@ export default function Dashboard() {
       {!recsError && !dashLoading && wildcard.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-[#e8e4dc]">Wild Card</h2>
+            <h2 className="text-xl font-medium text-[#e8e4dc]">Wild Card</h2>
             <div className="flex items-center gap-3">
-              <Link to="/wildcard" className="text-xs text-[#8891a8] hover:text-[#f72585] transition-colors">
+              <Link to="/wildcard" className="text-sm text-[#8891a8] hover:text-[#f72585] transition-colors">
                 More →
               </Link>
               <button
                 onClick={refreshWildcard}
                 disabled={wildcardRefreshing}
-                className="text-xs px-2.5 py-1 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-sm px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#f72585] hover:text-[#f72585] hover:[text-shadow:0_0_8px_#f72585] active:scale-[0.97] transition-[border-color,color,transform] disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Refresh wild card"
               >
                 {wildcardRefreshing ? '↻ Refreshing...' : 'Refresh'}

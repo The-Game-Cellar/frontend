@@ -59,14 +59,14 @@ export default function TagDropdown({ value, options, onChange, counts, emptyLab
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`bg-[#111220] border rounded px-3 py-1.5 text-xs transition-colors flex items-center gap-2 ${
+        className={`bg-[#111220] border rounded px-3.5 py-2 text-sm transition-colors flex items-center gap-2 ${
           value.length > 0
             ? 'border-[#f72585] text-[#f72585]'
             : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
         }`}
       >
         <span>{triggerLabel}</span>
-        <span className="text-[10px] opacity-60">▾</span>
+        <span className="text-xs opacity-60">▾</span>
       </button>
 
       {open && (
@@ -77,7 +77,7 @@ export default function TagDropdown({ value, options, onChange, counts, emptyLab
           <button
             type="button"
             onClick={clearAll}
-            className={`block w-full text-left px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${
+            className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap transition-colors ${
               value.length === 0
                 ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                 : 'text-[#e8e4dc] hover:bg-[#181a2e]'
@@ -86,7 +86,7 @@ export default function TagDropdown({ value, options, onChange, counts, emptyLab
             All
           </button>
           {options.length === 0 ? (
-            <p className="px-4 py-1.5 text-xs text-[#4a5068]">{emptyLabel}</p>
+            <p className="px-4 py-2 text-sm text-[#4a5068]">{emptyLabel}</p>
           ) : (
             sortedOptions.map((opt) => {
               const picked = selectedSet.has(opt.value)
@@ -104,7 +104,7 @@ export default function TagDropdown({ value, options, onChange, counts, emptyLab
                   onClick={() => toggle(opt.value)}
                   disabled={unavailable}
                   aria-disabled={unavailable}
-                  className={`flex w-full items-center justify-between gap-3 px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${stateClass}`}
+                  className={`flex w-full items-center justify-between gap-3 px-4 py-2 text-sm whitespace-nowrap transition-colors ${stateClass}`}
                 >
                   <span>{opt.label}</span>
                   <span className="flex items-center gap-2 text-xs">
@@ -117,7 +117,7 @@ export default function TagDropdown({ value, options, onChange, counts, emptyLab
                         </span>
                       )
                     )}
-                    {picked && <span className="text-[10px]">✓</span>}
+                    {picked && <span className="text-xs">✓</span>}
                   </span>
                 </button>
               )

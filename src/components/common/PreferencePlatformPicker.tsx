@@ -44,34 +44,41 @@ function PlatformChip({
 }: PlatformChipProps) {
   if (owned) {
     return (
-      <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border bg-[#f7258510] border-[#f7258560] text-[#f72585]">
-        <button
-          type="button"
-          onClick={() => ownedId != null && onTogglePrimary(ownedId, !isPrimary)}
-          disabled={isBusy}
+      <button
+        type="button"
+        onClick={() => ownedId != null && onRemove(ownedId)}
+        disabled={isBusy}
+        title={`Remove ${name}`}
+        aria-label={`Remove ${name}`}
+        className="flex items-center gap-1.5 text-sm px-3.5 py-2 rounded border bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_6px_#f7258540] [text-shadow:0_0_6px_#f7258560] disabled:opacity-40 transition-[border-color,color,background-color,box-shadow,transform] duration-150 active:scale-[0.97]"
+      >
+        <span
+          role="button"
+          tabIndex={isBusy ? -1 : 0}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (ownedId != null && !isBusy) onTogglePrimary(ownedId, !isPrimary)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              if (ownedId != null && !isBusy) onTogglePrimary(ownedId, !isPrimary)
+            }
+          }}
           title={isPrimary ? 'Primary platform (click to unset)' : 'Set as primary'}
           aria-label={isPrimary ? 'Unset primary platform' : 'Set as primary platform'}
           aria-pressed={isPrimary}
-          className={`text-sm leading-none transition-[color,text-shadow] disabled:opacity-50 ${
+          className={`text-sm leading-none transition-[color,text-shadow] cursor-pointer ${
             isPrimary
               ? 'text-[#f59e0b] [text-shadow:0_0_6px_#f59e0b80]'
               : 'text-[#4a5068] hover:text-[#f59e0b]'
           }`}
         >
           {isPrimary ? '★' : '☆'}
-        </button>
+        </span>
         {name}
-        <button
-          type="button"
-          onClick={() => ownedId != null && onRemove(ownedId)}
-          disabled={isBusy}
-          className="text-base leading-none text-[#4a5068] hover:text-[#ef4444] transition-colors disabled:opacity-50"
-          title="Remove platform"
-          aria-label={`Remove ${name}`}
-        >
-          ×
-        </button>
-      </span>
+      </button>
     )
   }
   return (
@@ -79,9 +86,9 @@ function PlatformChip({
       type="button"
       onClick={() => onAdd(name)}
       disabled={isBusy}
-      className="text-xs px-3 py-1.5 rounded border border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 transition-[border-color,color,background-color,transform] duration-150 active:scale-[0.97]"
+      className="text-sm px-3.5 py-2 rounded border bg-[#0a0b14] border-[#3a3d58] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc] disabled:opacity-40 transition-[border-color,color,background-color,transform] duration-150 active:scale-[0.97]"
     >
-      + {name}
+      {name}
     </button>
   )
 }
@@ -136,6 +143,15 @@ export default function PreferencePlatformPicker({
     return m
   }, [owned])
 
+  // Catalog-known owned chips, surfaced to the top "My platforms" group so the user sees
+  // their picks together instead of scattered across category groups.
+  const ownedCatalogChips = useMemo(
+    () => catalog
+      .filter((p) => p.name && ownedByName.has(p.name))
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
+    [catalog, ownedByName]
+  )
+
   const ownedCategories = useMemo(() => {
     const s = new Set<string>()
     for (const p of catalog) {
@@ -147,7 +163,7 @@ export default function PreferencePlatformPicker({
   const isCategoryOpen = (cat: string) => {
     if (userClosed.has(cat)) return false
     if (userOpened.has(cat)) return true
-    return cat === 'sony' || ownedCategories.has(cat)
+    return cat === 'my' || cat === 'sony' || ownedCategories.has(cat)
   }
 
   const matches = (name: string) => !isSearching || name.toLowerCase().includes(lowerSearch)
@@ -193,33 +209,71 @@ export default function PreferencePlatformPicker({
         className="w-full bg-[#0a0b14] border border-[#2a2d45] rounded px-3 py-2 text-sm text-[#e8e4dc] placeholder:text-[#4a5068] focus:border-[#f72585] focus:outline-none transition-colors"
       />
 
-      {orphaned.length > 0 && (
-        <div className="border border-[#f59e0b40] bg-[#f59e0b08] rounded p-3 space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#f59e0b]">
-            Legacy &mdash; no longer in catalog
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {orphaned.map((o) => (
-              <PlatformChip
-                key={o.id}
-                name={o.platformName ?? ''}
-                owned={true}
-                isPrimary={!!o.isPrimary}
-                ownedId={o.id ?? null}
-                onAdd={onAdd}
-                onRemove={onRemove}
-                onTogglePrimary={onTogglePrimary}
-                isBusy={isBusy}
-              />
-            ))}
+      {(ownedCatalogChips.length > 0 || orphaned.length > 0) && (() => {
+        const visibleOwned = ownedCatalogChips.filter((p) => matches(p.name ?? ''))
+        const visibleOrphans = orphaned.filter((o) => matches(o.platformName ?? ''))
+        if (visibleOwned.length === 0 && visibleOrphans.length === 0) return null
+        const open = isSearching || isCategoryOpen('my')
+        return (
+          <div className="border border-[#2a2d45] rounded overflow-hidden">
+            <button
+              type="button"
+              onClick={() => !isSearching && toggleCategory('my')}
+              disabled={isSearching}
+              className="w-full flex items-center justify-between px-3 py-2 bg-[#0a0b14] hover:bg-[#1e2035] text-left transition-colors disabled:cursor-default disabled:hover:bg-[#0a0b14]"
+            >
+              <span className="text-sm uppercase tracking-wider text-[#8891a8]">
+                My platforms
+              </span>
+              <span className="text-xs text-[#4a5068]">{open ? '−' : '+'}</span>
+            </button>
+            {open && (
+              <div className="p-3 flex flex-wrap gap-2">
+                {visibleOwned.map((p) => {
+                  const name = p.name ?? ''
+                  const ownedRow = ownedByName.get(name)
+                  return (
+                    <PlatformChip
+                      key={p.id}
+                      name={name}
+                      owned={true}
+                      isPrimary={!!ownedRow?.isPrimary}
+                      ownedId={ownedRow?.id ?? null}
+                      onAdd={onAdd}
+                      onRemove={onRemove}
+                      onTogglePrimary={onTogglePrimary}
+                      isBusy={isBusy}
+                    />
+                  )
+                })}
+                {visibleOrphans.map((o) => (
+                  <PlatformChip
+                    key={o.id}
+                    name={o.platformName ?? ''}
+                    owned={true}
+                    isPrimary={!!o.isPrimary}
+                    ownedId={o.id ?? null}
+                    onAdd={onAdd}
+                    onRemove={onRemove}
+                    onTogglePrimary={onTogglePrimary}
+                    isBusy={isBusy}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       <div className="space-y-2">
         {ordered.map(([category, items]) => {
-          const filtered = items.filter((p) => matches(p.name ?? ''))
-          if (isSearching && filtered.length === 0) return null
+          // Owned platforms live in the "My platforms" group above; only available-to-add
+          // chips remain in the category groups so users see real choices, not duplicates.
+          const filtered = items.filter((p) => {
+            const name = p.name ?? ''
+            return !ownedByName.has(name) && matches(name)
+          })
+          if (filtered.length === 0) return null
           const open = isSearching || isCategoryOpen(category)
           return (
             <div key={category} className="border border-[#2a2d45] rounded overflow-hidden">
@@ -229,7 +283,7 @@ export default function PreferencePlatformPicker({
                 disabled={isSearching}
                 className="w-full flex items-center justify-between px-3 py-2 bg-[#0a0b14] hover:bg-[#1e2035] text-left transition-colors disabled:cursor-default disabled:hover:bg-[#0a0b14]"
               >
-                <span className="text-xs uppercase tracking-wider text-[#8891a8]">
+                <span className="text-sm uppercase tracking-wider text-[#8891a8]">
                   {CATEGORY_LABELS[category] ?? category}
                 </span>
                 <span className="text-xs text-[#4a5068]">{open ? '−' : '+'}</span>
@@ -238,14 +292,13 @@ export default function PreferencePlatformPicker({
                 <div className="p-3 flex flex-wrap gap-2">
                   {filtered.map((p) => {
                     const name = p.name ?? ''
-                    const ownedRow = ownedByName.get(name)
                     return (
                       <PlatformChip
                         key={p.id}
                         name={name}
-                        owned={!!ownedRow}
-                        isPrimary={!!ownedRow?.isPrimary}
-                        ownedId={ownedRow?.id ?? null}
+                        owned={false}
+                        isPrimary={false}
+                        ownedId={null}
                         onAdd={onAdd}
                         onRemove={onRemove}
                         onTogglePrimary={onTogglePrimary}

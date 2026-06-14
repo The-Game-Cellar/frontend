@@ -86,14 +86,14 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`bg-[#111220] border rounded px-3 py-1.5 text-xs transition-colors flex items-center gap-2 ${
+        className={`bg-[#111220] border rounded px-3.5 py-2 text-sm transition-colors flex items-center gap-2 ${
           value
             ? 'border-[#f72585] text-[#f72585]'
             : 'border-[#2a2d45] text-[#8891a8] hover:border-[#8891a8] hover:text-[#e8e4dc]'
         }`}
       >
         <span>{triggerLabel}</span>
-        <span className="text-[10px] opacity-60">▾</span>
+        <span className="text-xs opacity-60">▾</span>
       </button>
 
       {open && (
@@ -105,7 +105,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
             type="button"
             onClick={() => select('')}
             onMouseEnter={scheduleClose}
-            className={`block w-full text-left px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${
+            className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap transition-colors ${
               value === ''
                 ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                 : 'text-[#e8e4dc] hover:bg-[#181a2e]'
@@ -120,7 +120,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
             const umbrellaPicked = group.umbrella === true && isPicked(childrenJoined)
             const isFlyoutOpen = hoveredUmbrella === group.label
             const showCaret = group.umbrella === true && platforms.length > 1
-            const baseClass = 'w-full flex items-center justify-between gap-3 px-4 py-1.5 text-xs whitespace-nowrap transition-colors'
+            const baseClass = 'w-full flex items-center justify-between gap-3 px-4 py-2 text-sm whitespace-nowrap transition-colors'
             const activeColorClass =
               (group.umbrella === true && umbrellaPicked) ||
               (group.umbrella !== true && isPicked(platforms[0] ?? ''))
@@ -142,7 +142,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
                 className={`${baseClass} ${activeColorClass}`}
               >
                 <span>{group.label}</span>
-                {showCaret && <span className="text-[10px] opacity-60">▸</span>}
+                {showCaret && <span className="text-xs opacity-60">▸</span>}
               </button>
             )
           })}
@@ -156,7 +156,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
                   type="button"
                   onClick={() => select(name)}
                   onMouseEnter={scheduleClose}
-                  className={`block w-full text-left px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${
+                  className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap transition-colors ${
                     isPicked(name)
                       ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                       : 'text-[#e8e4dc] hover:bg-[#181a2e]'
@@ -180,7 +180,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
           <button
             type="button"
             onClick={() => select((activeGroup.platforms ?? []).join(','))}
-            className={`block w-full text-left px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${
+            className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap transition-colors ${
               isPicked((activeGroup.platforms ?? []).join(','))
                 ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                 : 'text-[#e8e4dc] hover:bg-[#181a2e]'
@@ -194,7 +194,7 @@ export default function PlatformDropdown({ value, groups, others, onChange }: Pl
               key={child}
               type="button"
               onClick={() => select(child)}
-              className={`block w-full text-left px-4 py-1.5 text-xs whitespace-nowrap transition-colors ${
+              className={`block w-full text-left px-4 py-2 text-sm whitespace-nowrap transition-colors ${
                 isPicked(child)
                   ? 'text-[#f72585] [text-shadow:0_0_6px_#f72585]'
                   : 'text-[#8891a8] hover:bg-[#181a2e] hover:text-[#e8e4dc]'

@@ -63,16 +63,16 @@ export default function StyledSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((o) => !o)}
-        className={`bg-[#111220] border rounded pl-3 pr-3 py-1.5 text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 w-full text-left ${triggerColor}`}
+        className={`bg-[#111220] border rounded pl-3.5 pr-3.5 py-2 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 w-full text-left ${triggerColor}`}
       >
         <span className="truncate">{triggerLabel}</span>
-        <span className="ml-auto text-[10px] opacity-60">▾</span>
+        <span className="ml-auto text-xs opacity-60">▾</span>
       </button>
 
       {open && !disabled && (
         <div
           style={{ width: 'max-content', maxWidth: '20rem' }}
-          className="styled-scrollbar absolute z-40 top-full left-0 mt-1 max-h-72 overflow-y-auto bg-[#111220] border border-[#2a2d45] rounded shadow-[0_4px_12px_rgba(0,0,0,0.6)] py-1 text-xs"
+          className="styled-scrollbar absolute z-40 top-full left-0 mt-1 max-h-72 overflow-y-auto bg-[#111220] border border-[#2a2d45] rounded shadow-[0_4px_12px_rgba(0,0,0,0.6)] py-1 text-sm"
         >
           {sortByAvailability(options, value, counts).map((opt) => {
             const isPicked = opt.value === value
@@ -90,7 +90,7 @@ export default function StyledSelect({
                 onClick={() => !unavailable && select(opt.value)}
                 disabled={unavailable}
                 aria-disabled={unavailable}
-                className={`flex w-full items-center justify-between gap-3 px-4 py-1.5 transition-colors whitespace-nowrap ${stateClass}`}
+                className={`flex w-full items-center justify-between gap-3 px-4 py-2 transition-colors whitespace-nowrap ${stateClass}`}
               >
                 <span className="truncate">{opt.label}</span>
                 {counts !== undefined && opt.value !== '' && (

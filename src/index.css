@@ -1,6 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Responsive scale tokens. clamp(MIN, A + B*vw, MAX) interpolates linearly from
+   MIN at viewport ~1366px to MAX at viewport 2560px; beyond 2560 the value caps
+   at MAX. Overrides Tailwind v4's default --text-* scale so existing
+   text-xs / text-sm / etc utilities scale fluidly across the whole app. */
+@theme {
+  --text-xs:   clamp(0.75rem,  0.607rem + 0.168vw, 0.875rem);
+  --text-sm:   clamp(0.875rem, 0.732rem + 0.168vw, 1rem);
+  --text-base: clamp(1rem,     0.714rem + 0.335vw, 1.25rem);
+  --text-lg:   clamp(1.125rem, 0.696rem + 0.503vw, 1.5rem);
+  --text-xl:   clamp(1.25rem,  0.679rem + 0.670vw, 1.75rem);
+  --text-2xl:  clamp(1.5rem,   0.643rem + 1.005vw, 2.25rem);
+}
+
+/* Non-text design tokens kept on :root so source consumers can pick them up with
+   var(--name) without needing Tailwind utility generation. Card-w / card-h must
+   stay in sync with useGridPageSize's literal cardWidth / cardHeight defaults;
+   the hook does not read these vars at runtime today. */
+:root {
+  --space-xs: clamp(0.25rem, 0.107rem + 0.168vw, 0.375rem);
+  --space-sm: clamp(0.5rem,  0.214rem + 0.335vw, 0.75rem);
+  --space-md: clamp(1rem,    0.428rem + 0.670vw, 1.5rem);
+  --space-lg: clamp(1.5rem,  0.642rem + 1.005vw, 2.25rem);
+  --space-xl: clamp(2rem,    0.856rem + 1.340vw, 3rem);
+
+  --card-w: 176px;
+  --card-h: 300px;
+
+  --container-narrow: clamp(32rem, 13.696rem + 21.44vw, 48rem);
+  --container-wide:   clamp(64rem, 27.391rem + 42.88vw, 96rem);
+
+  --pad-page: clamp(1rem, -0.144rem + 1.340vw, 2rem);
+}
+
 body {
   font-family: 'Fira Code', 'FiraCode Nerd Font Mono', monospace;
   background-color: #0a0b14;
