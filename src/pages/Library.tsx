@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useUserGames, useUserPlatforms, useLibraryGenres, useRemoveGame } from '../services/libraryService'
+import { useUserGames, useLibraryGamePlatforms, useLibraryGenres, useRemoveGame } from '../services/libraryService'
 import type { GetUserGamesParams } from '../services/libraryService'
 import GameListItem from '../components/library/GameListItem'
 import LibraryGameCard from '../components/library/LibraryGameCard'
@@ -97,12 +97,12 @@ export default function Library() {
   if (activeGenre) userGamesParams.genre = activeGenre
 
   const { data: gamesData, isPending: gamesPending, error: gamesError } = useUserGames(userGamesParams)
-  const { data: platformsData } = useUserPlatforms()
+  const { data: platformsData } = useLibraryGamePlatforms()
   const { data: genresData } = useLibraryGenres()
   const removeGameMutation = useRemoveGame()
 
   const games = gamesData ?? []
-  const platforms = (platformsData ?? []).map((p) => p.platformName ?? '').filter((s) => s.length > 0)
+  const platforms = platformsData ?? []
   const genres = genresData ?? []
 
   const handleViewChange = (mode: ViewMode) => {

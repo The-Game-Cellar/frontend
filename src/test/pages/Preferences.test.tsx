@@ -27,7 +27,7 @@ describe('Preferences page', () => {
     )
     renderPreferences()
 
-    await waitFor(() => expect(screen.getByTitle(/remove platform/i)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTitle(/remove pc/i)).toBeInTheDocument())
     expect(screen.getByText('Platforms')).toBeInTheDocument()
     expect(screen.getByText('Genre preferences')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'RPG' })).toBeInTheDocument()

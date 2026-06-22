@@ -65,6 +65,9 @@ export const getDustyGames = (): Promise<AxiosResponse<UserGameDTO[]>> =>
 export const getLibraryGenres = (): Promise<AxiosResponse<string[]>> =>
   api.get('/api/v1/library/genres')
 
+export const getLibraryGamePlatforms = (): Promise<AxiosResponse<string[]>> =>
+  api.get('/api/v1/library/games/platforms')
+
 export const getUserPlatforms = (): Promise<AxiosResponse<UserPlatformDTO[]>> =>
   api.get('/api/v1/library/platforms')
 
@@ -117,6 +120,7 @@ export const libraryKeys = {
   dusty: () => [...libraryKeys.all, 'dusty'] as const,
   genres: () => [...libraryKeys.all, 'genres'] as const,
   platforms: () => [...libraryKeys.all, 'platforms'] as const,
+  gamePlatforms: () => [...libraryKeys.all, 'gamePlatforms'] as const,
   genrePreferences: () => [...libraryKeys.all, 'genrePreferences'] as const,
   tagPreferences: () => [...libraryKeys.all, 'tagPreferences'] as const,
   releaseYearPreferences: () => [...libraryKeys.all, 'releaseYearPreferences'] as const,
@@ -192,6 +196,12 @@ export const useLibraryGenres = () =>
   useQuery({
     queryKey: libraryKeys.genres(),
     queryFn: () => getLibraryGenres().then((r) => (Array.isArray(r.data) ? r.data : [])),
+  })
+
+export const useLibraryGamePlatforms = () =>
+  useQuery({
+    queryKey: libraryKeys.gamePlatforms(),
+    queryFn: () => getLibraryGamePlatforms().then((r) => (Array.isArray(r.data) ? r.data : [])),
   })
 
 export const useUserPlatforms = () =>
