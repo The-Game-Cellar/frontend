@@ -23,6 +23,7 @@ export const handlers = [
   http.get(`${API}/api/v1/library/completed`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/dusty`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/genres`, () => HttpResponse.json([])),
+  http.get(`${API}/api/v1/library/games/platforms`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/library/platforms`, () => HttpResponse.json([])),
   http.patch(`${API}/api/v1/library/platforms/:id/primary`, () =>
     HttpResponse.json({ id: 1, platformName: 'PC', isPrimary: true }),
