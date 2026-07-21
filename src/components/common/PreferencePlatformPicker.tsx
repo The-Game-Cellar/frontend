@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import type { PlatformCatalogDTO, UserPlatformDTO } from '../../types/api'
 
 interface PreferencePlatformPickerProps {
@@ -8,6 +9,12 @@ interface PreferencePlatformPickerProps {
   onRemove: (id: number) => void
   onTogglePrimary: (id: number, nextPrimary: boolean) => void
   isBusy: boolean
+  // Open/closed category state is owned by the parent so it survives tab switches and
+  // resets only when the Preferences page unmounts.
+  userOpened: Set<string>
+  setUserOpened: Dispatch<SetStateAction<Set<string>>>
+  userClosed: Set<string>
+  setUserClosed: Dispatch<SetStateAction<Set<string>>>
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -100,10 +107,12 @@ export default function PreferencePlatformPicker({
   onRemove,
   onTogglePrimary,
   isBusy,
+  userOpened,
+  setUserOpened,
+  userClosed,
+  setUserClosed,
 }: PreferencePlatformPickerProps) {
   const [search, setSearch] = useState('')
-  const [userOpened, setUserOpened] = useState<Set<string>>(new Set())
-  const [userClosed, setUserClosed] = useState<Set<string>>(new Set())
 
   const isSearching = search.trim().length > 0
   const lowerSearch = search.trim().toLowerCase()
@@ -152,18 +161,16 @@ export default function PreferencePlatformPicker({
     [catalog, ownedByName]
   )
 
-  const ownedCategories = useMemo(() => {
-    const s = new Set<string>()
-    for (const p of catalog) {
-      if (p.name && p.category && ownedByName.has(p.name)) s.add(p.category)
-    }
-    return s
-  }, [catalog, ownedByName])
+  const hasOwnedPlatforms = ownedCatalogChips.length > 0 || orphaned.length > 0
+  const firstCategory = ordered.length > 0 ? ordered[0][0] : null
 
   const isCategoryOpen = (cat: string) => {
     if (userClosed.has(cat)) return false
     if (userOpened.has(cat)) return true
-    return cat === 'my' || cat === 'sony' || ownedCategories.has(cat)
+    if (cat === 'my') return true
+    // No platforms yet (My platforms hidden): open the first category so the picker is not all-collapsed.
+    if (!hasOwnedPlatforms) return cat === firstCategory
+    return false
   }
 
   const matches = (name: string) => !isSearching || name.toLowerCase().includes(lowerSearch)
