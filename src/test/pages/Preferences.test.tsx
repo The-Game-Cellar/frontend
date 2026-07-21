@@ -27,8 +27,10 @@ describe('Preferences page', () => {
     )
     renderPreferences()
 
+    // Platforms is the default tab; the genre section lives behind its own tab.
     await waitFor(() => expect(screen.getByTitle(/remove pc/i)).toBeInTheDocument())
-    expect(screen.getByText('Platforms')).toBeInTheDocument()
+    expect(screen.queryByText('Genre preferences')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('tab', { name: /genres/i }))
     expect(screen.getByText('Genre preferences')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'RPG' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument()
@@ -45,6 +47,7 @@ describe('Preferences page', () => {
     )
     renderPreferences()
 
+    await userEvent.click(screen.getByRole('tab', { name: /tags/i }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'cozy' })).toBeInTheDocument())
     expect(screen.getByText('Tag preferences')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'atmospheric' })).toBeInTheDocument()
@@ -57,6 +60,7 @@ describe('Preferences page', () => {
     )
     renderPreferences()
 
+    await userEvent.click(screen.getByRole('tab', { name: /release era/i }))
     await waitFor(() => expect(screen.getByText('Release era preferences')).toBeInTheDocument())
     expect(screen.getByRole('button', { name: 'Pre-1990' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '1990s' })).toBeInTheDocument()
@@ -70,6 +74,30 @@ describe('Preferences page', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '2020s' }))
     await waitFor(() => expect(eraSaveButton).not.toBeDisabled())
+  })
+
+  it('keeps unsaved edits and flags the tab dirty when switching tabs', async () => {
+    server.use(
+      http.get(`${API}/api/v1/games/genres`, () =>
+        HttpResponse.json({ genres: ['RPG', 'Action'] }),
+      ),
+      http.get(`${API}/api/v1/library/genre-preferences`, () => HttpResponse.json([])),
+    )
+    renderPreferences()
+
+    await userEvent.click(screen.getByRole('tab', { name: /genres/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'RPG' }))
+
+    // Dirty indicator surfaces on the Genres tab once there is an unsaved edit.
+    expect(screen.getByRole('tab', { name: /genres.*unsaved changes/i })).toBeInTheDocument()
+
+    // Switch away and back; the unsaved selection must survive.
+    await userEvent.click(screen.getByRole('tab', { name: /platforms/i }))
+    expect(screen.queryByRole('button', { name: 'RPG' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('tab', { name: /genres.*unsaved changes/i }))
+
+    const rpg = screen.getByRole('button', { name: 'RPG' })
+    expect(rpg).toHaveClass('border-[#f72585]')
   })
 
   it('toggles primary platform when star is clicked', async () => {

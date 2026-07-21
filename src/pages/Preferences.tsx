@@ -16,6 +16,8 @@ import PreferencePlatformPicker from '../components/common/PreferencePlatformPic
 
 const RELEASE_YEAR_BUCKETS: string[] = ['Pre-1990', '1990s', '2000s', '2010s', '2020s']
 
+type PrefTab = 'platforms' | 'genres' | 'tags' | 'era'
+
 export default function Preferences() {
   const { data: platformsData, isError: platformsError } = useUserPlatforms()
   const platforms = platformsData ?? []
@@ -36,6 +38,13 @@ export default function Preferences() {
   const { data: tagList = [] } = usePopularTags(50)
 
   const { data: storedReleaseYearPreferences } = useReleaseYearPreferences()
+
+  const [activeTab, setActiveTab] = useState<PrefTab>('platforms')
+
+  // Platform category open/closed state lives here (not inside the picker) so it survives
+  // switching tabs and resets only when this page unmounts.
+  const [platformOpened, setPlatformOpened] = useState<Set<string>>(new Set())
+  const [platformClosed, setPlatformClosed] = useState<Set<string>>(new Set())
 
   const [adding, setAdding] = useState(false)
   const [addPlatformError, setAddPlatformError] = useState(false)
@@ -201,8 +210,15 @@ export default function Preferences() {
     }
   }
 
+  const tabs: { id: PrefTab; label: string; dirty: boolean }[] = [
+    { id: 'platforms', label: 'Platforms', dirty: false },
+    { id: 'genres', label: 'Genres', dirty: genresDirty },
+    { id: 'tags', label: 'Tags', dirty: tagsDirty },
+    { id: 'era', label: 'Release era', dirty: bucketsDirty },
+  ]
+
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-[#e8e4dc]">Preferences</h1>
         <p className="text-sm text-[#8891a8]">
@@ -210,6 +226,39 @@ export default function Preferences() {
         </p>
       </div>
 
+      <div
+        role="tablist"
+        aria-label="Preference sections"
+        className="flex gap-1 p-1 bg-[#0a0b14] border border-[#2a2d45] rounded-lg"
+      >
+        {tabs.map((tab) => {
+          const active = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded text-sm border transition-[border-color,color,background-color,box-shadow,text-shadow] duration-150 ${
+                active
+                  ? 'bg-[#f7258515] border-[#f72585] text-[#f72585] [box-shadow:0_0_8px_#f7258540] [text-shadow:0_0_6px_#f7258560]'
+                  : 'bg-transparent border-transparent text-[#8891a8] hover:text-[#e8e4dc] hover:bg-[#181a2e]'
+              }`}
+            >
+              {tab.label}
+              {tab.dirty && (
+                <span
+                  aria-label="unsaved changes"
+                  className="w-1.5 h-1.5 rounded-full bg-[#f72585] [box-shadow:0_0_6px_#f72585]"
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {activeTab === 'platforms' && (
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="space-y-1.5">
           <p className="text-sm text-[#8891a8] uppercase tracking-wider">Platforms</p>
@@ -254,10 +303,16 @@ export default function Preferences() {
               removePlatformMutation.isPending ||
               setPrimaryMutation.isPending
             }
+            userOpened={platformOpened}
+            setUserOpened={setPlatformOpened}
+            userClosed={platformClosed}
+            setUserClosed={setPlatformClosed}
           />
         )}
       </section>
+      )}
 
+      {activeTab === 'genres' && (
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-sm text-[#8891a8] uppercase tracking-wider">Genre preferences</p>
@@ -283,7 +338,7 @@ export default function Preferences() {
           </p>
         ) : (
           <div
-            className="grid gap-2 max-h-64 overflow-y-auto styled-scrollbar pr-1 -mr-1"
+            className="grid gap-2 max-h-[calc(100vh-24rem)] overflow-y-auto styled-scrollbar pr-1 -mr-1"
             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
           >
             {genreList.map((genre) => {
@@ -327,7 +382,9 @@ export default function Preferences() {
           </button>
         </div>
       </section>
+      )}
 
+      {activeTab === 'tags' && (
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-sm text-[#8891a8] uppercase tracking-wider">Tag preferences</p>
@@ -353,7 +410,7 @@ export default function Preferences() {
           </p>
         ) : (
           <div
-            className="grid gap-2 max-h-64 overflow-y-auto styled-scrollbar pr-1 -mr-1"
+            className="grid gap-2 max-h-[calc(100vh-24rem)] overflow-y-auto styled-scrollbar pr-1 -mr-1"
             style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
           >
             {tagList.map((tag) => {
@@ -397,7 +454,9 @@ export default function Preferences() {
           </button>
         </div>
       </section>
+      )}
 
+      {activeTab === 'era' && (
       <section className="bg-[#111220] border border-[#2a2d45] rounded-lg p-5 space-y-4">
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-sm text-[#8891a8] uppercase tracking-wider">Release era preferences</p>
@@ -461,6 +520,7 @@ export default function Preferences() {
           </button>
         </div>
       </section>
+      )}
     </div>
   )
 }
