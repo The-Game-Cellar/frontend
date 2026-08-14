@@ -6,10 +6,7 @@
 FROM node:22-alpine AS build
 WORKDIR /build
 COPY package.json package-lock.json ./
-# `npm install` rather than `npm ci` so the build tolerates a lockfile generated
-# on a different OS where optional native deps (e.g. @emnapi/*) differ. Switch
-# to `npm ci` once the lockfile is regenerated under Linux.
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 COPY . .
 ARG VITE_API_URL=http://localhost:8000
 ENV VITE_API_URL=$VITE_API_URL
