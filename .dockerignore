@@ -1,11 +1,38 @@
+# Build output and caches
 node_modules/
 dist/
-.git/
-.idea/
 .vite/
 coverage/
+*.tsbuildinfo
+
+# VCS and editor state
+.git/
+.gitattributes
+.idea/
+.vscode/
+
+# Agent and contributor docs. Not needed to build.
+.claude/
+AGENTS.md
+CLAUDE.md
+README.md
+docs/
+
+# Credentials and key material. This Dockerfile uses `COPY . .`, so .gitignore
+# alone does not keep a file on disk out of the build layer.
 .env
 .env.*
 !.env.example
-README.md
-docs/
+.npmrc
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# Test output, logs, OS noise
+playwright-report/
+*.log
+*.stackdump
+.DS_Store
+Thumbs.db
