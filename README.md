@@ -1,7 +1,8 @@
-# The Game Cellar — Frontend
+# The Game Cellar Frontend
 
 > React 19 single-page app for The Game Cellar. Dashboard, library, recommendations, explore, wildcard, game detail, profile. Strict-mode TypeScript end-to-end, server state via TanStack Query, DTOs auto-generated from each backend service's OpenAPI spec.
 
+[![CI](https://github.com/The-Game-Cellar/frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/The-Game-Cellar/frontend/actions/workflows/ci.yml)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff)
@@ -14,15 +15,15 @@
 
 ## Tech Stack
 
-- **TypeScript 5.9** — `strict: true`. Every page, component, hook, and service typed end-to-end against backend DTOs.
-- **React 19** — functional components and hooks only. No class components.
-- **Vite 8** — dev server on port 5173, production build via `vite build`.
-- **Tailwind CSS v4** — utility-first, `@import "tailwindcss"` in `index.css`. No config file.
-- **Axios** — HTTP client with a 401-refresh interceptor and typed retry queue.
-- **React Router v6** — client-side routing.
-- **TanStack Query v5** — server-state layer. `useQuery` for reads, `useMutation` for writes. Hierarchical query-key factories co-located with each service module.
-- **OpenAPI-generated types** — `openapi-typescript@7` regenerates `src/types/api/{game,library,recommendation}.ts` from each backend service's `/v3/api-docs`. Backend DTO changes surface as compile errors on the next typecheck.
-- **Vitest + MSW + Testing Library** — 19 test files / 45 tests covering services, context, components, mutation invalidation, and one smoke test per page.
+- **TypeScript 5.9**: `strict: true`. Every page, component, hook, and service typed end-to-end against backend DTOs.
+- **React 19**: functional components and hooks only. No class components.
+- **Vite 8**: dev server on port 5173, production build via `vite build`.
+- **Tailwind CSS v4**: utility-first, `@import "tailwindcss"` in `index.css`. No config file.
+- **Axios**: HTTP client with a 401-refresh interceptor and typed retry queue.
+- **React Router v6**: client-side routing.
+- **TanStack Query v5**: server-state layer. `useQuery` for reads, `useMutation` for writes. Hierarchical query-key factories co-located with each service module.
+- **OpenAPI-generated types**: `openapi-typescript@7` regenerates `src/types/api/{game,library,recommendation}.ts` from each backend service's `/v3/api-docs`. Backend DTO changes surface as compile errors on the next typecheck.
+- **Vitest + MSW + Testing Library**: 18 test files / 54 tests covering services, context, components, mutation invalidation, and one smoke test per page.
 
 ## Routes
 
@@ -53,7 +54,7 @@ Each service module pairs a Axios-facing functions with a TanStack Query layer:
 | `gameService`          | `gameKeys`           | `useSearchGames`, `useGameById`, `usePopularGames`, `useUpcomingGames`, `useGenres`, `useGamePlatforms`, `usePopularTags`, ...                    | none                                                                                                     |
 | `libraryService`       | `libraryKeys`        | `useUserGames`, `useBacklog`, `useWishlist`, `usePlaying`, `useCompleted`, `useStats`, `useDustyGames`, `useGenrePreferences`, `useTagPreferences`| `useAddGame`, `useUpdateGame`, `useRemoveGame`, `useAddPlatform`, `useUpdateGenrePreferences`, ...       |
 | `recommendationService`| `recommendationKeys` | `useDashboard`, `usePersonalizedGrouped`, `useWildCard`, `useSimilar`, `useBasedOn`                                                               | none                                                                                                     |
-| `authService`          | —                    | —                                                                                                                                                | `useLogin`, `useRegister`, `useExchangeAuthorizationCode`, `useChangeEmail`, `useChangePassword`, ...    |
+| `authService`          | none                 | none                                                                                                                                             | `useLogin`, `useRegister`, `useExchangeAuthorizationCode`, `useChangeEmail`, `useChangePassword`, ...    |
 
 Library write mutations invalidate both `libraryKeys.all` and `recommendationKeys.all`. Logout and `deleteAccount` call `queryClient.clear()` on the singleton in `src/services/queryClient.ts`.
 
