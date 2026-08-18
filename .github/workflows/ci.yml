@@ -12,3 +12,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+    with:
+      # Vite inlines VITE_* at build time, so the published image is tied to one
+      # origin. Local development builds from source and is unaffected.
+      api-url: https://gamecellar.app
