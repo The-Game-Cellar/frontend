@@ -32,7 +32,7 @@
 | `/login`                  | No        | Login form.                                                                                            |
 | `/register`               | No        | Custom registration form. Calls `/api/v1/auth/register`.                                               |
 | `/callback`               | No        | OAuth callback (PKCE). Exchanges authorization code for tokens, then navigates to `/onboarding`.       |
-| `/onboarding`             | No        | Platform selection (required) + optional genre / tag / release-year preferences.                       |
+| `/onboarding`             | No        | Platform selection + optional genre / tag / release-year preferences. Both steps are skippable.        |
 | `/dashboard`              | Yes       | Recommendations, "Because you liked" seed, Wild Card, Coming Soon, DUSTY strip, backlog snapshot.      |
 | `/library`                | Yes       | Game collection. Status tabs, platform / genre / tags / rating filters, list + grid view toggle.       |
 | `/recommendations`        | Yes       | Personalized recommendations grid, grouped by genre row.                                               |
