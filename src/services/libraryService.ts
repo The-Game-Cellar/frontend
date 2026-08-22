@@ -107,6 +107,17 @@ export const updateReleaseYearPreferences = (
 ): Promise<AxiosResponse<UserReleaseYearPreferenceDTO[]>> =>
   api.put('/api/v1/library/release-year-preferences', data)
 
+export interface OnboardingStatusDTO {
+  completed: boolean
+  completedAt: string | null
+}
+
+export const getOnboardingStatus = (): Promise<AxiosResponse<OnboardingStatusDTO>> =>
+  api.get('/api/v1/library/onboarding')
+
+export const completeOnboarding = (): Promise<AxiosResponse<OnboardingStatusDTO>> =>
+  api.post('/api/v1/library/onboarding')
+
 export const libraryKeys = {
   all: ['library'] as const,
   games: (params?: GetUserGamesParams) => [...libraryKeys.all, 'games', params ?? {}] as const,
@@ -124,6 +135,7 @@ export const libraryKeys = {
   genrePreferences: () => [...libraryKeys.all, 'genrePreferences'] as const,
   tagPreferences: () => [...libraryKeys.all, 'tagPreferences'] as const,
   releaseYearPreferences: () => [...libraryKeys.all, 'releaseYearPreferences'] as const,
+  onboarding: () => [...libraryKeys.all, 'onboarding'] as const,
 }
 
 export const useUserGames = (params?: GetUserGamesParams) =>
@@ -203,6 +215,25 @@ export const useLibraryGamePlatforms = () =>
     queryKey: libraryKeys.gamePlatforms(),
     queryFn: () => getLibraryGamePlatforms().then((r) => (Array.isArray(r.data) ? r.data : [])),
   })
+
+// Gates the /onboarding route, so it must not be served from a stale cache after the
+// user finishes the flow; the mutation writes the result straight into the cache.
+export const useOnboardingStatus = () =>
+  useQuery({
+    queryKey: libraryKeys.onboarding(),
+    queryFn: () => getOnboardingStatus().then((r) => r.data),
+    staleTime: Infinity,
+  })
+
+export const useCompleteOnboarding = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => completeOnboarding().then((r) => r.data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(libraryKeys.onboarding(), data)
+    },
+  })
+}
 
 export const useUserPlatforms = () =>
   useQuery({

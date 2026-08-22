@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAddPlatform, useUpdateGenrePreferences } from '../services/libraryService'
+import { useAddPlatform, useCompleteOnboarding, useUpdateGenrePreferences } from '../services/libraryService'
 import { useGenres, usePlatformCatalog } from '../services/gameService'
 import OnboardingPlatformPicker from '../components/common/OnboardingPlatformPicker'
 import TopBar from '../components/common/TopBar'
@@ -11,6 +11,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const addPlatformMutation = useAddPlatform()
   const updateGenrePreferencesMutation = useUpdateGenrePreferences()
+  const completeOnboardingMutation = useCompleteOnboarding()
 
   const [step, setStep] = useState<Step>('platforms')
 
@@ -83,8 +84,9 @@ export default function Onboarding() {
     setConfirmSkipOpen(true)
   }
 
-  function confirmSkipOnboarding() {
+  async function confirmSkipOnboarding() {
     setConfirmSkipOpen(false)
+    await completeOnboardingMutation.mutateAsync()
     navigate('/dashboard')
   }
 
@@ -97,6 +99,7 @@ export default function Onboarding() {
     setGenreError(null)
     try {
       await updateGenrePreferencesMutation.mutateAsync(genresToSave)
+      await completeOnboardingMutation.mutateAsync()
       navigate('/dashboard')
     } catch {
       setGenreError('Failed to save genre preferences. Please try again.')

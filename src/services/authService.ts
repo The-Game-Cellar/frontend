@@ -3,8 +3,16 @@ import { queryClient } from './queryClient'
 import { clearRecentlyShownIds } from './recommendationService'
 import { clearRecentlyShownUpcomingIds } from './gameService'
 import type { AccountExportDTO } from '../types/api'
+import { markPendingLogin } from '../config/loginTransition'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Login and account creation happen on Keycloak. The gateway starts the flow, so
+// this is a full page navigation rather than a fetch: the browser has to leave.
+export function startLogin(register = false): void {
+  markPendingLogin()
+  window.location.assign(`${API_URL}/api/v1/auth/authorize${register ? '?register=true' : ''}`)
+}
 
 export interface UserInfo {
   userId: string
@@ -19,19 +27,6 @@ interface ApiErrorBody {
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
   const body = (await res.json().catch(() => ({}))) as ApiErrorBody
   return body.error || fallback
-}
-
-export async function login(username: string, password: string): Promise<UserInfo> {
-  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  })
-  if (!res.ok) {
-    throw new Error(await readErrorMessage(res, 'Invalid username or password'))
-  }
-  return res.json() as Promise<UserInfo>
 }
 
 export async function refreshAccessToken(): Promise<UserInfo> {
@@ -58,19 +53,6 @@ export async function getMe(): Promise<UserInfo> {
     credentials: 'include',
   })
   if (!res.ok) throw new Error('Not authenticated')
-  return res.json() as Promise<UserInfo>
-}
-
-export async function register(username: string, email: string, password: string): Promise<UserInfo> {
-  const res = await fetch(`${API_URL}/api/v1/auth/register`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, email, password }),
-  })
-  if (!res.ok) {
-    throw new Error(await readErrorMessage(res, 'Registration failed'))
-  }
   return res.json() as Promise<UserInfo>
 }
 
@@ -127,18 +109,6 @@ export async function exportAccountData(): Promise<AccountExportDTO> {
 }
 
 // Auth bootstrap (getMe / refreshAccessToken) stays imperative in AuthProvider; only writes are mutations.
-export const useLogin = () =>
-  useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      login(username, password),
-  })
-
-export const useRegister = () =>
-  useMutation({
-    mutationFn: ({ username, email, password }: { username: string; email: string; password: string }) =>
-      register(username, email, password),
-  })
-
 export const useChangeEmail = () =>
   useMutation({
     mutationFn: ({ currentPassword, newEmail }: { currentPassword: string; newEmail: string }) =>
