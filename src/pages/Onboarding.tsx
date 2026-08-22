@@ -86,8 +86,14 @@ export default function Onboarding() {
 
   async function confirmSkipOnboarding() {
     setConfirmSkipOpen(false)
-    await completeOnboardingMutation.mutateAsync()
-    navigate('/dashboard')
+    try {
+      await completeOnboardingMutation.mutateAsync()
+      navigate('/dashboard')
+    } catch {
+      // Leaving without the flag written would drop the user straight back here, so
+      // stay put and say so rather than bouncing them between two screens.
+      setPlatformError('Could not save your choice. Please try again.')
+    }
   }
 
   async function handleSkipGenres() {

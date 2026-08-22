@@ -1,30 +1,24 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '../test-utils'
 import Register from '../../pages/Register'
 
-function renderRegister() {
-  return render(renderWithProviders(<Register />))
-}
+const { startLoginMock } = vi.hoisted(() => ({ startLoginMock: vi.fn() }))
+
+vi.mock('../../services/authService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/authService')>()
+  return { ...actual, startLogin: startLoginMock }
+})
 
 describe('Register page', () => {
-  it('renders the four-field form', () => {
-    renderRegister()
-    expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument()
+  beforeEach(() => {
+    startLoginMock.mockClear()
   })
 
-  it('shows a mismatch error when passwords do not match', async () => {
-    const user = userEvent.setup()
-    renderRegister()
-    await user.type(screen.getByLabelText(/^username$/i), 'alice')
-    await user.type(screen.getByLabelText(/^email$/i), 'a@example.test')
-    await user.type(screen.getByLabelText(/^password$/i), 'longenough1')
-    await user.type(screen.getByLabelText(/confirm password/i), 'differentpass1')
-    await user.click(screen.getByRole('button', { name: /create account/i }))
-    await waitFor(() => expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument())
+  // The route is kept only so existing links and bookmarks still land somewhere.
+  it('forwards to the hosted sign-up page rather than rendering a form', async () => {
+    const { container } = render(renderWithProviders(<Register />, { initialEntries: ['/register'] }))
+    await waitFor(() => expect(startLoginMock).toHaveBeenCalledWith(true))
+    expect(container.querySelector('form')).toBeNull()
   })
 })
