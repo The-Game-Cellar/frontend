@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import AuthProvider from './context/AuthProvider'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import PostLoginTransition from './components/common/PostLoginTransition'
 import Layout from './components/common/Layout'
 
 import Login from './pages/Login'
@@ -22,6 +23,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <PostLoginTransition />
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />

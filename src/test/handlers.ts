@@ -49,6 +49,9 @@ export const handlers = [
   http.post(`${API}/api/v1/recommendations/personalized/grouped`, () => HttpResponse.json({ rows: [], tier: 3, emptyMessage: 'Rate games in your library to unlock personalized recommendations.' })),
   http.get(`${API}/api/v1/recommendations/wildcard`, () => HttpResponse.json([])),
 
+  http.get(`${API}/api/v1/library/onboarding`, () => HttpResponse.json({ completed: true, completedAt: '2026-01-01T00:00:00' })),
+  http.post(`${API}/api/v1/library/onboarding`, () => HttpResponse.json({ completed: true, completedAt: '2026-01-01T00:00:00' })),
+
   http.get(`${API}/api/v1/games/:id/editions`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/recommendations/similar/:id`, () => HttpResponse.json([])),
   http.get(`${API}/api/v1/games/by-franchise/:name`, () => HttpResponse.json([])),

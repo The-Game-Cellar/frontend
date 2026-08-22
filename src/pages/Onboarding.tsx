@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAddPlatform, useUpdateGenrePreferences } from '../services/libraryService'
+import { useAddPlatform, useCompleteOnboarding, useUpdateGenrePreferences } from '../services/libraryService'
 import { useGenres, usePlatformCatalog } from '../services/gameService'
 import OnboardingPlatformPicker from '../components/common/OnboardingPlatformPicker'
 import TopBar from '../components/common/TopBar'
@@ -11,6 +11,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const addPlatformMutation = useAddPlatform()
   const updateGenrePreferencesMutation = useUpdateGenrePreferences()
+  const completeOnboardingMutation = useCompleteOnboarding()
 
   const [step, setStep] = useState<Step>('platforms')
 
@@ -83,9 +84,16 @@ export default function Onboarding() {
     setConfirmSkipOpen(true)
   }
 
-  function confirmSkipOnboarding() {
+  async function confirmSkipOnboarding() {
     setConfirmSkipOpen(false)
-    navigate('/dashboard')
+    try {
+      await completeOnboardingMutation.mutateAsync()
+      navigate('/dashboard')
+    } catch {
+      // Leaving without the flag written would drop the user straight back here, so
+      // stay put and say so rather than bouncing them between two screens.
+      setPlatformError('Could not save your choice. Please try again.')
+    }
   }
 
   async function handleSkipGenres() {
@@ -97,6 +105,7 @@ export default function Onboarding() {
     setGenreError(null)
     try {
       await updateGenrePreferencesMutation.mutateAsync(genresToSave)
+      await completeOnboardingMutation.mutateAsync()
       navigate('/dashboard')
     } catch {
       setGenreError('Failed to save genre preferences. Please try again.')

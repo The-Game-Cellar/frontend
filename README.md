@@ -29,8 +29,8 @@
 
 | Route                     | Protected | Description                                                                                            |
 |---------------------------|-----------|--------------------------------------------------------------------------------------------------------|
-| `/login`                  | No        | Login form.                                                                                            |
-| `/register`               | No        | Custom registration form. Calls `/api/v1/auth/register`.                                               |
+| `/login`                  | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize`; renders a retry card only when the callback returns `?error=`. |
+| `/register`               | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize?register=true`, which opens Keycloak's sign-up page. |
 | `/callback`               | No        | OAuth callback (PKCE). Exchanges authorization code for tokens, then navigates to `/onboarding`.       |
 | `/onboarding`             | No        | Platform selection + optional genre / tag / release-year preferences. Both steps are skippable.        |
 | `/dashboard`              | Yes       | Recommendations, "Because you liked" seed, Wild Card, Coming Soon, DUSTY strip, backlog snapshot.      |
