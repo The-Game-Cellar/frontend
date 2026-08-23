@@ -31,15 +31,14 @@
 |---------------------------|-----------|--------------------------------------------------------------------------------------------------------|
 | `/login`                  | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize`; renders a retry card only when the callback returns `?error=`. |
 | `/register`               | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize?register=true`, which opens Keycloak's sign-up page. |
-| `/callback`               | No        | OAuth callback (PKCE). Exchanges authorization code for tokens, then navigates to `/onboarding`.       |
-| `/onboarding`             | No        | Platform selection + optional genre / tag / release-year preferences. Both steps are skippable.        |
+| `/onboarding`             | Yes       | Platform selection + optional genre / tag / release-year preferences. Both steps are skippable.        |
 | `/dashboard`              | Yes       | Recommendations, "Because you liked" seed, Wild Card, Coming Soon, DUSTY strip, backlog snapshot.      |
 | `/library`                | Yes       | Game collection. Status tabs, platform / genre / tags / rating filters, list + grid view toggle.       |
 | `/recommendations`        | Yes       | Personalized recommendations grid, grouped by genre row.                                               |
 | `/explore`                | Yes       | Browse the catalog. Search, genre / platform / gamemodes / camera / release-year filters, "Coming soon" view. |
 | `/wildcard`               | Yes       | Dedicated Wild Card discovery page with a Roll Again button.                                           |
 | `/games/:igdbId`          | Yes       | Game detail. Hero, Add / Change status, `RatingWidget`, similar games scroll, addons.                  |
-| `/profile`                | Yes       | Account: email, change email / password, export data, delete account, sign out.                        |
+| `/profile`                | Yes       | Account: email, change email / password, export data, delete account, sign out. Email and password changes leave for Keycloak and return with `?action=` and `?status=`; deletion returns the same way and only then shows its confirmation. |
 | `/profile/statistics`     | Yes       | Library overview, average rating, games by genre + platform.                                           |
 | `/profile/preferences`    | Yes       | Platforms + declared genre / tag / release-year preferences.                                           |
 
