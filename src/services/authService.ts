@@ -14,6 +14,14 @@ export function startLogin(register = false): void {
   window.location.assign(`${API_URL}/api/v1/auth/authorize${register ? '?register=true' : ''}`)
 }
 
+export type AccountAction = 'UPDATE_PASSWORD' | 'UPDATE_EMAIL' | 'DELETE_ACCOUNT'
+
+// Password and email are changed on Keycloak's own pages; deletion sends the user there
+// only to prove who they are and is confirmed back here. All three leave the app.
+export function startAccountAction(intent: AccountAction): void {
+  window.location.assign(`${API_URL}/api/v1/auth/authorize?intent=${intent}`)
+}
+
 export interface UserInfo {
   userId: string
   email: string
@@ -56,41 +64,13 @@ export async function getMe(): Promise<UserInfo> {
   return res.json() as Promise<UserInfo>
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${API_URL}/api/v1/auth/change-password`, {
-    method: 'PUT',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ currentPassword, newPassword }),
-  })
-  if (!res.ok) {
-    throw new Error(await readErrorMessage(res, 'Password update failed'))
-  }
-  return res.json() as Promise<Record<string, unknown>>
-}
-
-export async function changeEmail(currentPassword: string, newEmail: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${API_URL}/api/v1/auth/change-email`, {
-    method: 'PUT',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ currentPassword, newEmail }),
-  })
-  if (!res.ok) {
-    throw new Error(await readErrorMessage(res, 'Email update failed'))
-  }
-  return res.json() as Promise<Record<string, unknown>>
-}
-
-export async function deleteAccount(currentPassword: string): Promise<Record<string, unknown>> {
+export async function deleteAccount(): Promise<Record<string, unknown>> {
   queryClient.clear()
   clearRecentlyShownIds()
   clearRecentlyShownUpcomingIds()
   const res = await fetch(`${API_URL}/api/v1/auth/account`, {
     method: 'DELETE',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ currentPassword }),
   })
   if (!res.ok) {
     throw new Error(await readErrorMessage(res, 'Account deletion failed'))
@@ -109,22 +89,10 @@ export async function exportAccountData(): Promise<AccountExportDTO> {
 }
 
 // Auth bootstrap (getMe / refreshAccessToken) stays imperative in AuthProvider; only writes are mutations.
-export const useChangeEmail = () =>
-  useMutation({
-    mutationFn: ({ currentPassword, newEmail }: { currentPassword: string; newEmail: string }) =>
-      changeEmail(currentPassword, newEmail),
-  })
-
-export const useChangePassword = () =>
-  useMutation({
-    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
-      changePassword(currentPassword, newPassword),
-  })
-
 export const useDeleteAccount = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (currentPassword: string) => deleteAccount(currentPassword),
+    mutationFn: () => deleteAccount(),
     onSuccess: () => {
       queryClient.clear()
     },
