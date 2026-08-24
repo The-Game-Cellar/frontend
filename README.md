@@ -41,6 +41,7 @@
 | `/profile`                | Yes       | Account: email, change email / password, export data, delete account, sign out. Email and password changes leave for Keycloak and return with `?action=` and `?status=`; deletion returns the same way and only then shows its confirmation. |
 | `/profile/statistics`     | Yes       | Library overview, average rating, games by genre + platform.                                           |
 | `/profile/preferences`    | Yes       | Platforms + declared genre / tag / release-year preferences.                                           |
+| `/about`                  | Yes       | What the product is, plus the IGDB data attribution and the non-affiliation notice. Linked from `AttributionFooter`. |
 
 ## Service Layer
 
