@@ -4,6 +4,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import './index.css'
 import App from './App'
 import { queryClient } from './services/queryClient'
+import { initSentry, onReactError } from './services/sentry'
+
+initSentry()
 
 let scrollTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -15,7 +18,7 @@ document.addEventListener('scroll', () => {
 
 const rootEl = document.getElementById('root')
 if (!rootEl) throw new Error('Missing #root element in index.html')
-createRoot(rootEl).render(
+createRoot(rootEl, { onUncaughtError: onReactError, onCaughtError: onReactError }).render(
   <QueryClientProvider client={queryClient}>
     <App />
     {import.meta.env.DEV && <ReactQueryDevtools buttonPosition="bottom-right" />}

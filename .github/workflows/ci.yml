@@ -16,3 +16,9 @@ jobs:
       # Vite inlines VITE_* at build time, so the published image is tied to one
       # origin. Local development builds from source and is unaffected.
       api-url: https://gamecellar.app
+      # Plain text on purpose: the DSN ships inside the public bundle, so a secret would
+      # hide it only from review. Junk events are kept out on Sentry's side by the
+      # project's Allowed Domains setting.
+      sentry-dsn: https://17b40498029580ad91ac01b42338db7e@o4511978506420224.ingest.de.sentry.io/4511978536894544
+    secrets:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

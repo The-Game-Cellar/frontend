@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { logout as logoutApi, getMe, refreshAccessToken } from '../services/authService'
 import type { UserInfo } from '../services/authService'
 import { AuthContext } from './AuthContext'
+import { setSentryUser } from '../services/sentry'
 
 interface UserState {
   userId: string
@@ -44,6 +45,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
     bootstrap()
   }, [])
+
+  useEffect(() => {
+    setSentryUser(user?.userId ?? null)
+  }, [user])
 
   const login = useCallback((userInfo: UserInfo) => {
     setUser(toUserState(userInfo))
