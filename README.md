@@ -24,7 +24,7 @@
 - **TanStack Query v5**: server-state layer. `useQuery` for reads, `useMutation` for writes. Hierarchical query-key factories co-located with each service module.
 - **OpenAPI-generated types**: `openapi-typescript@7` regenerates `src/types/api/{game,library,recommendation}.ts` from each backend service's `/v3/api-docs`. Backend DTO changes surface as compile errors on the next typecheck.
 - **Vitest + MSW + Testing Library**: 19 test files / 68 tests covering services, context, components, mutation invalidation, and one smoke test per page.
-- **Sentry** (`@sentry/react` + `@sentry/vite-plugin`): error tracking, errors only, no PII beyond the account UUID. Source maps are uploaded during the image build and deleted before nginx copies the bundle, so production ships minified code with readable stack traces in Sentry.
+- **Sentry** (`@sentry/react` + `@sentry/vite-plugin`): error tracking, errors only, no PII beyond the account UUID. Events post to `/crash` on the app's own origin, which the production proxy forwards to Sentry, so ad blockers do not drop them. Source maps are uploaded during the image build and deleted before nginx copies the bundle, so production ships minified code with readable stack traces in Sentry.
 
 ## Routes
 
