@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/library/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getStatus"];
+        put?: never;
+        post: operations["markCompleted"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/games": {
         parameters: {
             query?: never;
@@ -130,6 +146,86 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["setPrimary"];
+        trace?: never;
+    };
+    "/internal/library/users/{userId}/preferences/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTagPreferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/library/users/{userId}/preferences/release-years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReleaseYearPreferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/library/users/{userId}/preferences/genres": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGenrePreferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/library/users/{userId}/platforms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPlatforms_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/library/users/{userId}/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGames_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/library/wishlist": {
@@ -204,6 +300,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getGenres"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/library/games/platforms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGamePlatforms"];
         put?: never;
         post?: never;
         delete?: never;
@@ -392,6 +504,11 @@ export interface components {
             platformName?: string;
             isPrimary?: boolean;
         };
+        OnboardingStatusDTO: {
+            completed?: boolean;
+            /** Format: date-time */
+            completedAt?: string;
+        };
         AddGameRequest: {
             /** Format: int32 */
             igdbGameId: number;
@@ -434,10 +551,13 @@ export interface components {
             genrePreferenceCount?: number;
             /** Format: int32 */
             tagPreferenceCount?: number;
+            /** Format: int32 */
+            releaseYearPreferenceCount?: number;
             games?: components["schemas"]["UserGameDTO"][];
             platforms?: components["schemas"]["UserPlatformDTO"][];
             genrePreferences?: components["schemas"]["UserGenrePreferenceDTO"][];
             tagPreferences?: components["schemas"]["UserTagPreferenceDTO"][];
+            releaseYearPreferences?: components["schemas"]["UserReleaseYearPreferenceDTO"][];
         };
     };
     responses: never;
@@ -692,6 +812,46 @@ export interface operations {
             };
         };
     };
+    getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OnboardingStatusDTO"];
+                };
+            };
+        };
+    };
+    markCompleted: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OnboardingStatusDTO"];
+                };
+            };
+        };
+    };
     getGames: {
         parameters: {
             query?: {
@@ -789,6 +949,116 @@ export interface operations {
             };
         };
     };
+    getTagPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserTagPreferenceDTO"][];
+                };
+            };
+        };
+    };
+    getReleaseYearPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserReleaseYearPreferenceDTO"][];
+                };
+            };
+        };
+    };
+    getGenrePreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGenrePreferenceDTO"][];
+                };
+            };
+        };
+    };
+    getPlatforms_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserPlatformDTO"][];
+                };
+            };
+        };
+    };
+    getGames_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserGameDTO"][];
+                };
+            };
+        };
+    };
     getWishlist: {
         parameters: {
             query?: never;
@@ -870,6 +1140,26 @@ export interface operations {
         };
     };
     getGenres: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string[];
+                };
+            };
+        };
+    };
+    getGamePlatforms: {
         parameters: {
             query?: never;
             header?: never;
