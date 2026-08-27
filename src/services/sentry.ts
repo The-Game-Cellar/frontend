@@ -15,6 +15,9 @@ export function initSentry(): void {
     // Release is not set here: the bundler plugin injects it as a global the SDK reads.
     tracesSampleRate: 0,
     sendDefaultPii: false,
+    // Ad blockers list the ingest host, so events go to our own origin and nginx forwards
+    // them. The path must stay free of words the filter lists match, such as "sentry".
+    tunnel: '/crash',
   })
 }
 

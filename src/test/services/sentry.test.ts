@@ -21,11 +21,11 @@ describe('initSentry', () => {
     expect(init).not.toHaveBeenCalled()
   })
 
-  it('reports errors only and sends no PII', () => {
+  it('reports errors only, sends no PII, and posts through the same-origin tunnel', () => {
     vi.stubEnv('VITE_SENTRY_DSN', 'https://key@o1.ingest.de.sentry.io/1')
     initSentry()
     expect(init).toHaveBeenCalledWith(
-      expect.objectContaining({ tracesSampleRate: 0, sendDefaultPii: false }),
+      expect.objectContaining({ tracesSampleRate: 0, sendDefaultPii: false, tunnel: '/crash' }),
     )
   })
 })
