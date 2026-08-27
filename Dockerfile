@@ -10,7 +10,16 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 ARG VITE_API_URL=http://localhost:8000
 ENV VITE_API_URL=$VITE_API_URL
-RUN npm run build
+# Both empty by default: without a DSN the SDK is a no-op, and the release is the commit
+# sha, which tags the image but is not readable from inside it. CI sets both.
+ARG VITE_SENTRY_DSN=""
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ARG SENTRY_RELEASE=""
+ENV SENTRY_RELEASE=$SENTRY_RELEASE
+# The source map upload token is a BuildKit secret: readable during this step, present in
+# no layer. Without it the Sentry plugin stays off and the build emits no maps at all.
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" npm run build
 
 # Runtime stage: nginx serves the static bundle with SPA fallback (any unknown
 # path returns index.html so React Router handles the route client-side).

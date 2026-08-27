@@ -23,7 +23,8 @@
 - **React Router v6**: client-side routing.
 - **TanStack Query v5**: server-state layer. `useQuery` for reads, `useMutation` for writes. Hierarchical query-key factories co-located with each service module.
 - **OpenAPI-generated types**: `openapi-typescript@7` regenerates `src/types/api/{game,library,recommendation}.ts` from each backend service's `/v3/api-docs`. Backend DTO changes surface as compile errors on the next typecheck.
-- **Vitest + MSW + Testing Library**: 18 test files / 54 tests covering services, context, components, mutation invalidation, and one smoke test per page.
+- **Vitest + MSW + Testing Library**: 19 test files / 68 tests covering services, context, components, mutation invalidation, and one smoke test per page.
+- **Sentry** (`@sentry/react` + `@sentry/vite-plugin`): error tracking, errors only, no PII beyond the account UUID. Source maps are uploaded during the image build and deleted before nginx copies the bundle, so production ships minified code with readable stack traces in Sentry.
 
 ## Routes
 
@@ -137,7 +138,7 @@ npm test             # vitest run
 npm run test:watch   # vitest watch mode
 ```
 
-19 test files / 45 tests cover:
+19 test files / 68 tests cover:
 
 - One smoke test per route (renders without crashing under MSW handlers).
 - Service modules (axios client, retry queue, query-key factories).
@@ -160,8 +161,16 @@ Only `VITE_*`-prefixed values are exposed to the browser bundle.
 | `VITE_LOGIN_TRANSITION_MIN_MS`           | `700`                    | First-ever-login ceremony floor (ms)                     |
 | `VITE_LOGIN_TRANSITION_MIN_MS_REPEAT`    | `200`                    | Repeat-login floor (ms)                                  |
 | `VITE_LOGIN_TRANSITION_MAX_MS`           | `1500`                   | Hard cap on the login transition                         |
+| `VITE_SENTRY_DSN`                        | (empty)                  | Sentry ingest endpoint. Empty keeps the SDK off, so local runs and tests send nothing. Set by CI for the production image only. |
 
 Anything in `VITE_*` ships in the browser bundle. **Do not put secrets here.**
+
+Two more values reach the build without the `VITE_` prefix, so they never enter the bundle. Both are supplied by CI and are empty in a local build:
+
+| Variable            | Purpose                                                                                                   |
+|---------------------|-----------------------------------------------------------------------------------------------------------|
+| `SENTRY_RELEASE`    | Commit sha, passed as a build arg. The Sentry plugin injects it so events group by deploy.                  |
+| `SENTRY_AUTH_TOKEN` | Source map upload token, passed as a BuildKit secret. Present: maps are uploaded then deleted. Absent: the plugin stays off and no maps are emitted. |
 
 ## Design
 
