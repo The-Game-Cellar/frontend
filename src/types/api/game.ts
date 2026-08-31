@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/background-art": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["triggerBackgroundArtPass"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platforms/catalog": {
         parameters: {
             query?: never;
@@ -406,6 +422,8 @@ export interface components {
             totalRatingCount?: number;
             backgroundImage?: string;
             coverImageUrl?: string;
+            backgroundArtUrl?: string;
+            backgroundSource?: string;
             released?: string;
             /** Format: int64 */
             firstReleaseDate?: number;
@@ -629,6 +647,26 @@ export interface operations {
         };
     };
     triggerDeveloperBackfill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    triggerBackgroundArtPass: {
         parameters: {
             query?: never;
             header?: never;
