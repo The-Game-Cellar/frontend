@@ -120,6 +120,12 @@ export interface components {
             reason?: string;
             /** Format: int32 */
             tier?: number;
+            /** Format: int32 */
+            seedIgdbId?: number;
+            seedName?: string;
+            /** Format: int32 */
+            seedRating?: number;
+            sharedTags?: string[];
         };
         GroupedRequest: {
             recentlyShownIds?: number[];
