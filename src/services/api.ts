@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { refreshAccessToken } from './authService'
+import { refreshAccessToken, isSigningOut } from './authService'
 
 type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
@@ -31,7 +31,8 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const original = error.config as RetryableConfig | undefined
 
-    if (!original || error.response?.status !== 401 || original._retry) {
+    // No refresh during sign-out: it would fail and hard-navigate, aborting the logout POST.
+    if (!original || error.response?.status !== 401 || original._retry || isSigningOut()) {
       return Promise.reject(error)
     }
 

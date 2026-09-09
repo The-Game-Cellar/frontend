@@ -44,6 +44,7 @@ export default function Profile() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleteSaving, setDeleteSaving] = useState(false)
   const [exportError, setExportError] = useState(false)
+  const [logoutError, setLogoutError] = useState(false)
 
   // The outcome of a Keycloak round trip lives in the URL rather than in state, so the
   // page reads the same whether it was just redirected here or reloaded afterwards.
@@ -92,9 +93,19 @@ export default function Profile() {
     }
   }
 
+  function closeConfirm() {
+    setConfirmOpen(false)
+    setLogoutError(false)
+  }
+
   async function handleLogout() {
-    await logout()
-    navigate('/login')
+    setLogoutError(false)
+    try {
+      await logout()
+      navigate('/login')
+    } catch {
+      setLogoutError(true)
+    }
   }
 
   return (
@@ -222,7 +233,7 @@ export default function Profile() {
       {confirmOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center animate-enter"
-          onClick={() => setConfirmOpen(false)}
+          onClick={closeConfirm}
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
@@ -232,9 +243,14 @@ export default function Profile() {
               <p className="text-base font-medium text-[#e8e4dc]">Sign out?</p>
               <p className="text-sm text-[#8891a8]">You will be returned to the login page.</p>
             </div>
+            {logoutError && (
+              <p className="text-sm text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+                Could not sign out. Check your connection and try again.
+              </p>
+            )}
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setConfirmOpen(false)}
+                onClick={closeConfirm}
                 className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-[border-color,color,transform] duration-200 active:scale-[0.97]"
               >
                 Cancel
