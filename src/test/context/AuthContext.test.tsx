@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { useState } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
@@ -10,6 +11,7 @@ import { AuthContext } from '../../context/AuthContext'
 const API = 'http://api.test'
 
 function Probe() {
+  const [logoutFailed, setLogoutFailed] = useState(false)
   return (
     <AuthContext.Consumer>
       {(ctx) => {
@@ -19,10 +21,11 @@ function Probe() {
             <span data-testid="loading">{String(ctx.isLoading)}</span>
             <span data-testid="authed">{String(ctx.isAuthenticated)}</span>
             <span data-testid="userId">{ctx.userId ?? ''}</span>
+            <span data-testid="logoutFailed">{String(logoutFailed)}</span>
             <button onClick={() => ctx.login({ userId: 'u-2', email: 'b@x.test', roles: ['user'] })}>
               login
             </button>
-            <button onClick={ctx.logout}>logout</button>
+            <button onClick={() => ctx.logout().catch(() => setLogoutFailed(true))}>logout</button>
           </div>
         )
       }}
@@ -73,5 +76,20 @@ describe('AuthContext', () => {
 
     await user.click(screen.getByText('logout'))
     await waitFor(() => expect(screen.getByTestId('authed')).toHaveTextContent('false'))
+  })
+
+  it('keeps the session and rejects when the logout POST never reaches the server', async () => {
+    server.use(
+      http.post(`${API}/api/v1/auth/logout`, () => HttpResponse.error()),
+    )
+    const user = userEvent.setup()
+    render(<AuthProvider><Probe /></AuthProvider>)
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'))
+    expect(screen.getByTestId('authed')).toHaveTextContent('true')
+
+    await user.click(screen.getByText('logout'))
+    await waitFor(() => expect(screen.getByTestId('logoutFailed')).toHaveTextContent('true'))
+    expect(screen.getByTestId('authed')).toHaveTextContent('true')
+    expect(screen.getByTestId('userId')).toHaveTextContent(TEST_USER.userId)
   })
 })

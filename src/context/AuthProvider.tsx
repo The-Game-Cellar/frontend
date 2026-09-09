@@ -54,12 +54,11 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     setUser(toUserState(userInfo))
   }, [])
 
+  // A failed sign-out leaves the cookies on the server, so local state changes only on success
+  // and the failure reaches the caller, which tells the user.
   const logout = useCallback(async () => {
-    try {
-      await logoutApi()
-    } finally {
-      setUser(null)
-    }
+    await logoutApi()
+    setUser(null)
   }, [])
 
   return (

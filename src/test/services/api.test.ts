@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { http, HttpResponse } from 'msw'
+import { describe, it, expect, vi } from 'vitest'
+import { http, HttpResponse, delay } from 'msw'
 import { server } from '../server'
 import api from '../../services/api'
+import { logout } from '../../services/authService'
 
 const API = 'http://api.test'
 
@@ -36,5 +37,25 @@ describe('api axios instance', () => {
     )
 
     await expect(api.get('/api/v1/library/games')).rejects.toThrow()
+  })
+
+  it('does not refresh while a sign-out is in flight', async () => {
+    const refresh = vi.fn()
+    server.use(
+      http.post(`${API}/api/v1/auth/logout`, async () => {
+        await delay(60)
+        return new HttpResponse(null, { status: 204 })
+      }),
+      http.get(`${API}/api/v1/library/games`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${API}/api/v1/auth/refresh`, () => {
+        refresh()
+        return HttpResponse.json({ ok: true })
+      }),
+    )
+
+    const signOut = logout()
+    await expect(api.get('/api/v1/library/games')).rejects.toThrow()
+    expect(refresh).not.toHaveBeenCalled()
+    await signOut
   })
 })

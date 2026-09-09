@@ -46,14 +46,28 @@ export async function refreshAccessToken(): Promise<UserInfo> {
   return res.json() as Promise<UserInfo>
 }
 
+let signingOut = false
+
+// Read by the axios interceptor: a 401 while the logout POST is in flight is expected, and a
+// refresh attempt there fails and hard-navigates, which aborts the POST mid-request.
+export function isSigningOut(): boolean {
+  return signingOut
+}
+
 export async function logout(): Promise<void> {
+  signingOut = true
+  const res = await fetch(`${API_URL}/api/v1/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  }).finally(() => {
+    signingOut = false
+  })
+  // Anything but a success leaves the cookies alive on the server, so nothing local is cleared
+  // either: the caller keeps the user signed in and says so.
+  if (!res.ok) throw new Error('Sign out failed')
   queryClient.clear()
   clearRecentlyShownIds()
   clearRecentlyShownUpcomingIds()
-  await fetch(`${API_URL}/api/v1/auth/logout`, {
-    method: 'POST',
-    credentials: 'include',
-  })
 }
 
 export async function getMe(): Promise<UserInfo> {

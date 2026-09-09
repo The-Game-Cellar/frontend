@@ -13,10 +13,21 @@ export default function TopBar({ menuOpen = false, onToggleMenu }: TopBarProps) 
   const { logout } = useAuth()
   const navigate = useNavigate()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [logoutError, setLogoutError] = useState(false)
+
+  function closeConfirm() {
+    setConfirmOpen(false)
+    setLogoutError(false)
+  }
 
   async function handleLogout() {
-    await logout()
-    navigate('/login')
+    setLogoutError(false)
+    try {
+      await logout()
+      navigate('/login')
+    } catch {
+      setLogoutError(true)
+    }
   }
 
   return (
@@ -69,7 +80,7 @@ export default function TopBar({ menuOpen = false, onToggleMenu }: TopBarProps) 
       {confirmOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center animate-enter"
-          onClick={() => setConfirmOpen(false)}
+          onClick={closeConfirm}
         >
           <div
             className="bg-[#111220] border border-[#1e2035] rounded-lg p-6 w-full max-w-xs space-y-4 animate-enter"
@@ -79,9 +90,14 @@ export default function TopBar({ menuOpen = false, onToggleMenu }: TopBarProps) 
               <p className="text-sm font-medium text-[#e8e4dc]">Sign out?</p>
               <p className="text-xs text-[#4a5068]">You will be returned to the login page.</p>
             </div>
+            {logoutError && (
+              <p className="text-xs text-[#ef4444] bg-[#ef444410] border border-[#ef444430] rounded px-3 py-2">
+                Could not sign out. Check your connection and try again.
+              </p>
+            )}
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setConfirmOpen(false)}
+                onClick={closeConfirm}
                 className="px-4 py-1.5 border border-[#2a2d45] text-[#8891a8] text-xs rounded hover:border-[#8891a8] hover:text-[#e8e4dc] transition-colors"
               >
                 Cancel

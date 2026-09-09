@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+import { server } from '../server'
 import { renderWithProviders } from '../test-utils'
 import Profile from '../../pages/Profile'
+
+const API = 'http://api.test'
 
 // The account actions perform a full page navigation, which jsdom cannot do. Mocking
 // keeps the assertion on the contract: which intent the page asked the gateway for.
@@ -64,5 +68,19 @@ describe('Profile page', () => {
     renderProfile('/profile?action=delete&status=ready')
     expect(await screen.findByText(/delete account\?/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /delete forever/i })).toBeInTheDocument()
+  })
+
+  it('keeps the user signed in and says so when the sign-out never reaches the server', async () => {
+    server.use(http.post(`${API}/api/v1/auth/logout`, () => HttpResponse.error()))
+    const user = userEvent.setup()
+    renderProfile()
+    await waitFor(() => expect(screen.getByText('test@example.test')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: /sign out/i }))
+    const buttons = screen.getAllByRole('button', { name: /sign out/i })
+    await user.click(buttons[buttons.length - 1])
+
+    expect(await screen.findByText(/could not sign out/i)).toBeInTheDocument()
+    expect(screen.getByText('test@example.test')).toBeInTheDocument()
   })
 })
