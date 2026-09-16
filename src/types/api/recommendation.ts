@@ -123,7 +123,6 @@ export interface components {
             /** Format: int32 */
             seedIgdbId?: number;
             seedName?: string;
-            /** Format: int32 */
             seedRating?: number;
             sharedTags?: string[];
         };
