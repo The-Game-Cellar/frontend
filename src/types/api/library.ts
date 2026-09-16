@@ -493,7 +493,6 @@ export interface components {
         UpdateGameRequest: {
             /** @enum {string} */
             status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
-            /** Format: int32 */
             rating?: number;
             platform?: string;
             /** Format: date-time */
@@ -515,7 +514,6 @@ export interface components {
             released?: string;
             /** @enum {string} */
             status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
-            /** Format: int32 */
             rating?: number;
             platform?: string;
             /** Format: date-time */
@@ -552,7 +550,6 @@ export interface components {
             /** @enum {string} */
             status: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
             platform: string;
-            /** Format: int32 */
             rating?: number;
             notes?: string;
         };
