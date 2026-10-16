@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import { logout as logoutApi, getMe, refreshAccessToken } from '../services/authService'
+import { logout as logoutApi, getMe, refreshAccessToken, clearShownHistory } from '../services/authService'
 import type { UserInfo } from '../services/authService'
 import { AuthContext } from './AuthContext'
 import { setSentryUser } from '../services/sentry'
@@ -37,6 +37,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           const userInfo = await refreshAccessToken()
           setUser(toUserState(userInfo))
         } catch {
+          // A sign-in that ran out while the tab was closed ends here, not in sign-out.
+          clearShownHistory()
           setUser(null)
         }
       } finally {

@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { refreshAccessToken, isSigningOut } from './authService'
+import { refreshAccessToken, isSigningOut, clearShownHistory } from './authService'
 
 type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
@@ -56,6 +56,7 @@ api.interceptors.response.use(
       return api(original)
     } catch (refreshError) {
       processQueue(refreshError)
+      clearShownHistory()
       window.location.href = '/login'
       return Promise.reject(refreshError)
     } finally {

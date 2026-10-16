@@ -69,22 +69,22 @@ const PARTS: Part[] = [
       <p>The Game Cellar collects five kinds of personal data, each for one reason.</p>
       <PolicyTable heads={['Data', 'Why', 'Legal basis']} nowrapLast rows={[
         [
-          <>Your account<small>Username, email address and password, the password stored only as a hash. A first and last name only if you add them in your account settings. While you are signed in, the IP address of the session.</small></>,
+          <>Your account<small>Username, email address and password, the password stored only as a hash. A first and last name only if you add them in your account settings, and an authenticator app or security key only if you set one up there. While you are signed in, the IP address of the session.</small></>,
           'To sign you in, confirm your address and send password resets.',
           <Basis name="Contract" art="6(1)(b)" />,
         ],
         [
-          <>Your library<small>The games you add, with their status, your rating, notes, playtime and when you last played; your platforms; the genres, tags and eras you pick as preferences; and the recommendation profile worked out from all of it.</small></>,
-          'This is the service itself: your shelf, your statistics and your recommendations.',
+          <>Your library<small>The games you add, with their status, when you added them and when the status last changed, your rating, notes, playtime and when you last played; your platforms and when you finished the first setup; the genres, tags and eras you pick as preferences; and the recommendation profile worked out from all of it.</small></>,
+          'This is the service itself: your shelf, your statistics and your recommendations. Ratings also count, without your name or account, toward the average shown with each game.',
           <Basis name="Contract" art="6(1)(b)" />,
         ],
         [
-          <>Server logs<small>IP address, the address requested, time, response, referring page and browser. A failed sign-in also records the username tried, and requests are counted per IP address.</small></>,
+          <>Server logs<small>IP address, the address requested, time, response, referring page and browser, and your internal account number when something is done on your account. A failed sign-in also records the username or email address tried, and is counted against that account with the address it came from. Requests are counted per IP address and per account.</small></>,
           'To keep the site running and to find and block abuse, such as password guessing.',
           <Basis name="Legitimate interest" art="6(1)(f)" />,
         ],
         [
-          <>Error reports<small>What failed and where, the pages, requests and clicks just before it, the address requested, your browser and operating system, the country the request came from and, when you are signed in, your internal account number. Sent without your IP address, name or email.</small></>,
+          <>Error reports<small>What failed and where, the pages, requests and clicks just before it, the address requested, your browser and operating system, the country the request came from and, when you are signed in or your account is being deleted, your internal account number. Sent without your IP address, name or email.</small></>,
           'To find and fix bugs.',
           <Basis name="Legitimate interest" art="6(1)(f)" />,
         ],
@@ -113,10 +113,10 @@ const PARTS: Part[] = [
           <><code>cellar:recs:shown</code><br /><code>cellar:upcoming:shown</code></>,
           'Your browser',
           'The games already shown to you, so recommendations and upcoming games do not repeat.',
-          'Until you sign out',
+          'Until you sign out or your sign-in ends',
         ],
       ]} />
-      <p className="note">A game page with a trailer embeds it from YouTube, and YouTube can set cookies of its own once the player loads.</p>
+      <p className="note">A game page with a trailer embeds it from YouTube, and YouTube can set cookies of its own as soon as the player appears on the page, before anything is played.</p>
     </>,
   },
   {
@@ -125,7 +125,7 @@ const PARTS: Part[] = [
       <PolicyTable heads={['Service', 'What it does', 'Where']} rows={[
         ['Hetzner', 'Runs the server and the databases.', 'Helsinki, Finland'],
         ['Cloudflare', 'Sits in front of the site (DNS, encryption, protection against abuse), keeps the nightly backups and forwards mail sent to hello@.', 'Global network, US company'],
-        ['Resend and Amazon Web Services', 'Send the account emails: address confirmation, password reset and email change.', 'Ireland, US companies'],
+        ['Resend and Amazon Web Services', 'Send the account emails (address confirmation, password reset and email change) and the replies from hello@.', 'Ireland, US companies'],
         ['Sentry', 'Receives error reports.', 'Germany, US company'],
         ['Google', 'Holds the hello@ inbox (Gmail), serves the site’s typeface (Google Fonts) and plays trailers (YouTube).', 'US company'],
         ['IGDB, owned by Twitch', 'Supplies the game catalog. Cover images load straight from IGDB’s image server.', 'US company'],
@@ -141,7 +141,8 @@ const PARTS: Part[] = [
         ['After you delete it', 'Removed from the live service at once. Nightly backups roll over within 30 days, server snapshots within 7.'],
         ['Record of a deletion', 'No end date. The internal account number and two dates, with no name and no email, so an interrupted deletion can be finished and there is a record that it was asked for.'],
         ['Server logs', '14 days.'],
-        ['Request counts per IP address', '15 minutes.'],
+        ['Request counts per IP address or account', '15 minutes.'],
+        ['Failed sign-ins on an account', 'The count and the address of the last one, until the next successful sign-in or the next restart of the sign-in server, whichever comes first.'],
         ['Error reports', '30 days.'],
         ['Mail to hello@', 'Until the conversation is over.'],
       ]} />
@@ -160,7 +161,7 @@ const PARTS: Part[] = [
   },
   {
     id: 'transfers', short: 'Outside the EU', title: 'Data outside the EU', body: (
-      <p>Cloudflare, Resend, Amazon, Sentry and Google are US companies, so your data can reach the United States even where it is stored in the EU. All five are certified under the EU-US Data Privacy Framework, which is what those transfers rest on.</p>
+      <p>Cloudflare, Resend, Amazon, Sentry and Google are US companies, so your data can reach the United States even where it is stored in the EU. All five are certified under the EU-US Data Privacy Framework, which is what those transfers rest on. Twitch, the US company behind IGDB, also sees your IP address when your browser loads a cover image; The Game Cellar sends it nothing else about you.</p>
     ),
   },
   {
@@ -266,7 +267,7 @@ export default function Privacy() {
           <p className="eyebrow">Privacy policy</p>
           <h1>What the cellar <span className="grad">keeps</span> about you</h1>
           <p className="lede">The Game Cellar is a game library tracker run by one person. This page lists every piece of personal data it handles, why, who else sees it and how long it stays.</p>
-          <p className="meta">Last updated 1 October 2026</p>
+          <p className="meta">Last updated 16 October 2026</p>
         </header>
 
         <div className="glance">

@@ -54,6 +54,12 @@ export function isSigningOut(): boolean {
   return signingOut
 }
 
+// The games already shown belong to one sign-in, so they go when it ends, however it ends.
+export function clearShownHistory(): void {
+  clearRecentlyShownIds()
+  clearRecentlyShownUpcomingIds()
+}
+
 export async function logout(): Promise<void> {
   signingOut = true
   const res = await fetch(`${API_URL}/api/v1/auth/logout`, {
@@ -66,8 +72,7 @@ export async function logout(): Promise<void> {
   // either: the caller keeps the user signed in and says so.
   if (!res.ok) throw new Error('Sign out failed')
   queryClient.clear()
-  clearRecentlyShownIds()
-  clearRecentlyShownUpcomingIds()
+  clearShownHistory()
 }
 
 export async function getMe(): Promise<UserInfo> {
@@ -80,8 +85,7 @@ export async function getMe(): Promise<UserInfo> {
 
 export async function deleteAccount(): Promise<Record<string, unknown>> {
   queryClient.clear()
-  clearRecentlyShownIds()
-  clearRecentlyShownUpcomingIds()
+  clearShownHistory()
   const res = await fetch(`${API_URL}/api/v1/auth/account`, {
     method: 'DELETE',
     credentials: 'include',
