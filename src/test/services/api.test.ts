@@ -39,6 +39,19 @@ describe('api axios instance', () => {
     await expect(api.get('/api/v1/library/games')).rejects.toThrow()
   })
 
+  it('forgets the games already shown when the sign-in has run out', async () => {
+    localStorage.setItem('cellar:recs:shown', '[1]')
+    localStorage.setItem('cellar:upcoming:shown', '[2]')
+    server.use(
+      http.get(`${API}/api/v1/library/games`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${API}/api/v1/auth/refresh`, () => new HttpResponse(null, { status: 401 })),
+    )
+
+    await expect(api.get('/api/v1/library/games')).rejects.toThrow()
+    expect(localStorage.getItem('cellar:recs:shown')).toBeNull()
+    expect(localStorage.getItem('cellar:upcoming:shown')).toBeNull()
+  })
+
   it('does not refresh while a sign-out is in flight', async () => {
     const refresh = vi.fn()
     server.use(

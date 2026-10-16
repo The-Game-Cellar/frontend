@@ -28,6 +28,14 @@ describe('initSentry', () => {
       expect.objectContaining({ tracesSampleRate: 0, sendDefaultPii: false, tunnel: '/crash' }),
     )
   })
+
+  it('drops the page-load session pings and the locale context', () => {
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://key@o1.ingest.de.sentry.io/1')
+    initSentry()
+    const { integrations } = init.mock.calls[0][0] as { integrations: (d: { name: string }[]) => { name: string }[] }
+    const kept = integrations([{ name: 'Breadcrumbs' }, { name: 'BrowserSession' }, { name: 'CultureContext' }])
+    expect(kept.map((i) => i.name)).toEqual(['Breadcrumbs'])
+  })
 })
 
 describe('setSentryUser', () => {

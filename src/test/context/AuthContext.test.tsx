@@ -61,6 +61,19 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('userId')).toHaveTextContent('')
   })
 
+  it('forgets the games already shown when the sign-in ran out while away', async () => {
+    localStorage.setItem('cellar:recs:shown', '[1]')
+    localStorage.setItem('cellar:upcoming:shown', '[2]')
+    server.use(
+      http.get(`${API}/api/v1/auth/me`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${API}/api/v1/auth/refresh`, () => new HttpResponse(null, { status: 401 })),
+    )
+    render(<AuthProvider><Probe /></AuthProvider>)
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'))
+    expect(localStorage.getItem('cellar:recs:shown')).toBeNull()
+    expect(localStorage.getItem('cellar:upcoming:shown')).toBeNull()
+  })
+
   it('login() and logout() flip authenticated state', async () => {
     server.use(
       http.get(`${API}/api/v1/auth/me`, () => new HttpResponse(null, { status: 401 })),
