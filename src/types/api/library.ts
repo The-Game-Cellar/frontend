@@ -494,6 +494,7 @@ export interface components {
             /** @enum {string} */
             status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
             rating?: number;
+            platforms?: string[];
             platform?: string;
             /** Format: date-time */
             lastPlayed?: string;
@@ -516,6 +517,7 @@ export interface components {
             status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
             rating?: number;
             platform?: string;
+            platforms?: string[];
             /** Format: date-time */
             dateAdded?: string;
             /** Format: date-time */
@@ -549,7 +551,8 @@ export interface components {
             gameName: string;
             /** @enum {string} */
             status: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
-            platform: string;
+            platforms?: string[];
+            platform?: string;
             rating?: number;
             notes?: string;
         };
@@ -591,11 +594,73 @@ export interface components {
             tagPreferenceCount?: number;
             /** Format: int32 */
             releaseYearPreferenceCount?: number;
-            games?: components["schemas"]["UserGameDTO"][];
-            platforms?: components["schemas"]["UserPlatformDTO"][];
-            genrePreferences?: components["schemas"]["UserGenrePreferenceDTO"][];
-            tagPreferences?: components["schemas"]["UserTagPreferenceDTO"][];
-            releaseYearPreferences?: components["schemas"]["UserReleaseYearPreferenceDTO"][];
+            /** Format: date-time */
+            onboardingCompletedAt?: string;
+            games?: components["schemas"]["ExportedGame"][];
+            platforms?: components["schemas"]["ExportedPlatform"][];
+            genrePreferences?: components["schemas"]["ExportedGenrePreference"][];
+            tagPreferences?: components["schemas"]["ExportedTagPreference"][];
+            releaseYearPreferences?: components["schemas"]["ExportedReleaseYearPreference"][];
+        };
+        ExportedGame: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            igdbGameId?: number;
+            gameName?: string;
+            /** @enum {string} */
+            status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
+            /** @enum {string} */
+            previousStatus?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
+            rating?: number;
+            platforms?: string[];
+            genres?: string[];
+            themes?: string[];
+            tags?: string[];
+            released?: string;
+            backgroundImage?: string;
+            notes?: string;
+            /** Format: int32 */
+            playtime?: number;
+            /** Format: date-time */
+            dateAdded?: string;
+            /** Format: date-time */
+            lastPlayed?: string;
+            /** Format: date-time */
+            statusChangedAt?: string;
+            /** Format: date-time */
+            metadataSyncedAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        ExportedGenrePreference: {
+            /** Format: int64 */
+            id?: number;
+            genreName?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ExportedPlatform: {
+            /** Format: int64 */
+            id?: number;
+            platformName?: string;
+            isPrimary?: boolean;
+        };
+        ExportedReleaseYearPreference: {
+            /** Format: int64 */
+            id?: number;
+            bucketLabel?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ExportedTagPreference: {
+            /** Format: int64 */
+            id?: number;
+            tagName?: string;
+            /** Format: date-time */
+            createdAt?: string;
         };
     };
     responses: never;
@@ -914,7 +979,7 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "PLAYING" | "BACKLOG" | "COMPLETED" | "DROPPED" | "WISHLIST" | "DUSTY";
-                platform?: string;
+                platform?: string[];
                 search?: string;
                 genre?: string;
             };

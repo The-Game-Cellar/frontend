@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recommendations/personalized/grouped/genre": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refreshGenreRow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recommendations/dashboard": {
         parameters: {
             query?: never;
@@ -46,6 +62,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["getDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rec/enqueue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["enqueue"];
         delete?: never;
         options?: never;
         head?: never;
@@ -84,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recommendations/dashboard/because-you-liked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["rollBecauseYouLiked"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recommendations/because-you-liked/{gameId}": {
         parameters: {
             query?: never;
@@ -95,6 +143,38 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recommendations/account/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recommendations/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteAccount"];
         options?: never;
         head?: never;
         patch?: never;
@@ -141,6 +221,10 @@ export interface components {
             fallback?: boolean;
             games?: components["schemas"]["RecommendationDTO"][];
         };
+        GenreRowRequest: {
+            genre: string;
+            recentlyShownIds?: number[];
+        };
         DashboardRequest: {
             recentlyShownIds?: number[];
         };
@@ -154,6 +238,68 @@ export interface components {
             recommendations?: components["schemas"]["RecommendationDTO"][];
             wildcard?: components["schemas"]["RecommendationDTO"][];
             becauseYouLiked?: components["schemas"]["BecauseYouLikedDTO"][];
+        };
+        AccountExportDTO: {
+            userId?: string;
+            exportedAt?: string;
+            profile?: components["schemas"]["ExportedProfile"];
+            candidatePool?: components["schemas"]["ExportedCandidate"][];
+            heldBackGames?: components["schemas"]["ExportedHolding"][];
+            pendingRecompute?: components["schemas"]["ExportedQueueEntry"];
+        };
+        ExportedCandidate: {
+            /** Format: int32 */
+            igdbId?: number;
+            name?: string;
+            baseScore?: number;
+            /** Format: int32 */
+            tier?: number;
+            rating?: number;
+            backgroundImage?: string;
+            genres?: string[];
+            platforms?: string[];
+            /** Format: int32 */
+            seedIgdbId?: number;
+            seedName?: string;
+            seedRating?: number;
+            sharedTags?: string[];
+            /** Format: date-time */
+            computedAt?: string;
+        };
+        ExportedHolding: {
+            genre?: string;
+            /** Format: int32 */
+            igdbId?: number;
+            /** Format: date-time */
+            releasedAt?: string;
+        };
+        ExportedProfile: {
+            genreWeights?: {
+                [key: string]: number;
+            };
+            tagWeights?: {
+                [key: string]: number;
+            };
+            platformWeights?: {
+                [key: string]: number;
+            };
+            decadeWeights?: {
+                [key: string]: number;
+            };
+            libraryGenreCounts?: {
+                [key: string]: number;
+            };
+            /** Format: int32 */
+            ratedCount?: number;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        ExportedQueueEntry: {
+            /** Format: date-time */
+            queuedAt?: string;
+            /** Format: int32 */
+            attempts?: number;
+            targetGenre?: string;
         };
     };
     responses: never;
@@ -212,6 +358,30 @@ export interface operations {
             };
         };
     };
+    refreshGenreRow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenreRowRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RecommendationRow"];
+                };
+            };
+        };
+    };
     getDashboard: {
         parameters: {
             query?: never;
@@ -232,6 +402,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DashboardDTO"];
+                };
+            };
+        };
+    };
+    enqueue: {
+        parameters: {
+            query: {
+                userId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -282,6 +476,28 @@ export interface operations {
             };
         };
     };
+    rollBecauseYouLiked: {
+        parameters: {
+            query?: {
+                excludeSeedIgdbIds?: number[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BecauseYouLikedDTO"];
+                };
+            };
+        };
+    };
     getBecauseYouLiked: {
         parameters: {
             query?: {
@@ -302,6 +518,48 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["RecommendationDTO"][];
+                };
+            };
+        };
+    };
+    exportAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExportDTO"];
+                };
+            };
+        };
+    };
+    deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

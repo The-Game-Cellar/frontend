@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryClient } from './queryClient'
 import { clearRecentlyShownIds } from './recommendationService'
 import { clearRecentlyShownUpcomingIds } from './gameService'
-import type { AccountExportDTO } from '../types/api'
 import { markPendingLogin } from '../config/loginTransition'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -96,14 +95,16 @@ export async function deleteAccount(): Promise<Record<string, unknown>> {
   return res.json() as Promise<Record<string, unknown>>
 }
 
-export async function exportAccountData(): Promise<AccountExportDTO> {
-  const res = await fetch(`${API_URL}/api/v1/library/account/export`, {
+// The gateway assembles the whole file (the account from Keycloak and each service's export),
+// so the page saves what comes back as it is.
+export async function exportAccountData(): Promise<Record<string, unknown>> {
+  const res = await fetch(`${API_URL}/api/v1/auth/account/export`, {
     credentials: 'include',
   })
   if (!res.ok) {
     throw new Error(await readErrorMessage(res, 'Data export failed'))
   }
-  return res.json() as Promise<AccountExportDTO>
+  return res.json() as Promise<Record<string, unknown>>
 }
 
 // Auth bootstrap (getMe / refreshAccessToken) stays imperative in AuthProvider; only writes are mutations.
