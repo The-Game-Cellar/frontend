@@ -70,6 +70,50 @@ describe('Profile page', () => {
     expect(screen.getByRole('button', { name: /delete forever/i })).toBeInTheDocument()
   })
 
+  it('saves the file the gateway assembles, exactly as it came back', async () => {
+    const assembled = { account: { username: 'alex' }, library: { games: [] }, recommendations: { profile: null } }
+    const requested: string[] = []
+    server.use(http.get(`${API}/api/v1/auth/account/export`, ({ request }) => {
+      requested.push(request.url)
+      return HttpResponse.json(assembled)
+    }))
+    let saved: Blob | undefined
+    const createObjectURL = vi.fn((blob: Blob) => {
+      saved = blob
+      return 'blob:export'
+    })
+    const revokeObjectURL = vi.fn()
+    Object.assign(URL, { createObjectURL, revokeObjectURL })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const user = userEvent.setup()
+    renderProfile()
+    await waitFor(() => expect(screen.getByText('test@example.test')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: /download my data/i }))
+
+    await waitFor(() => expect(click).toHaveBeenCalledTimes(1))
+    expect(requested).toEqual([`${API}/api/v1/auth/account/export`])
+    expect(JSON.parse(await saved!.text())).toEqual(assembled)
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toMatch(/^the-game-cellar-export-\d{4}-\d{2}-\d{2}\.json$/)
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:export')
+    click.mockRestore()
+  })
+
+  it('says so when the export cannot be gathered, and saves nothing', async () => {
+    server.use(http.get(`${API}/api/v1/auth/account/export`, () =>
+      HttpResponse.json({ error: 'Could not gather all of your data, try again' }, { status: 502 })))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const user = userEvent.setup()
+    renderProfile()
+    await waitFor(() => expect(screen.getByText('test@example.test')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: /download my data/i }))
+
+    expect(await screen.findByText(/export failed/i)).toBeInTheDocument()
+    expect(click).not.toHaveBeenCalled()
+    click.mockRestore()
+  })
+
   it('keeps the user signed in and says so when the sign-out never reaches the server', async () => {
     server.use(http.post(`${API}/api/v1/auth/logout`, () => HttpResponse.error()))
     const user = userEvent.setup()
