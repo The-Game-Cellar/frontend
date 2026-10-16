@@ -1,0 +1,138 @@
+/* The privacy policy as a reading surface: contents at the left edge, lined up with the brand mark,
+   and the text centred in the room left over. Scoped under .privacy; the tokens come from .public. */
+.privacy {
+  --toc-w: 210px;
+  --toc-fs: 16px;
+  --text-w: 110ch;
+
+  display: grid; grid-template-columns: var(--toc-w) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 80px); align-items: start;
+  padding: 0 clamp(20px, 4vw, 48px) 96px;
+}
+.privacy > article { width: 100%; max-width: var(--text-w); margin-inline: auto; }
+
+.privacy .head { padding-block: clamp(40px, 8vh, 88px) 36px; }
+.privacy .eyebrow {
+  margin: 0; font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--text-2);
+  display: flex; align-items: center; gap: 12px;
+}
+.privacy .eyebrow::before {
+  content: ""; width: 28px; height: 1px;
+  background: var(--spectrum); background-size: 400% 100%; animation: drift 12s linear infinite;
+  box-shadow: 0 0 6px var(--s3);
+}
+.privacy h1 {
+  font-size: clamp(2rem, 4.2vw, 3.3rem); line-height: 1.08; font-weight: 700; letter-spacing: -.02em;
+  margin: 18px 0 18px; text-wrap: balance;
+}
+.privacy .grad {
+  background: var(--spectrum); background-size: 400% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: drift 12s linear infinite;
+}
+.privacy .lede { font-size: 17px; color: var(--text-2); max-width: 60ch; margin: 0 0 18px; }
+.privacy .meta { margin: 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* at a glance: the one panel on the page */
+.privacy .glance {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 36px;
+  padding: 24px 26px; border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid var(--line-2);
+}
+.privacy .glance div { display: flex; flex-direction: column; gap: 4px; }
+.privacy .glance strong { font-size: 15px; font-weight: 600; color: var(--text); }
+.privacy .glance span { font-size: 14px; line-height: 1.55; color: var(--text-2); }
+
+.privacy section.part { padding-top: 60px; scroll-margin-top: 80px; }
+.privacy h2 {
+  display: flex; align-items: baseline; gap: 14px;
+  font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.2;
+  margin: 0 0 18px; text-wrap: balance;
+}
+.privacy h2 .n { flex: 0 0 auto; font-size: 13px; letter-spacing: .12em; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.privacy .part p { margin: 0 0 16px; }
+.privacy .part p.note { color: var(--text-2); font-size: 15px; }
+
+/* Tailwind's base sets small to 80 %; the page was approved at the browser default */
+.privacy small { font-size: smaller; }
+
+.privacy .lnk { color: var(--text); border-bottom: 1px solid color-mix(in srgb, var(--s2) 55%, transparent); transition: border-color .25s, text-shadow .25s; }
+.privacy .lnk:hover { border-bottom-color: var(--s2); text-shadow: 0 0 10px color-mix(in srgb, var(--s2) 60%, transparent); }
+/* literal cookie and storage names read as plain text, like the description rows beside them */
+.privacy code { font: inherit; white-space: nowrap; }
+
+/* tables: rows on a wide screen, stacked label/value blocks on a phone */
+.privacy .tbl-wrap { margin: 6px 0 20px; }
+.privacy .tbl { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.55; }
+.privacy .tbl th {
+  text-align: left; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
+  color: var(--muted); padding: 0 18px 10px 0; border-bottom: 1px solid var(--line-2);
+}
+.privacy .tbl td { padding: 14px 18px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--text-2); }
+.privacy .tbl td:last-child, .privacy .tbl th:last-child { padding-right: 0; }
+.privacy .tbl td:first-child { color: var(--text); font-weight: 500; }
+.privacy .tbl td small { display: block; color: var(--text-2); font-weight: 400; margin-top: 3px; }
+.privacy .tbl .nowrap { white-space: nowrap; }
+
+.privacy .basis {
+  display: inline-block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
+  color: var(--text-2); border: 1px solid var(--line-2); border-radius: 3px; padding: 2px 7px;
+  background: rgba(10,11,20,.45); white-space: nowrap;
+}
+.privacy .basis + small { font-size: 12px; color: var(--muted) !important; }
+
+.privacy .rights { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.privacy .rights li { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.privacy .rights li:first-child { border-top: 1px solid var(--line); }
+.privacy .rights b { font-weight: 600; color: var(--text); }
+.privacy .rights span { color: var(--text-2); font-size: 15px; }
+
+.privacy .contact { margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--line-2); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 24px; }
+.privacy .contact p { margin: 0; color: var(--text-2); }
+.privacy .contact a { font-size: clamp(1.1rem, 2vw, 1.4rem); font-weight: 600; }
+
+/* ---------- contents: the rail's active-row recipe ---------- */
+/* the negative margin cancels the rows' own inset, so the numbers line up with the brand mark */
+.privacy .toc { position: sticky; top: 92px; padding-top: clamp(40px, 8vh, 88px); margin-left: -12px; }
+.privacy .toc .lbl { display: flex; align-items: center; gap: 10px; margin: 0 0 10px 12px; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; font-weight: 500; }
+.privacy .toc .lbl span {
+  background: var(--spectrum); background-size: 400% 100%; animation: drift 12s linear infinite;
+  -webkit-background-clip: text; background-clip: text; color: transparent; opacity: .85;
+}
+.privacy .toc .lbl::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, color-mix(in srgb, var(--s3) 70%, transparent), transparent); }
+.privacy .toc ol { list-style: none; margin: 0; padding: 0; }
+.privacy .toc a {
+  position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 4px;
+  padding: 7px 12px; font-size: var(--toc-fs); line-height: 1.45; color: var(--text-2);
+  transition: color .25s, background .25s;
+}
+.privacy .toc a .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.privacy .toc a:hover { color: var(--text); }
+.privacy .toc a.on {
+  color: var(--text);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--s2) 16%, transparent), transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--s2) 50%, transparent);
+}
+.privacy .toc a.on::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--spectrum-y); background-size: 100% 400%; animation: drift-y 12s linear infinite;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--s2) 70%, transparent);
+}
+
+@media (max-width: 960px) {
+  .privacy { grid-template-columns: minmax(0, 1fr); }
+  .privacy .toc { display: none; }
+}
+@media (max-width: 720px) {
+  .privacy .glance { grid-template-columns: 1fr; padding: 20px; }
+  .privacy .rights li { grid-template-columns: 1fr; gap: 4px; }
+  .privacy .tbl thead { display: none; }
+  .privacy .tbl, .privacy .tbl tbody, .privacy .tbl tr, .privacy .tbl td { display: block; width: 100%; }
+  .privacy .tbl tr { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .privacy .tbl td { border: 0; padding: 3px 0; }
+  .privacy .tbl td[data-l]::before { content: attr(data-l); display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+  .privacy .tbl td:first-child::before { display: none; }
+  .privacy .tbl .nowrap { white-space: normal; }
+  .privacy .contact { flex-direction: column; }
+}

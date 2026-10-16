@@ -20,10 +20,10 @@
 - **Vite 8**: dev server on port 5173, production build via `vite build`.
 - **Tailwind CSS v4**: utility-first, `@import "tailwindcss"` in `index.css`. No config file.
 - **Axios**: HTTP client with a 401-refresh interceptor and typed retry queue.
-- **React Router v6**: client-side routing.
+- **React Router v7**: client-side routing.
 - **TanStack Query v5**: server-state layer. `useQuery` for reads, `useMutation` for writes. Hierarchical query-key factories co-located with each service module.
 - **OpenAPI-generated types**: `openapi-typescript@7` regenerates `src/types/api/{game,library,recommendation}.ts` from each backend service's `/v3/api-docs`. Backend DTO changes surface as compile errors on the next typecheck.
-- **Vitest + MSW + Testing Library**: 19 test files / 68 tests covering services, context, components, mutation invalidation, and one smoke test per page.
+- **Vitest + MSW + Testing Library**: 22 test files / 83 tests covering services, context, components, mutation invalidation, and one smoke test per page.
 - **Sentry** (`@sentry/react` + `@sentry/vite-plugin`): error tracking, errors only, no PII beyond the account UUID. Events post to `/crash` on the app's own origin, which the production proxy forwards to Sentry, so ad blockers do not drop them. Source maps are uploaded during the image build and deleted before nginx copies the bundle, so production ships minified code with readable stack traces in Sentry.
 
 ## Routes
@@ -32,6 +32,7 @@
 |---------------------------|-----------|--------------------------------------------------------------------------------------------------------|
 | `/login`                  | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize`; renders a retry card only when the callback returns `?error=`. |
 | `/register`               | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize?register=true`, which opens Keycloak's sign-up page. |
+| `/privacy`                | No        | Privacy policy. Rendered inside `PublicLayout`, the nav, background and footer shared by the pages outside sign-in. |
 | `/onboarding`             | Yes       | Platform selection + optional genre / tag / release-year preferences. Both steps are skippable.        |
 | `/dashboard`              | Yes       | Recommendations, "Because you liked" seed, Wild Card, Coming Soon, DUSTY strip, backlog snapshot.      |
 | `/library`                | Yes       | Game collection. Status tabs, platform / genre / tags / rating filters, list + grid view toggle.       |
@@ -82,7 +83,7 @@ frontend/
     │   ├── recommendation.ts
     │   └── index.ts                  Stable re-export surface
     ├── pages/                        Route-level components
-    ├── components/{common,library,game}/
+    ├── components/{common,library,game,public}/
     ├── services/                     Axios + TanStack Query
     ├── context/{AuthContext,AuthProvider}.tsx
     ├── hooks/
@@ -138,7 +139,7 @@ npm test             # vitest run
 npm run test:watch   # vitest watch mode
 ```
 
-19 test files / 68 tests cover:
+22 test files / 83 tests cover:
 
 - One smoke test per route (renders without crashing under MSW handlers).
 - Service modules (axios client, retry queue, query-key factories).

@@ -4,6 +4,7 @@ import AuthProvider from './context/AuthProvider'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import PostLoginTransition from './components/common/PostLoginTransition'
 import Layout from './components/common/Layout'
+import PublicLayout from './components/public/PublicLayout'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -18,6 +19,7 @@ import Statistics from './pages/Statistics'
 import Preferences from './pages/Preferences'
 import GameDetail from './pages/GameDetail'
 import About from './pages/About'
+import Privacy from './pages/Privacy'
 
 export default function App() {
   return (
@@ -28,6 +30,9 @@ export default function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/privacy" element={<Privacy />} />
+          </Route>
 
           {/* Protected routes. Redirect to /login if not authenticated. */}
           <Route element={<ProtectedRoute />}>
