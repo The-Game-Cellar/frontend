@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useWildCard } from '../services/recommendationService'
 import { useGridPageSize } from '../hooks/useGridPageSize'
 import GameCard from '../components/common/GameCard'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function WildCard() {
+  useDocumentTitle('Wild Card')
   const navigate = useNavigate()
   const gridContainerRef = useRef<HTMLDivElement | null>(null)
   const pageSize = useGridPageSize(gridContainerRef, { max: 50 })

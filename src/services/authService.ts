@@ -8,9 +8,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Login and account creation happen on Keycloak. The gateway starts the flow, so
 // this is a full page navigation rather than a fetch: the browser has to leave.
+// replace, not assign: the page that starts it (/login, /register) is only a trigger, so
+// Keycloak takes its place in the history and Back returns to the page before it.
 export function startLogin(register = false): void {
   markPendingLogin()
-  window.location.assign(`${API_URL}/api/v1/auth/authorize${register ? '?register=true' : ''}`)
+  window.location.replace(`${API_URL}/api/v1/auth/authorize${register ? '?register=true' : ''}`)
 }
 
 export type AccountAction = 'UPDATE_PASSWORD' | 'UPDATE_EMAIL' | 'DELETE_ACCOUNT'

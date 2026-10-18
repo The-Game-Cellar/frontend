@@ -1,6 +1,6 @@
 # The Game Cellar Frontend
 
-> React 19 single-page app for The Game Cellar. Dashboard, library, recommendations, explore, wildcard, game detail, profile. Strict-mode TypeScript end-to-end, server state via TanStack Query, DTOs auto-generated from each backend service's OpenAPI spec.
+> React 19 single-page app for The Game Cellar. Public front page, dashboard, library, recommendations, explore, wildcard, game detail, profile. Strict-mode TypeScript end-to-end, server state via TanStack Query, DTOs auto-generated from each backend service's OpenAPI spec.
 
 [![CI](https://github.com/The-Game-Cellar/frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/The-Game-Cellar/frontend/actions/workflows/ci.yml)
 ![React](https://img.shields.io/badge/React-19-blue)
@@ -23,16 +23,17 @@
 - **React Router v7**: client-side routing.
 - **TanStack Query v5**: server-state layer. `useQuery` for reads, `useMutation` for writes. Hierarchical query-key factories co-located with each service module.
 - **OpenAPI-generated types**: `openapi-typescript@7` regenerates `src/types/api/{game,library,recommendation}.ts` from each backend service's `/v3/api-docs`. Backend DTO changes surface as compile errors on the next typecheck.
-- **Vitest + MSW + Testing Library**: 22 test files / 86 tests covering services, context, components, mutation invalidation, and one smoke test per page.
+- **Vitest + MSW + Testing Library**: 33 test files / 159 tests covering services, context, components, mutation invalidation, and one smoke test per page.
 - **Sentry** (`@sentry/react` + `@sentry/vite-plugin`): error tracking, errors only, no PII beyond the account UUID. Events post to `/crash` on the app's own origin, which the production proxy forwards to Sentry, so ad blockers do not drop them. Source maps are uploaded during the image build and deleted before nginx copies the bundle, so production ships minified code with readable stack traces in Sentry.
 
 ## Routes
 
 | Route                     | Protected | Description                                                                                            |
 |---------------------------|-----------|--------------------------------------------------------------------------------------------------------|
+| `/`                       | No        | Front page: the sign, a mosaic of IGDB covers, and the rail beside one window running the Library, Dusty, Recommend and Explore rooms on bundled demo data. Renders nothing until `GET /api/v1/auth/me` has answered; a signed-in visitor goes on to `/dashboard`. |
 | `/login`                  | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize`; renders a retry card only when the callback returns `?error=`. |
 | `/register`               | No        | Redirect trigger. Sends the browser to `GET /api/v1/auth/authorize?register=true`, which opens Keycloak's sign-up page. |
-| `/privacy`                | No        | Privacy policy. Rendered inside `PublicLayout`, the nav, background and footer shared by the pages outside sign-in. |
+| `/privacy`                | No        | Privacy policy. Rendered inside `PublicLayout`, with the nav and footer the front page shares. |
 | `/onboarding`             | Yes       | Platform selection + optional genre / tag / release-year preferences. Both steps are skippable.        |
 | `/dashboard`              | Yes       | Recommendations, "Because you liked" seed, Wild Card, Coming Soon, DUSTY strip, backlog snapshot.      |
 | `/library`                | Yes       | Game collection. Status tabs, platform / genre / tags / rating filters, list + grid view toggle.       |
@@ -44,6 +45,8 @@
 | `/profile/statistics`     | Yes       | Library overview, average rating, games by genre + platform.                                           |
 | `/profile/preferences`    | Yes       | Platforms + declared genre / tag / release-year preferences.                                           |
 | `/about`                  | Yes       | What the product is, plus the IGDB data attribution and the non-affiliation notice. Linked from `AttributionFooter`. |
+
+Any other path redirects to `/`, so a mistyped URL shows a visitor the front page and passes a signed-in user through to the dashboard. Pages name their browser tab `Page · The Game Cellar`; the front page is `The Game Cellar` alone.
 
 ## Service Layer
 
@@ -83,13 +86,14 @@ frontend/
     │   ├── recommendation.ts
     │   └── index.ts                  Stable re-export surface
     ├── pages/                        Route-level components
-    ├── components/{common,library,game,public}/
+    ├── components/{common,library,game,public,landing}/
     ├── services/                     Axios + TanStack Query
     ├── context/{AuthContext,AuthProvider}.tsx
     ├── hooks/
     ├── config/
     ├── test/                         Vitest + MSW
     ├── App.tsx
+    ├── AppRoutes.tsx                 The route tree
     └── main.tsx
 ```
 
@@ -139,9 +143,11 @@ npm test             # vitest run
 npm run test:watch   # vitest watch mode
 ```
 
-22 test files / 86 tests cover:
+33 test files / 159 tests cover:
 
 - One smoke test per route (renders without crashing under MSW handlers).
+- The front page: where signed-in and signed-out visitors land, the nav and footer, the rooms' rotation and demos, the mosaic draw, reduced motion, tab titles and `index.html`.
+- The sign-in round trip: the overlay only after a confirmed sign-in, and the redirect page left out of the history.
 - Service modules (axios client, retry queue, query-key factories).
 - `AuthContext` bootstrap and refresh flow.
 - Mutation invalidation (library writes invalidate both library + recommendation caches).

@@ -19,6 +19,7 @@ import AddGameModal from '../components/game/AddGameModal'
 import NotesPanel from '../components/game/NotesPanel'
 import PeekStack from '../components/game/PeekStack'
 import RatingWidget from '../components/game/RatingWidget'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import type {
   AgeRatingDTO,
   GameResponse,
@@ -204,6 +205,7 @@ export default function GameDetail() {
   const numericId = isValidId ? Number(igdbId) : 0
 
   const { data: game, isPending: gameLoading, error: gameError } = useGameById(numericId, isValidId)
+  useDocumentTitle(game?.name ?? 'Game')
   const { data: libraryEntryData } = useUserGameByIgdb(numericId, isValidId)
   const libraryEntry: UserGameDTO | null = libraryEntryData ?? null
   const { data: similarData } = useSimilar(numericId, 50, isValidId)

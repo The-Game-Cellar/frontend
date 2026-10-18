@@ -1,0 +1,108 @@
+/* The nav, button family and footer both public pages share. Each page owns its tokens, its
+   nav backdrop and its nav entrance; nothing here sets those, so the two stylesheets never
+   compete for a property and their load order does not matter. */
+
+/* ---------- nav ---------- */
+:is(.public, .landing) .nav {
+  position: sticky; top: 0; z-index: 4;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px clamp(20px, 4vw, 48px);
+}
+:is(.public, .landing) .brand { display: flex; align-items: center; gap: 10px; }
+:is(.public, .landing) .brand-mark {
+  width: 22px; height: 22px; display: block; overflow: visible; flex: 0 0 auto;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--s2) 60%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--s3) 30%, transparent));
+}
+:is(.public, .landing) .brand-mark .halo { fill: none; stroke: url(#specMark); stroke-opacity: .35; stroke-width: 4.2; stroke-linecap: round; stroke-linejoin: round; }
+:is(.public, .landing) .brand-mark .core { fill: none; stroke: url(#specMark); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+:is(.public, .landing) .brand-text { line-height: 1.05; }
+:is(.public, .landing) .brand-text small { display: block; font-size: 9px; letter-spacing: .3em; color: var(--text-2); }
+:is(.public, .landing) .brand-text strong { font-size: 13px; letter-spacing: .12em; font-weight: 600; }
+:is(.public, .landing) .nav-actions { display: flex; gap: 10px; }
+
+/* ---------- one button family: a neon tube. Primary is lit, secondary is the same tube switched off until hover ---------- */
+:is(.public, .landing) .btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border-radius: 4px;
+  font: inherit; font-size: 15px; font-weight: 500; letter-spacing: .04em; line-height: 1.6;
+  color: var(--text-2);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    linear-gradient(rgba(10,11,20,.62), rgba(10,11,20,.62)) border-box,
+    var(--spectrum) border-box;
+  background-size: auto, auto, 400% 100%;
+  animation: drift 12s linear infinite;
+  cursor: pointer;
+  transition: color .25s, box-shadow .25s, transform .2s;
+}
+:is(.public, .landing) .btn:hover, :is(.public, .landing) .btn.neon {
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    var(--spectrum) border-box;
+  background-size: auto, 400% 100%;
+}
+:is(.public, .landing) .btn::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--spectrum); background-size: 400% 100%;
+  animation: drift 12s linear infinite;
+  opacity: 0; transition: opacity .25s; pointer-events: none;
+}
+:is(.public, .landing) .btn::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: color-mix(in srgb, var(--s2) 22%, transparent);
+  opacity: 0; pointer-events: none;
+}
+:is(.public, .landing) .btn:hover {
+  color: var(--text);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 45%, transparent), 0 0 24px color-mix(in srgb, var(--s3) 22%, transparent);
+}
+:is(.public, .landing) .btn:hover::before { opacity: .1; }
+:is(.public, .landing) .btn.small { padding: 8px 16px; font-size: 13px; }
+
+:is(.public, .landing) .btn.neon {
+  color: var(--text);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 55%, transparent), 0 0 28px color-mix(in srgb, var(--s3) 30%, transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--s2) 60%, transparent);
+}
+:is(.public, .landing) .btn.neon::before { opacity: .12; }
+:is(.public, .landing) .btn.neon:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--s2) 70%, transparent), 0 0 44px color-mix(in srgb, var(--s3) 40%, transparent);
+}
+:is(.public, .landing) .btn.neon:hover::before { opacity: .22; }
+:is(.public, .landing) .btn.neon:hover::after { animation: flick .45s steps(1, end) 1; }
+:is(.public, .landing) .btn.neon:active { transform: translateY(0); }
+@keyframes flick { 0% { opacity: .5; } 20% { opacity: 0; } 35% { opacity: .35; } 55% { opacity: 0; } 70% { opacity: .2; } 100% { opacity: 0; } }
+
+/* Coming soon: the primary tube where Get started goes once registration opens; inert, so no lift, flicker or pointer */
+:is(.public, .landing) .btn.soon { cursor: default; user-select: none; }
+:is(.public, .landing) .btn.neon.soon:hover {
+  transform: none;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 55%, transparent), 0 0 28px color-mix(in srgb, var(--s3) 30%, transparent);
+}
+:is(.public, .landing) .btn.neon.soon:hover::before { opacity: .12; }
+:is(.public, .landing) .btn.neon.soon:hover::after { animation: none; }
+
+/* the nav keeps one line on a phone: below about 410 px it no longer fits as drawn, so the buttons get smaller
+   instead of the name and the buttons wrapping */
+:is(.public, .landing) .nav .btn, :is(.public, .landing) .brand-text strong { white-space: nowrap; }
+@media (max-width: 420px) {
+  :is(.public, .landing) .nav { padding-left: 16px; padding-right: 16px; }
+  :is(.public, .landing) .brand, :is(.public, .landing) .nav-actions { gap: 8px; }
+  :is(.public, .landing) .nav .btn.small { padding: 8px 12px; font-size: 12px; }
+}
+
+/* ---------- footer: one centred row, brand mark first, wraps on narrow screens ---------- */
+:is(.public, .landing) footer {
+  display: flex; justify-content: center; align-items: center; gap: 10px 26px; flex-wrap: wrap;
+  padding: 28px clamp(20px, 6vw, 96px) 40px;
+  border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--muted); letter-spacing: .06em;
+}
+:is(.public, .landing) footer .brand-mark { width: 18px; height: 18px; }
+:is(.public, .landing) footer a:hover { color: var(--text-2); }
+:is(.public, .landing) footer a[aria-current] { color: var(--text-2); }
+:is(.public, .landing) footer .credit a { color: var(--text-2); }
+:is(.public, .landing) footer .credit a:hover { color: var(--text); }

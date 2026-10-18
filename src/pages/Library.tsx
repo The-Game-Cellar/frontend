@@ -7,6 +7,7 @@ import GameListItem from '../components/library/GameListItem'
 import LibraryGameCard from '../components/library/LibraryGameCard'
 import StyledSelect from '../components/common/StyledSelect'
 import type { GameStatus } from '../types/api'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 type StatusTab = 'All' | GameStatus
 type ViewMode = 'list' | 'grid'
@@ -75,6 +76,7 @@ function GridIcon() {
 }
 
 export default function Library() {
+  useDocumentTitle('Library')
   const [searchParams] = useSearchParams()
   const initialStatus: StatusTab = (() => {
     if (searchParams.get('filter') === 'dusty') return 'DUSTY'

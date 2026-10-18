@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import './Privacy.css'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 interface Part {
   id: string
@@ -172,6 +173,7 @@ const PARTS: Part[] = [
 ]
 
 export default function Privacy() {
+  useDocumentTitle('Privacy')
   const [active, setActive] = useState(PARTS[0].id)
   const pinned = useRef(false)
   const settle = useRef<ReturnType<typeof setTimeout>>(undefined)

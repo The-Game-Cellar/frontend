@@ -1,0 +1,477 @@
+/* The front page. Scoped under .landing so none of it reaches the app; the nav, buttons and footer are
+   components/public/shell.css, the rooms on the CRTs components/landing/screens.css. Unlayered on purpose:
+   it outranks Tailwind's base layer without raising specificity. */
+
+/* ---------- tokens ---------- */
+.landing {
+  --bg: #0a0b14;
+  --surface: #111220;
+  --raised: #181a2e;
+  --line: #1e2035;
+  --line-2: #2a2d45;
+  --text: #e8e4dc;
+  --text-2: #8891a8;
+  --muted: #4a5068;
+  --neon: #f72585;
+
+  /* spectrum, cold ramp */
+  --s1: #f72585;
+  --s2: #c44df0;
+  --s3: #a855f7;
+  --s4: #6478ff;
+  --s5: #22d3ee;
+
+  --st-playing: #22c55e;
+  --st-backlog: #22d3ee;
+  --st-completed: #a855f7;
+  --st-dropped: #ef4444;
+  --st-wishlist: #f59e0b;
+  --st-dusty: #a3987f;
+
+  --font: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sign: var(--font);
+  --sign-tracking: 0.12em;
+  --sign-size: 84px;
+  --sign-style: italic;
+  --pad-hero: clamp(20px, 6vw, 96px);
+
+  --spectrum: linear-gradient(90deg, var(--s1), var(--s2), var(--s3), var(--s4), var(--s5), var(--s4), var(--s3), var(--s2), var(--s1));
+
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  /* clip, not hidden: hidden would make this a scroll container and unstick the nav */
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+.landing a { color: inherit; text-decoration: none; }
+.landing :focus-visible { outline: 2px solid var(--s5); outline-offset: 3px; }
+
+/* ---------- fixed atmosphere layers ---------- */
+.landing .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+
+.landing .bg-fog { opacity: 0; animation: fade-in 2.4s ease 1.6s forwards; }
+.landing .blob {
+  position: absolute;
+  width: 62vw; height: 62vw;
+  border-radius: 50%;
+  filter: blur(48px);
+  mix-blend-mode: screen;
+  opacity: .5;
+  will-change: transform;
+}
+.landing .blob-1 { background: radial-gradient(circle, var(--s1) 0%, transparent 58%); left: -22vw; top: -18vw; animation: float-a 22s ease-in-out infinite alternate; }
+.landing .blob-2 { background: radial-gradient(circle, var(--s3) 0%, transparent 58%); right: -20vw; top: 8vh; animation: float-b 26s ease-in-out infinite alternate; }
+.landing .blob-3 { background: radial-gradient(circle, var(--s5) 0%, transparent 58%); left: 22vw; bottom: -36vw; animation: float-c 30s ease-in-out infinite alternate; opacity: .4; }
+.landing .blob-4 { background: radial-gradient(circle, var(--s4) 0%, transparent 58%); right: 8vw; bottom: -30vw; animation: float-a 34s ease-in-out infinite alternate-reverse; opacity: .35; }
+@keyframes fade-in { to { opacity: 1; } }
+
+.landing .bg-mosaic { opacity: 0; animation: fade-in 2.4s ease 1.4s forwards; }
+.landing .mosaic {
+  position: absolute; inset: -30% -20%;
+  display: flex; flex-direction: column; gap: 18px;
+  transform: rotate(-9deg);
+  transform-origin: 50% 40%;
+}
+/* the band rests against the left edge and reaches the middle of the screen (tile count set from the viewport);
+   every row drifts out to the right and back, rows at different speeds for parallax; the curve is close to
+   linear with only a short rounding at the turn, so a row never parks at either end */
+.landing .row { display: flex; gap: 18px; width: max-content; }
+.landing .row:nth-child(odd) { animation: slide-out 46.67s cubic-bezier(.3, .05, .7, .95) infinite alternate; }
+.landing .row:nth-child(even) { animation: slide-back 56s cubic-bezier(.3, .05, .7, .95) infinite alternate; margin-left: -12%; }
+@keyframes slide-out { from { transform: translateX(0); } to { transform: translateX(var(--drift, 200px)); } }
+@keyframes slide-back { from { transform: translateX(var(--drift, 200px)); } to { transform: translateX(0); } }
+.landing .tile {
+  flex: 0 0 150px; aspect-ratio: 3 / 4; border-radius: 4px;
+  background: linear-gradient(160deg, var(--a) 0%, var(--b) 100%);
+  opacity: calc(var(--tile-o, .38) + .25);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 -40px 60px rgba(10,11,20,.6);
+  position: relative; overflow: hidden;
+}
+.landing .tile::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.25) 0 1px, transparent 1px 3px);
+  opacity: .6;
+}
+/* the cover sits under the scanlines, greyed, with the tile's spectrum pair laid over it in color blend,
+   so every cover keeps its own light but takes the theme's hue */
+.landing .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.15) brightness(.85); }
+.landing .tile .tone { position: absolute; inset: 0; background: linear-gradient(160deg, var(--a), var(--b)); mix-blend-mode: color; z-index: 1; }
+.landing .scrim {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 32% 50%, rgba(10,11,20,.92) 0%, rgba(10,11,20,.55) 55%, rgba(10,11,20,.15) 100%),
+    linear-gradient(180deg, rgba(10,11,20,.9) 0%, rgba(10,11,20,.35) 30%, rgba(10,11,20,.35) 70%, var(--bg) 100%);
+}
+
+.landing .fx { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+.landing .fx-scan {
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+  opacity: .55;
+}
+.landing .fx-noise {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http:%2F%2Fwww.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: .05;
+  animation: grain .6s steps(4) infinite;
+}
+@keyframes grain {
+  0% { background-position: 0 0; } 25% { background-position: -40px 30px; }
+  50% { background-position: 30px -50px; } 75% { background-position: -20px -20px; } 100% { background-position: 0 0; }
+}
+.landing .fx-vignette { background: radial-gradient(ellipse 80% 75% at 50% 45%, transparent 55%, rgba(4,5,10,.75) 100%); }
+
+.landing .cursor-light {
+  position: fixed; left: 0; top: 0; width: 620px; height: 620px; margin: -310px 0 0 -310px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--s2) 0%, transparent 60%);
+  filter: blur(28px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none; z-index: 0;
+  transition: opacity .8s ease;
+  will-change: transform;
+}
+.landing .cursor-light.on { opacity: .13; }
+
+/* ---------- page ---------- */
+.landing .page { position: relative; z-index: 1; }
+
+/* the nav's backdrop and its entrance after the sign has lit */
+.landing .nav {
+  background: linear-gradient(180deg, rgba(10,11,20,.85), rgba(10,11,20,0));
+  opacity: 0; animation: rise .9s var(--ease-out) 2.3s forwards;
+}
+
+/* ---------- hero ---------- */
+.landing .hero {
+  position: relative;
+  min-height: 100vh;
+  width: 100%; max-width: 1480px;
+  margin: -64px auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  padding: 0 var(--pad-hero) 60px;
+  overflow: hidden;
+}
+/* diagonal composition: copy low-left, sign high-right, the first stair reaching over the copy's shoulder */
+.landing .hero-copy { position: relative; z-index: 1; max-width: 600px; align-self: center; margin-top: 16vh; }
+.landing .motes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.landing .mote {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 6px var(--c), 0 0 14px color-mix(in srgb, var(--c) 50%, transparent);
+  opacity: 0;
+  animation: mote var(--t) linear var(--dl) infinite;
+}
+@keyframes mote {
+  0% { opacity: 0; transform: translate(0, 0); }
+  12% { opacity: .85; }
+  85% { opacity: .5; }
+  100% { opacity: 0; transform: translate(var(--dx), -140px); }
+}
+.landing .eyebrow {
+  font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--text-2);
+  display: flex; align-items: center; gap: 12px;
+  /* the browser's paragraph margin, which Tailwind's preflight takes away */
+  margin: 1em 0;
+}
+.landing .eyebrow::before {
+  content: ""; width: 28px; height: 1px;
+  background: var(--spectrum); background-size: 400% 100%; animation: drift 12s linear infinite;
+  box-shadow: 0 0 6px var(--s3);
+}
+.landing h1 {
+  font-size: clamp(2.5rem, 5.2vw, 4.8rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin: 20px 0 22px;
+  text-wrap: balance;
+  white-space: pre-line;
+  text-shadow: 0 0 26px rgba(10,11,20,.9), 0 0 6px rgba(10,11,20,.9);
+}
+.landing .grad {
+  text-shadow: none;
+  background: var(--spectrum); background-size: 400% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: drift 12s linear infinite;
+  position: relative;
+}
+
+.landing .glitch { position: relative; display: inline-block; }
+.landing .glitch::before, .landing .glitch::after {
+  content: attr(data-text);
+  position: absolute; inset: 0;
+  white-space: pre-line;
+  opacity: 0; pointer-events: none;
+  clip-path: inset(0 0 100% 0);
+}
+.landing .glitch::before { color: var(--s5); left: -3px; text-shadow: 0 0 6px var(--s5); }
+.landing .glitch::after  { color: var(--s1); left: 3px;  text-shadow: 0 0 6px var(--s1); }
+.landing .glitch.burst::before { animation: glitch-a .7s steps(2, end) 1; }
+.landing .glitch.burst::after  { animation: glitch-b .7s steps(2, end) 1; }
+.landing .glitch:hover::before { animation: glitch-a .55s steps(2, end) infinite; }
+.landing .glitch:hover::after  { animation: glitch-b .55s steps(2, end) infinite; }
+@keyframes glitch-a {
+  0%   { opacity: 1; clip-path: inset(8% 0 78% 0);  transform: translate(-4px, 0); }
+  15%  { opacity: 1; clip-path: inset(62% 0 14% 0); transform: translate(3px, -2px); }
+  30%  { opacity: 1; clip-path: inset(30% 0 52% 0); transform: translate(-6px, 1px); }
+  45%  { opacity: 1; clip-path: inset(84% 0 2% 0);  transform: translate(5px, 0); }
+  60%  { opacity: 1; clip-path: inset(18% 0 66% 0); transform: translate(-2px, 2px); }
+  75%  { opacity: 1; clip-path: inset(48% 0 34% 0); transform: translate(6px, -1px); }
+  90%  { opacity: 1; clip-path: inset(2% 0 92% 0);  transform: translate(-3px, 0); }
+  100% { opacity: 0; clip-path: inset(0 0 100% 0); }
+}
+@keyframes glitch-b {
+  0%   { opacity: 1; clip-path: inset(70% 0 12% 0); transform: translate(4px, 0); }
+  15%  { opacity: 1; clip-path: inset(10% 0 74% 0); transform: translate(-3px, 2px); }
+  30%  { opacity: 1; clip-path: inset(56% 0 26% 0); transform: translate(6px, -1px); }
+  45%  { opacity: 1; clip-path: inset(24% 0 60% 0); transform: translate(-5px, 0); }
+  60%  { opacity: 1; clip-path: inset(80% 0 6% 0);  transform: translate(2px, -2px); }
+  75%  { opacity: 1; clip-path: inset(40% 0 46% 0); transform: translate(-6px, 1px); }
+  90%  { opacity: 1; clip-path: inset(90% 0 0 0);   transform: translate(3px, 0); }
+  100% { opacity: 0; clip-path: inset(0 0 100% 0); }
+}
+
+.landing .lede { font-size: 17px; color: var(--text-2); max-width: 46ch; margin: 0 0 30px; }
+.landing .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.landing .rise { opacity: 0; animation: rise .9s var(--ease-out) forwards; animation-delay: calc(1.9s + var(--i, 0) * .13s); }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+/* the sign: sits in the right column, its first stair reaches back into the gap behind the copy */
+.landing .sign {
+  position: relative; z-index: 0;
+  align-self: start;
+  width: 120%; margin-left: -14%; margin-right: -6%;
+  margin-top: 9vh;
+  pointer-events: none;
+}
+.landing .sign svg { width: 100%; height: auto; display: block; overflow: visible; pointer-events: none; }
+.landing .sign .st1 { stop-color: var(--s1); }
+.landing .sign .st2 { stop-color: var(--s2); }
+.landing .sign .st3 { stop-color: var(--s3); }
+.landing .sign .st4 { stop-color: var(--s4); }
+.landing .sign .st5 { stop-color: var(--s5); }
+.landing .wg { cursor: default; }
+.landing .hit { fill: transparent; stroke: none; pointer-events: fill; }
+.landing .w.gx {
+  animation: none; opacity: 0;
+  filter: url(#glow);
+  mix-blend-mode: screen;
+  clip-path: inset(0 0 100% 0); transform-box: fill-box;
+}
+.landing .w.gx-a { fill: var(--s5); }
+.landing .w.gx-b { fill: var(--s1); }
+.landing .wg { transform-box: fill-box; }
+.landing .wg:hover { animation: sjitter .28s steps(2, end) infinite; }
+.landing .wg:hover .gx-a { animation: sglitch-a .5s steps(2, end) infinite; }
+.landing .wg:hover .gx-b { animation: sglitch-b .5s steps(2, end) infinite; }
+/* a hovered word keeps its own loop; the burst only hits the others */
+.landing .sign.burst .wg:not(:hover) { animation: sjitter .28s steps(2, end) 3; }
+.landing .sign.burst .wg:not(:hover) .gx-a { animation: sglitch-a .8s steps(2, end) 1; }
+.landing .sign.burst .wg:not(:hover) .gx-b { animation: sglitch-b .8s steps(2, end) 1; }
+@keyframes sjitter {
+  0% { transform: translate(0, 0); } 25% { transform: translate(-6px, 2px); }
+  50% { transform: translate(5px, -2px); } 75% { transform: translate(-3px, 0); } 100% { transform: translate(0, 0); }
+}
+@keyframes sglitch-a {
+  0%   { opacity: 1; clip-path: inset(6% 0 70% 0);  transform: translate(-22px, -4px); }
+  15%  { opacity: 1; clip-path: inset(58% 0 12% 0); transform: translate(18px, 3px); }
+  30%  { opacity: 1; clip-path: inset(26% 0 48% 0); transform: translate(-30px, 0); }
+  45%  { opacity: 1; clip-path: inset(80% 0 0 0);   transform: translate(24px, -3px); }
+  60%  { opacity: 1; clip-path: inset(14% 0 62% 0); transform: translate(-14px, 4px); }
+  75%  { opacity: 1; clip-path: inset(44% 0 30% 0); transform: translate(28px, 0); }
+  90%  { opacity: 1; clip-path: inset(0 0 88% 0);   transform: translate(-18px, 2px); }
+  100% { opacity: 0; clip-path: inset(0 0 100% 0); }
+}
+@keyframes sglitch-b {
+  0%   { opacity: 1; clip-path: inset(66% 0 10% 0); transform: translate(22px, 3px); }
+  15%  { opacity: 1; clip-path: inset(8% 0 72% 0);  transform: translate(-18px, -3px); }
+  30%  { opacity: 1; clip-path: inset(52% 0 24% 0); transform: translate(30px, 0); }
+  45%  { opacity: 1; clip-path: inset(20% 0 58% 0); transform: translate(-24px, 4px); }
+  60%  { opacity: 1; clip-path: inset(76% 0 4% 0);  transform: translate(14px, -4px); }
+  75%  { opacity: 1; clip-path: inset(36% 0 44% 0); transform: translate(-28px, 0); }
+  90%  { opacity: 1; clip-path: inset(88% 0 0 0);   transform: translate(18px, -2px); }
+  100% { opacity: 0; clip-path: inset(0 0 100% 0); }
+}
+.landing .stairs {
+  fill: none; stroke: url(#specStairs); stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: 0;
+  animation: draw 1.6s var(--ease-out) .25s backwards;
+  filter: url(#glow);
+}
+@keyframes draw { from { stroke-dashoffset: 1; } }
+.landing .w {
+  font-family: var(--font-sign);
+  font-size: var(--sign-size);
+  font-style: var(--sign-style);
+  font-weight: 700;
+  letter-spacing: var(--sign-tracking);
+  fill: url(#spec);
+  filter: url(#glow);
+  animation:
+    tube-on .95s steps(1, end) var(--d) backwards,
+    tube-buzz 13s linear calc(var(--d) + var(--buzz, 4s)) infinite;
+}
+.landing .w1 { --d: .9s; --buzz: 4s; }
+.landing .w2 { --d: 1.25s; --buzz: 7s; }
+.landing .w3 { --d: 1.6s; --buzz: 10s; }
+@keyframes tube-on {
+  0% { opacity: 0; } 9% { opacity: .55; } 13% { opacity: 0; } 22% { opacity: .9; } 26% { opacity: .15; }
+  34% { opacity: 1; } 41% { opacity: .35; } 47% { opacity: 1; } 100% { opacity: 1; }
+}
+@keyframes tube-buzz {
+  0%, 91%, 100% { opacity: 1; } 92% { opacity: .5; } 93% { opacity: 1; } 95.5% { opacity: .7; } 96.5% { opacity: 1; }
+}
+
+/* ---------- sections ---------- */
+.landing section.band { position: relative; padding: clamp(72px, 10vh, 120px) clamp(20px, 6vw, 96px); }
+.landing .rule {
+  height: 1px; width: 100%;
+  background: linear-gradient(90deg, transparent, var(--line-2) 20%, var(--line-2) 80%, transparent);
+}
+.landing .kicker { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--text-2); margin: 0 0 14px; }
+.landing h2 { font-size: clamp(1.6rem, 2.6vw, 2.4rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.15; margin: 0 0 12px; text-wrap: balance; }
+.landing .sub { color: var(--text-2); max-width: 56ch; margin: 0; }
+
+/* ---------- the rooms: one window beside the app's rail, showing one room at a time, its label over a cellar CRT with
+   that room running in it ---------- */
+.landing .bento {
+  display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 18px;
+  margin-top: 48px;
+}
+/* the window wears the rail's lit room: the name in text with the s2 glow */
+.landing .tile-card {
+  --c: var(--s2);
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  grid-column: 2; grid-row: 1; min-height: 640px; border-radius: 10px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line-2);
+}
+.landing .tile-card:not(.cur) { display: none; }
+.landing .tile-card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(60% 80% at 0% 100%, color-mix(in srgb, var(--c) 14%, transparent), transparent 70%);
+}
+/* on hover the window only glows, at once: no lift, since it takes no click */
+.landing .tile-card:hover {
+  border-color: color-mix(in srgb, var(--c) 55%, var(--line-2));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 25%, transparent), 0 0 40px color-mix(in srgb, var(--c) 18%, transparent);
+}
+.landing .label {
+  position: relative; z-index: 1;
+  padding: 28px 24px 12px; display: flex; flex-direction: column; gap: 12px;
+}
+.landing .label h3 {
+  font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -.02em; margin: 0;
+  color: var(--text); text-shadow: 0 0 10px color-mix(in srgb, var(--s2) 50%, transparent);
+}
+.landing .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.landing .pill {
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
+  padding: 3px 8px; border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  color: var(--c); background: color-mix(in srgb, var(--c) 10%, transparent);
+}
+.landing .pill.dim { color: var(--text-2); border-color: var(--line-2); background: transparent; }
+.landing .label p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+
+.landing .screen-wrap { position: relative; overflow: hidden; min-height: 210px; }
+.landing .screen {
+  position: absolute; inset: 0 22px 22px 22px;
+  border-radius: 6px; overflow: hidden;
+  background: #07080f;
+  border: 1px solid var(--line-2);
+  box-shadow: inset 0 0 40px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03);
+  font-size: 12.5px; line-height: 1.6;
+}
+
+.landing .rooms-rail { display: flex; flex-direction: column; grid-column: 1; grid-row: 1; padding: 22px 0; }
+/* the rail as the app draws it: the group label on the spectrum, the active room lit */
+.landing .rooms-rail .grp { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; padding: 0 24px 10px; display: flex; align-items: center; gap: 10px; }
+.landing .rooms-rail .grp .word { color: transparent; background: var(--spectrum); background-size: 400% 100%; -webkit-background-clip: text; background-clip: text; animation: drift 12s linear infinite; opacity: .85; }
+.landing .rooms-rail .grp .tail { flex: 1; height: 1px; background: var(--spectrum); background-size: 400% 100%; animation: drift 12s linear infinite; -webkit-mask-image: linear-gradient(90deg, #fff, transparent); mask-image: linear-gradient(90deg, #fff, transparent); opacity: .55; }
+.landing .rooms-rail a { position: relative; display: flex; align-items: center; gap: 14px; padding: 12px 24px; color: var(--text-2); font-size: 15px; letter-spacing: .02em; transition: color .25s, background .25s; }
+.landing .rooms-rail a:hover { color: var(--text); background: rgba(255,255,255,.025); }
+.landing .rooms-rail a.active { color: var(--text); text-shadow: 0 0 10px color-mix(in srgb, var(--s2) 50%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--s2) 16%, transparent), transparent 85%); }
+.landing .rooms-rail a.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 2px 2px 0; background: var(--spectrum); background-size: 100% 400%; animation: drift-y 12s linear infinite; box-shadow: 0 0 10px var(--s2), 0 0 22px color-mix(in srgb, var(--s3) 50%, transparent); }
+.landing .rooms-rail svg { width: 18px; height: 18px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* Dusty is a Library tab rather than a room, so it sits as a row under Library with no glyph of its own: the name
+   lined up with the rooms' names, the Profile sub-links' smaller type and row */
+.landing .rooms-rail a.sub { padding: 8px 24px 8px 56px; font-size: 13px; }
+.landing .rooms-rail a.active svg { stroke: url(#specMark); filter: drop-shadow(0 0 5px color-mix(in srgb, var(--s2) 70%, transparent)) drop-shadow(0 0 12px color-mix(in srgb, var(--s3) 35%, transparent)); }
+/* the time left before the window moves on: a spectrum hairline under the active room filling up */
+.landing .rooms-rail .prog { position: absolute; left: 24px; right: 24px; bottom: 3px; height: 1px; background: var(--spectrum); background-size: 400% 100%; transform: scaleX(0); transform-origin: 0 50%; opacity: 0; }
+.landing .rooms-rail a.active .prog.run { opacity: .8; animation: prog var(--rot, 30s) linear forwards, drift 12s linear infinite; }
+.landing .rooms-rail.held .prog { animation-play-state: paused !important; }
+@keyframes prog { to { transform: scaleX(1); } }
+
+.landing .screen::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.6) 100%);
+}
+.landing .screen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c) 10%, transparent), transparent 40%, transparent 70%, color-mix(in srgb, var(--s5) 6%, transparent));
+}
+.landing [data-s="PLAYING"]   { --c: var(--st-playing); }
+.landing [data-s="BACKLOG"]   { --c: var(--st-backlog); }
+.landing [data-s="COMPLETED"] { --c: var(--st-completed); }
+.landing [data-s="DROPPED"]   { --c: var(--st-dropped); }
+.landing [data-s="WISHLIST"]  { --c: var(--st-wishlist); }
+.landing [data-s="DUSTY"]     { --c: var(--st-dusty); }
+
+/* ---------- closing ---------- */
+.landing .closing { text-align: center; }
+.landing .closing h2 { font-size: clamp(2rem, 4vw, 3.4rem); margin-bottom: 14px; }
+.landing .closing .sub { margin: 0 auto 30px; }
+.landing .closing .ctas { justify-content: center; }
+/* the last steps of the stair line from the sign, ending at a door left ajar; draws itself on reveal */
+.landing .door-art { display: block; width: 260px; height: auto; margin: 0 auto 28px; overflow: visible; }
+.landing .door-art .ln {
+  fill: none; stroke: url(#specDoor); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; filter: url(#glow);
+}
+.landing .door-art .leaf { stroke-width: 2.5; }
+.landing .door-art .spill { fill: var(--s5); opacity: 0; filter: blur(14px); transition: opacity 1.2s ease 1.3s; }
+.landing .reveal.in .door-art .steps { animation: draw-in 1.3s var(--ease-out) .1s forwards; }
+.landing .reveal.in .door-art .frame { animation: draw-in .7s var(--ease-out) 1s forwards; }
+.landing .reveal.in .door-art .leaf { animation: draw-in .5s var(--ease-out) 1.4s forwards; }
+.landing .reveal.in .door-art .spill { opacity: .28; }
+@keyframes draw-in { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .landing .door-art .ln { stroke-dashoffset: 0; }
+  .landing .door-art .spill { opacity: .28; }
+}
+
+/* ---------- scroll reveal ---------- */
+.landing .reveal { opacity: 0; transform: translateY(26px); transition: opacity .9s ease, transform .9s var(--ease-out); transition-delay: calc(var(--i, 0) * 110ms); }
+.landing .reveal.in { opacity: 1; transform: none; }
+
+/* ---------- reduced motion: everything at rest, nothing waiting to fade in ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .landing *, .landing *::before, .landing *::after { animation: none !important; transition: none !important; }
+  .landing .rise, .landing .nav, .landing .bg-fog, .landing .bg-mosaic { opacity: 1; }
+  .landing .reveal { opacity: 1; transform: none; }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px) {
+  .landing .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 90px; margin-top: 0; gap: 8px; }
+  .landing .hero-copy { max-width: none; margin-top: 0; }
+  .landing .sign { width: 100%; margin: 0 0 8px; order: -1; align-self: auto; }
+  .landing .bento { grid-template-columns: minmax(0, 1fr); }
+  .landing .tile-card { grid-column: auto; grid-row: 2; min-height: 320px; }
+  .landing .screen-wrap { min-height: 230px; }
+  .landing .rooms-rail { grid-column: auto; flex-direction: row; flex-wrap: wrap; padding: 0; }
+  .landing .rooms-rail .grp { display: none; }
+  .landing .cursor-light { display: none; }
+}

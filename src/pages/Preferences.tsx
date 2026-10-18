@@ -13,12 +13,14 @@ import {
 } from '../services/libraryService'
 import { useGenres, usePlatformCatalog, usePopularTags } from '../services/gameService'
 import PreferencePlatformPicker from '../components/common/PreferencePlatformPicker'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const RELEASE_YEAR_BUCKETS: string[] = ['Pre-1990', '1990s', '2000s', '2010s', '2020s']
 
 type PrefTab = 'platforms' | 'genres' | 'tags' | 'era'
 
 export default function Preferences() {
+  useDocumentTitle('Preferences')
   const { data: platformsData, isError: platformsError } = useUserPlatforms()
   const platforms = platformsData ?? []
   const { data: catalogData, isError: catalogError } = usePlatformCatalog()
