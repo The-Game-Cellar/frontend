@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStats } from '../services/libraryService'
 import type { GameStatus } from '../types/api'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const TOP_N = 8
 
@@ -22,6 +23,7 @@ const STATUSES: StatusEntry[] = [
 ]
 
 export default function Statistics() {
+  useDocumentTitle('Statistics')
   const navigate = useNavigate()
   const { data: stats, isLoading, isError } = useStats()
   const [showAllGenres, setShowAllGenres] = useState(false)

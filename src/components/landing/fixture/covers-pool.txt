@@ -1,0 +1,400 @@
+co2lbd|Grand Theft Auto V|5693|f9
+coaarl|The Witcher 3: Wild Hunt|5256|f14
+co1rs4|Portal 2|4304|f187
+co1tnw|The Elder Scrolls V: Skyrim|4196|f50
+co2lb9|Grand Theft Auto: San Andreas|3887|f9
+coay61|Portal|3873|f187
+co1q1f|Red Dead Redemption 2|3582|c110
+co1r7f|The Last of Us|3417|f172
+cobkt6|God of War|3390|f10
+co1nmw|Half-Life 2|3325|f284
+co2mli|BioShock|3123|f140
+co1rcf|Assassin's Creed II|3119|f41
+co2lbb|Grand Theft Auto: Vice City|3035|f9
+co3p2d|The Legend of Zelda: Breath of the Wild|2857|f8
+coag8n|Half-Life|2817|f284
+co20ac|Mass Effect 2|2705|f26
+co2n12|BioShock Infinite|2627|f140
+co1voh|Batman: Arkham City|2602|f107
+co1r7h|Uncharted 4: A Thief's End|2560|f17
+co1voj|Batman: Arkham Asylum|2542|f72
+co1x7o|Mass Effect|2473|f26
+co2lcv|Red Dead Redemption|2439|c110
+co2una|Horizon Zero Dawn|2358|f12
+co1u60|Fallout: New Vegas|2344|f39
+co1rbu|Tomb Raider|2333|f18
+co1tnb|Uncharted 2: Among Thieves|2177|f17
+co1vpd|Far Cry 3|2170|f45
+cobfzp|Hollow Knight|2108|c532
+co4jni|Elden Ring|2106|c379
+co3nnx|The Legend of Zelda: Ocarina of Time|2083|f8
+co1r77|Marvel's Spider-Man|2049|f33
+coa77e|Minecraft: Java Edition|2018|f149
+co721v|Super Mario 64|1996|f46
+co8lo8|Super Mario World|1959|f46
+co1nc7|Doom|1881|f4
+cob9ed|Dark Souls III|1876|f13
+coabgu|Dishonored|1867|c63
+cob1t2|Undertale|1853|c241
+co9ba3|Borderlands 2|1844|f108
+co2lbv|Grand Theft Auto IV|1839|f9
+co1r8e|Life is Strange|1838|f176
+co1x7q|Mass Effect 3|1835|f26
+co1mxf|Super Mario Odyssey|1808|f46
+co1wko|Call of Duty 4: Modern Warfare|1801|f16
+cob99l|Bloodborne|1797|g127
+co1rrw|Assassin's Creed|1761|f41
+co4qfn|Assassin's Creed IV Black Flag|1757|f41
+co1ycw|Fallout 3|1744|f39
+coa93h|Stardew Valley|1734|g384
+co3wb2|Max Payne|1731|f213
+co6t4d|Assassin's Creed Brotherhood|1718|f41
+co2j1g|The Walking Dead|1717|f159
+co1yc6|Fallout 4|1712|f39
+co7ozx|Super Mario Bros. 3|1684|f46
+co5ziw|The Last of Us Part II|1675|f172
+co2mvs|Dragon Age: Origins|1674|f113
+co3vzn|The Legend of Zelda: A Link to the Past|1663|f8
+cobpak|Metal Gear Solid|1656|f55
+cob9kr|Hades|1649|c106
+co1x78|Dark Souls|1647|f13
+co2wk8|Resident Evil 4|1635|f5
+co2fca|Inside|1630|g2
+co1xuq|Warcraft III: Reign of Chaos|1603|f182
+co1qrs|Limbo|1576|g864
+co2lb8|Grand Theft Auto III|1570|f9
+co8fpz|The Elder Scrolls IV: Oblivion|1545|f50
+co3gfq|Diablo II|1529|f139
+co3cwt|Call of Duty: Modern Warfare 2|1524|f16
+coaih8|Cyberpunk 2077|1519|f42
+co5pcj|NieR: Automata|1503|f19
+co1qrt|Mafia|1489|c32
+co1y41|Ori and the Blind Forest|1485|c205
+co1xii|Assassin's Creed III|1477|f41
+coagib|Batman: Arkham Knight|1477|f72
+co1tp8|Uncharted 3: Drake's Deception|1441|f17
+co1tmz|Star Wars: Knights of the Old Republic|1440|f22
+co670h|Baldur's Gate III|1438|f245
+cob9dh|Celeste|1413|c390
+co20pd|Middle-earth: Shadow of Mordor|1378|f48
+co1wy4|The Witcher 2: Assassins of Kings|1363|f14
+co3plw|Chrono Trigger|1347|f507
+cobt66|Counter-Strike: Global Offensive|1331|c964
+co1rqa|Rise of the Tomb Raider|1326|f18
+co2a23|Sekiro: Shadows Die Twice|1311|g579
+co1wkl|Call of Duty: Black Ops|1308|f16
+co21c0|Wolfenstein: The New Order|1300|f27
+co6pib|Super Mario Bros.|1291|f46
+co1ozz|Shadow of the Colossus|1285|f150
+co1vqp|Hotline Miami|1240|c256
+co21ro|Super Mario Galaxy|1235|f46
+co6mzf|Detroit: Become Human|1235|g390
+co5ei5|Metal Gear Solid 3: Snake Eater|1230|f55
+co1xih|Assassin's Creed Revelations|1221|f41
+co2n13|Mafia II|1218|c32
+co2g7w|Dead Space|1214|f138
+co9n6m|StarCraft|1214|f300
+co1v8x|South Park: The Stick of Truth|1201|f77
+cobxcp|Rocket League|1201|c121
+co1tp7|Uncharted: Drake's Fortune|1184|f17
+co1rcy|The Wolf Among Us|1183|f72
+cob1ts|Firewatch|1181|g123
+co1rcb|Overwatch|1178|f20
+co1y2f|Left 4 Dead 2|1163|c669
+co2vyg|Silent Hill 2|1159|f322
+cob9lk|Journey|1151|g338
+co1v85|Metal Gear Solid V: The Phantom Pain|1151|f55
+co2npa|Far Cry 4|1143|f45
+co20up|Sid Meier's Civilization V|1140|f44
+co2mjo|Max Payne 3|1135|f213
+co2p5w|Watch Dogs|1133|f34
+co1wkn|Call of Duty: Modern Warfare 3|1131|f16
+co1sfj|Disco Elysium|1119|g1209
+co1tnn|StarCraft II: Wings of Liberty|1094|f300
+coaajv|Heavy Rain|1092|g876
+co2mlj|BioShock 2|1080|f140
+co1r76|Persona 5|1079|f37
+co2l7l|Hellblade: Senua's Sacrifice|1076|c42
+co1rbe|Assassin's Creed Origins|1076|f41
+co21yv|Super Smash Bros. Melee|1069|f8
+co2mvy|Dragon Age: Inquisition|1069|f113
+co1tr1|Final Fantasy X|1068|f6
+co1xbu|Battlefield 3|1057|f35
+co3acf|Call of Duty 2|1048|f16
+cobtwh|Resident Evil 7: Biohazard|1042|f5
+co3ddc|God of War|1042|f10
+co5osy|Super Metroid|1038|f115
+co20xq|Dead Space 2|1037|f138
+coba3d|God of War Ragnarök|1036|f10
+cob22v|It Takes Two|1034|g213
+co3dik|God of War II|1031|f10
+co1rd2|Deus Ex: Human Revolution|1031|c4
+co2ldn|L.A. Noire|1027|g1755
+co2lcl|Max Payne 2: The Fall of Max Payne|1025|f213
+co2crj|Ghost of Tsushima|1025|c275
+co65yq|Dying Light|1022|f95
+co3ohz|The Legend of Zelda: The Wind Waker|1019|f8
+coaamg|Terraria|1013|c258
+co55xo|Age of Empires II: The Age of Kings|1010|c600
+co20tx|Borderlands|1009|f108
+co1rbi|Star Wars Jedi: Fallen Order|998|f22
+co5e1c|Metal Gear Solid 2: Sons of Liberty|997|f55
+co2dft|Alan Wake|996|c658
+co5rav|Doom|984|f4
+co1rbj|What Remains of Edith Finch|981|g56
+cobpn7|League of Legends|980|f519
+co209j|Need for Speed: Most Wanted|973|f93
+cobssb|Fortnite|973|f485
+co5gbw|Mirror's Edge|960|c11
+co1wl8|Call of Duty: World at War|956|f16
+co1xiq|Assassin's Creed Unity|953|f41
+co2nul|Assassin's Creed Odyssey|951|f41
+co2unc|Final Fantasy IX|939|f6
+co2255|Super Smash Bros. Ultimate|936|f6
+co2l1u|Diablo III|936|f139
+co21tl|Super Mario Galaxy 2|915|f46
+co2evj|Control|913|c151
+co1wkv|Call of Duty: Black Ops II|903|f16
+co2r2r|Halo: Combat Evolved|902|f52
+co2acb|Spec Ops: The Line|900|c491
+co1nmf|Battlefield 4|891|f35
+co62ao|Cuphead|885|g161
+co2n9d|Battlefield 1|883|f35
+co6rzl|Team Fortress 2|875|f778
+co2l7z|World of Warcraft|874|f182
+co8ado|Fallout 2|870|f39
+cobksf|Death Stranding|868|f89
+co3w4w|Metroid Prime|866|f115
+co1rd6|Metro 2033|865|f177
+co3pah|The Legend of Zelda: Majora's Mask|854|f8
+co21a6|Far Cry 5|847|f45
+fhbeilnghyhhmjqhinqa|Titanfall 2|846|c30
+co209h|Need for Speed: Underground 2|844|f93
+co5vmg|The Legend of Zelda: Tears of the Kingdom|842|f8
+cobysr|Dark Souls II|841|f13
+co2k36|The Walking Dead: Season Two|834|f159
+co2knd|The Elder Scrolls III: Morrowind|828|f50
+co2n19|Call of Duty|826|f16
+co86dk|Deus Ex|826|f775
+co276m|Super Meat Boy|826|c602
+co1xis|Assassin's Creed Syndicate|824|f41
+co30t1|Kingdom Hearts II|822|f74
+co1xhc|Halo 3|820|f52
+co65ac|Outer Wilds|819|c628
+co1xrx|The Witcher|818|f14
+co53m8|Castlevania: Symphony of the Night|813|f123
+co209g|Need for Speed: Underground|810|f93
+co1nmd|Batman: Arkham Origins|808|f72
+co1qrj|Star Wars: Knights of the Old Republic II - The Sith Lords|806|f22
+co3koi|God of War III|793|f10
+cobtgs|Resident Evil 5|792|f5
+co9gam|Clair Obscur: Expedition 33|783|g2288
+co2on1|Crysis|783|f328
+co1rro|Brothers: A Tale of Two Sons|780|g209
+co9e29|Dishonored 2|780|c63
+co1lat|A Plague Tale: Innocence|773|c155
+co4t8l|Prince of Persia: The Sands of Time|755|f324
+coaq5k|Final Fantasy III|750|f6
+co8r4w|Beyond: Two Souls|750|g267
+co1qlj|Bastion|749|g1351
+cobfk4|Dota 2|747|f555
+co1qrm|Left 4 Dead|744|c669
+co81pl|Counter-Strike|741|f284
+co2p3j|Watch Dogs 2|736|f34
+co2634|Saints Row: The Third|730|c74
+co3p5n|Doom Eternal|724|f4
+co3b15|Call of Duty: Ghosts|723|f16
+co5eju|Metal Gear Solid 4: Guns of the Patriots|723|f55
+co2s5q|Until Dawn|722|c146
+co2h9d|Metro: Last Light|720|f177
+co1rdi|Little Nightmares|718|c99
+co1uii|The Legend of Zelda|717|f8
+co1sh2|Hearthstone|714|f182
+co3p0j|The Legend of Zelda: A Link Between Worlds|712|f8
+cob1g4|Star Wars: Battlefront II|711|f22
+co1vep|Papers, Please|706|g2885
+co1vzu|Alien: Isolation|704|f57
+co2kn9|Super Mario World 2: Yoshi's Island|700|f46
+co2a47|Heroes of Might and Magic III: The Restoration of Erathia|697|f556
+co555l|Crash Bandicoot|695|f71
+co3mtv|The Legend of Zelda: Twilight Princess|694|f8
+coaas0|Cities: Skylines|693|c247
+co1yat|Outlast|690|c119
+co9aoh|Prey|688|c140
+co213q|Mario Kart 8|684|f8
+co4tt2|Stray|683|g1163
+co2mw1|Dragon Age II|678|f113
+co1x77|Halo 2|674|f52
+co1zsh|Age of Empires|673|c600
+co1qrc|Hitman: Absolution|671|f2
+co1vcn|Shadow of the Tomb Raider|668|f18
+co2a20|Soma|662|g244
+co2e3z|Sleeping Dogs|660|c262
+co1xha|Halo: Reach|659|f52
+co3h3l|The Sims 4|655|f134
+coaroh|Metro Exodus|653|f177
+coa93z|Apex Legends|651|c30
+co1vca|A Way Out|649|g366
+co69id|Plants vs. Zombies|649|f58
+co1xbi|Battlefield: Bad Company 2|644|f35
+co1ybn|Fallout: A Post Nuclear Role Playing Game|641|f39
+cobj1z|Destiny 2|638|f15
+co21c5|Wolfenstein II: The New Colossus|637|f27
+co2on2|Crysis 2|636|c304
+co2eew|The Outer Worlds|636|c150
+coacrk|No Man's Sky|633|g3
+coavu6|The Sims 3|632|f134
+co7jfv|Dead Cells|628|g467
+coaav6|Hogwarts Legacy|627|f189
+coaaqr|Sid Meier's Civilization VI|625|f44
+co1wky|Call of Duty: Advanced Warfare|623|f16
+coa9dy|Genshin Impact|622|f331
+coanlj|Sonic the Hedgehog|621|f111
+coaam4|PUBG: Battlegrounds|611|g183
+co5kkj|Sonic the Hedgehog 2|605|f111
+co2n14|Vampire: The Masquerade - Bloodlines|604|f178
+co1rdj|Call of Duty: WWII|603|f16
+co25ni|Braid|601|g5248
+co67hm|Mario Kart 64|597|f46
+co6nz1|Final Fantasy XV|596|f6
+co94bn|Days Gone|594|c139
+co5pi4|Pokémon Red Version|591|f51
+co214e|Mario Kart Wii|588|f46
+co70qn|Donkey Kong Country|588|f84
+co221w|Super Smash Bros. Brawl|587|f8
+co3ggo|Diablo|586|f139
+co20yw|Call of Duty: Black Ops III|586|f16
+co30yr|Monkey Island 2: LeChuck's Revenge|584|f301
+co25jt|Deus Ex: Mankind Divided|583|c4
+co2fgr|Hitman|580|f2
+co1rst|Monster Hunter: World|578|f43
+co1utk|F.E.A.R.|577|c665
+coa938|Subnautica|576|c345
+co2vz0|Resident Evil 2|575|f5
+co1nrn|Saints Row IV|573|c74
+co1xir|Assassin's Creed Rogue|573|f41
+co20tr|Tales from the Borderlands|572|f108
+co30zf|Kingdom Hearts|569|f74
+co1uuh|Mad Max|568|f135
+co2vye|Silent Hill|566|f322
+co2e1l|Ori and the Will of the Wisps|566|c205
+co20r3|Borderlands 3|566|f108
+co6kqt|Among Us|566|g3263
+co8nf4|Bayonetta|565|f40
+coa7cs|Fall Guys|559|g905
+co3wi7|Star Wars Battlefront II|558|f22
+co9yqs|Rainbow Six Siege|556|f31
+co6v07|EarthBound|555|f121
+co873w|Crash Bandicoot: Warped|555|f71
+co8d7q|Tekken 3|551|f94
+co7ybp|SuperHot|550|c102
+co1vpo|Far Cry 2|550|c61
+qwhxxrcxzw7inwfrfkbq|Gone Home|547|g526
+coab9q|Resident Evil Village|547|f5
+co1qv5|Gris|546|g469
+cobgod|Resident Evil 6|545|f5
+co209k|Need for Speed: Carbon|545|f93
+co2dm6|Hitman: Blood Money|545|f2
+co39vk|Mass Effect: Andromeda|543|f26
+co25us|Paper Mario: The Thousand-Year Door|543|f46
+co1rb4|Devil May Cry 5|543|f97
+co2l1t|Metal Gear Rising: Revengeance|542|f55
+co1xhf|Halo 4|541|f52
+co71yr|Baldur's Gate II: Shadows of Amn|539|f245
+co3lym|Dead Island|538|c366
+cobaa7|Shovel Knight|537|f54
+co8rkr|Gears of War|537|f7
+co2lb2|Grand Theft Auto 2|537|f9
+co3dm5|The Sims 2|535|f134
+co1vpf|Far Cry|535|c61
+co1qq5|Amnesia: The Dark Descent|526|c429
+co9x1a|Prince of Persia: Warrior Within|525|f324
+co82vt|Crash Bandicoot 2: Cortex Strikes Back|525|f71
+co3hih|The Witness|521|g516
+co6iip|Doom II: Hell on Earth|520|f4
+co1izy|Infamous: Second Son|520|c180
+co6p5e|Doki Doki Literature Club!|518|c1622
+cob8q1|Super Mario Sunshine|516|f46
+co2z7d|Final Fantasy VIII|516|f6
+co1iyf|Slay the Spire|513|c699
+co28p7|Burnout Paradise|511|c319
+co8j9a|The Sims|510|f134
+co252x|Yakuza 0|508|f29
+cobut9|Warframe|499|c362
+coaaqu|Payday 2|498|c129
+co1twj|Life is Strange: Before the Storm|495|f176
+co1u77|DmC: Devil May Cry|495|f97
+co9gmb|Pokémon Go|494|f51
+co3wls|Animal Crossing: New Horizons|493|f81
+cobtjo|Valorant|491|g1867
+co28bp|The Secret of Monkey Island|490|f301
+co1rco|Destiny|490|c19
+co2mll|Mafia III|489|c32
+co1y08|Mortal Kombat X|488|f79
+co2lb0|Grand Theft Auto|487|f9
+co28ha|Far Cry: Primal|485|f45
+co1n6w|Path of Exile|485|c1179
+co28sy|Abzu|484|g12
+cob23o|Transistor|483|g519
+co20pq|Middle-earth: Shadow of War|480|f48
+co27j9|Return of the Obra Dinn|480|g1625
+co217m|Donkey Kong Country 2: Diddy's Kong Quest|479|f84
+co5pi7|Pokémon Blue Version|479|f51
+co1qri|Just Cause 2|471|c81
+co3hfx|Tomb Raider|467|f18
+coa4s4|S.T.A.L.K.E.R.: Shadow of Chernobyl|466|f604
+co4ta0|Prince of Persia: The Two Thrones|463|f324
+co2tso|Super Smash Bros.|463|f8
+co907c|Age of Mythology|463|c600
+co1rd9|Fez|460|c299
+co25yv|To the Moon|459|c651
+co1xzr|Return to Castle Wolfenstein|458|f27
+co3wf6|Hotline Miami 2: Wrong Number|458|c256
+co29t0|Darksiders|457|f114
+co30yt|Day of the Tentacle|457|c330
+co1rb5|The Talos Principle|456|c296
+co5wgs|The Evil Within|454|c127
+co25xx|Star Wars: The Force Unleashed|452|f22
+co2res|Star Wars Battlefront|451|f22
+co8pgw|Garry's Mod|451|g356417
+co1u6n|Devil May Cry 4|449|f97
+co21w8|Super Mario Kart|448|f46
+co1y5v|Divinity: Original Sin II|448|c242
+co2ed3|Assassin's Creed Valhalla|448|f41
+co4aqi|Kingdom Come: Deliverance|446|c356
+cob8wi|Super Mario 3D World|445|f46
+co1xy6|Age of Empires III|445|c600
+co1rsg|Call of Duty: Modern Warfare|445|f16
+coaaw2|Darkest Dungeon|444|c406
+co20mc|Mortal Kombat|444|f79
+co20a5|Need for Speed: Most Wanted|442|f93
+co2vvb|Resident Evil 3: Nemesis|441|f5
+co28gg|Gears of War 2|440|f7
+co1y7x|Duke Nukem 3D|438|f290
+co1mvj|XCOM 2|436|f3
+co25zo|Valiant Hearts: The Great War|435|c480
+co7r52|Crash Team Racing|435|f71
+co20bp|Resident Evil|434|f5
+co25ag|Gothic II|434|c941
+co3vge|Wii Sports|430|c578
+co2e1a|Forza Horizon 4|429|f11
+co2int|Dead Space 3|429|f138
+co2hlq|Oxenfree|428|c143
+co1pdt|Hitman 2: Silent Assassin|428|f2
+coab5n|Just Cause 3|428|c81
+co25r2|Gothic|427|c941
+cobebu|Hollow Knight: Silksong|424|c532
+co3nsk|The Legend of Zelda: The Minish Cap|424|f8
+co1wkp|Call of Duty: Infinite Warfare|424|f16
+co1v3n|Doom 3|423|f4
+coar4c|Command & Conquer: Red Alert 2|421|f563
+coboys|Final Fantasy XIII|420|f6
+co1xbv|Battlefield V|419|f35
+co1qll|The Binding of Isaac|419|c1079
+co9chw|FTL: Faster Than Light|419|c943
+co27lo|Machinarium|418|g7865
+co6ys2|Indiana Jones and the Fate of Atlantis|418|f283
+co1yvf|Tom Clancy's The Division|417|f31
+co5c44|Star Wars: Jedi Knight - Jedi Academy|416|f22
+co95ri|Tom Clancy's Splinter Cell|416|f31
+coar27|Frostpunk|415|c452

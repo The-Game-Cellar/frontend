@@ -4,10 +4,12 @@ import { useAddPlatform, useCompleteOnboarding, useUpdateGenrePreferences } from
 import { useGenres, usePlatformCatalog } from '../services/gameService'
 import OnboardingPlatformPicker from '../components/common/OnboardingPlatformPicker'
 import TopBar from '../components/common/TopBar'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 type Step = 'platforms' | 'genres'
 
 export default function Onboarding() {
+  useDocumentTitle('Onboarding')
   const navigate = useNavigate()
   const addPlatformMutation = useAddPlatform()
   const updateGenrePreferencesMutation = useUpdateGenrePreferences()

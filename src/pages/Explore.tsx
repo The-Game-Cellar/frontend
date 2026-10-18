@@ -19,6 +19,7 @@ import StyledSelect from '../components/common/StyledSelect'
 import TagDropdown from '../components/common/TagDropdown'
 import YearRangeSlider from '../components/common/YearRangeSlider'
 import type { GameResponse, PlatformGroup } from '../types/api'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 type ViewKey = 'browse' | 'upcoming'
 type GameTypeFilter = NonNullable<SearchGamesParams['gameType']>
@@ -93,6 +94,7 @@ function yearToEpochEnd(year: number): number {
 }
 
 export default function Explore() {
+  useDocumentTitle('Explore')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 

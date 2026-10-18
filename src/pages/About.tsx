@@ -1,4 +1,7 @@
+import useDocumentTitle from '../hooks/useDocumentTitle'
+
 export default function About() {
+  useDocumentTitle('About')
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <header className="space-y-1">

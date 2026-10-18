@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePersonalizedGrouped, useRefreshGenreRow } from '../services/recommendationService'
 import GameCard from '../components/common/GameCard'
 import type { RecommendationDTO, RecommendationRow } from '../types/api'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const CARD_W = 176
 const GAP = 12
@@ -84,6 +85,7 @@ function Row({ row, onGameClick, onLabelClick, onRefresh, refreshing }: RowProps
 }
 
 export default function Recommendations() {
+  useDocumentTitle('Recommend')
   const navigate = useNavigate()
   const { data, isFetching, error } = usePersonalizedGrouped()
   const refreshRow = useRefreshGenreRow()

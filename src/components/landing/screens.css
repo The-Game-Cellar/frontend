@@ -1,0 +1,112 @@
+/* The rooms on the front page's CRTs: each screen is that room's own markup and CSS at its real size, scaled by
+   --k to fit the frame. The classes that would collide with the page's own (row, blob, mote, the rise keyframes)
+   carry an r or card prefix. */
+.landing .rv {
+  --c: var(--text);
+  --ctl-h: 42px; --ctl-fs: 15px; --ctl-px: 16px; --tab-fs: 14px; --tab-py: 9px; --tab-px: 18px; --cap-fs: 14px; --search-w: 270px;
+  --card: 176px; --gap: 16px;
+  position: absolute; left: 0; top: 0; overflow: hidden; container-type: size;
+  transform: scale(var(--k, .6)); transform-origin: 0 0;
+  background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55;
+  pointer-events: none;
+}
+.landing .rv [hidden] { display: none !important; }
+.landing .rv .rfog { position: absolute; inset: 0; mix-blend-mode: screen; }
+.landing .rv .rblob { position: absolute; width: 62cqw; height: 62cqw; border-radius: 50%; filter: blur(48px); will-change: transform; }
+.landing .rv .rblob-1 { background: radial-gradient(circle, var(--f1) 0%, transparent 58%); left: -22cqw; top: -18cqw; opacity: .2; animation: rfloat-a 22s ease-in-out infinite alternate; }
+.landing .rv .rblob-2 { background: radial-gradient(circle, var(--f2) 0%, transparent 58%); right: -20cqw; top: 8cqh; opacity: .2; animation: rfloat-b 26s ease-in-out infinite alternate; }
+.landing .rv .rblob-3 { background: radial-gradient(circle, var(--f1) 0%, transparent 58%); left: 22cqw; bottom: -36cqw; opacity: .16; animation: rfloat-c 30s ease-in-out infinite alternate; }
+.landing .rv .rblob-4 { background: radial-gradient(circle, var(--f2) 0%, transparent 58%); right: 8cqw; bottom: -30cqw; opacity: .14; animation: rfloat-a 34s ease-in-out infinite alternate-reverse; }
+@keyframes rfloat-a { from { transform: translate(0, 0) scale(1); } to { transform: translate(9cqw, 7cqh) scale(1.15); } }
+@keyframes rfloat-b { from { transform: translate(0, 0) scale(1.1); } to { transform: translate(-10cqw, 9cqh) scale(.95); } }
+@keyframes rfloat-c { from { transform: translate(0, 0); } to { transform: translate(12cqw, -8cqh); } }
+/* dust motes, the Dashboard's Forgotten recipe, over the room on the Dusty tab */
+.landing .rv .rmotes { position: absolute; inset: 0; clip-path: inset(0); }
+.landing .rv .rmote { position: absolute; left: var(--x); top: var(--y); width: 3px; height: 3px; border-radius: 50%; background: #d9cba0; box-shadow: 0 0 6px #b8a880; opacity: 0; animation: rmote var(--d) linear infinite; animation-delay: var(--dl); }
+@keyframes rmote { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: .75; } 88% { opacity: .45; } 100% { transform: translate(var(--dx), -160px); opacity: 0; } }
+.landing .rv .rc { position: relative; z-index: 1; padding: 28px 40px; }
+
+/* bars, tabs, the search field, Order by and Filters, as the Library and Explore draw them */
+.landing .rv .bar { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
+.landing .rv .bar .spacer { flex: 1; }
+.landing .rv .bar2 { margin-bottom: 20px; }
+.landing .rv .tabs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.landing .rv .tab { --c: var(--s2); position: relative; display: inline-flex; align-items: center; gap: 8px; padding: var(--tab-py) var(--tab-px); border-radius: 4px; font-size: var(--tab-fs); letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); border: 1px solid transparent; transition: color .25s, border-color .25s, background .25s; }
+.landing .rv .tab b { font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.landing .rv .tab.on { color: var(--c); border-color: color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); text-shadow: 0 0 8px color-mix(in srgb, var(--c) 45%, transparent); }
+.landing .rv .tab.on b { color: var(--c); }
+/* the Library's All tab, the one active tab with no status colour of its own */
+.landing .rv .tab.on.spec { color: var(--text); text-shadow: none; border-color: transparent; background: linear-gradient(var(--bg), var(--bg)) padding-box, var(--spectrum) border-box; background-size: auto, 400% 100%; animation: drift 12s linear infinite; box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 30%, transparent); }
+.landing .rv .tab.on.spec b { color: var(--text-2); }
+/* Explore's active view, a 10 % tint of s2 inside the spectrum border */
+.landing .rv .tab.on.tint { --tab-tint: color-mix(in srgb, var(--s2) 10%, var(--bg)); color: var(--text); text-shadow: none; border-color: transparent; background: linear-gradient(var(--tab-tint), var(--tab-tint)) padding-box, var(--spectrum) border-box; background-size: auto, 400% 100%; animation: drift 12s linear infinite; box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 30%, transparent); }
+.landing .rv .search { position: relative; display: inline-flex; align-items: center; gap: 8px; height: var(--ctl-h); width: var(--search-w); border: 1px solid transparent; border-bottom: 1px solid var(--line-2); padding: 0 4px; color: var(--text-2); font-size: var(--ctl-fs); transition: color .25s; }
+.landing .rv .search .mag { width: 15px; height: 15px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; color: var(--muted); transition: color .25s; }
+.landing .rv .search::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--spectrum); background-size: 400% 100%; animation: drift 12s linear infinite; opacity: 0; transition: opacity .25s; }
+.landing .rv .search .q { flex: 1; min-width: 0; color: var(--text); white-space: nowrap; overflow: hidden; }
+.landing .rv .search .q:empty::before { content: "Search"; color: var(--muted); }
+.landing .rv .search .clear { color: var(--muted); font-size: 16px; line-height: 1; }
+/* while the demo types, the field carries the focus look the real field takes */
+.landing .rv .search.typing { color: var(--text); }
+.landing .rv .search.typing .mag { color: var(--text-2); }
+.landing .rv .search.typing::after { opacity: 1; }
+.landing .rv .search.typing .q::after { content: ""; display: inline-block; width: 1px; height: 1.1em; margin-left: 1px; vertical-align: -3px; background: var(--text); animation: caret 1s steps(1, end) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.landing .rv .sel-btn { display: inline-flex; align-items: center; gap: 8px; height: var(--ctl-h); padding: 0 var(--ctl-px); border-radius: 4px; border: 1px solid var(--line-2); background: rgba(17,18,32,.6); color: var(--text-2); font-size: var(--ctl-fs); }
+.landing .rv .sel-btn .k { color: var(--text-2); }
+.landing .rv .sel-btn .v { color: var(--text); font-weight: 500; white-space: nowrap; }
+.landing .rv .filters-btn { height: var(--ctl-h); padding: 0 calc(var(--ctl-px) + 2px); font-size: var(--cap-fs); letter-spacing: .1em; text-transform: uppercase; }
+/* Explore: the result count at the bar's right end; a game without a cover is its name as the sign, lit, on a ground
+   tinted by the view's fog */
+.landing .rv .count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; padding: 0 6px; }
+.landing .rv[data-room="explore"] .cv .nocv { font-size: 13px; font-weight: 600; font-style: italic; letter-spacing: .1em; text-transform: uppercase; line-height: 1.35; color: var(--text); text-shadow: 0 0 10px color-mix(in srgb, var(--text) 70%, transparent), 0 0 30px color-mix(in srgb, var(--text) 35%, transparent);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--f1) 14%, var(--raised)), var(--raised) 70%); }
+/* Explore: Reset follows Order by while anything is searched */
+.landing .rv .reset { height: var(--ctl-h); padding: 0 calc(var(--ctl-px) + 2px); font-size: var(--cap-fs); letter-spacing: .1em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.1); border-radius: 4px; color: var(--text-2); display: inline-flex; align-items: center; }
+
+/* shelves: the Library's sign header in the shelf colour with the count at the right end; Recommend's lit white with
+   the Refresh ghost there instead, one row that fits */
+.landing .rv .shelf { position: relative; margin: 0 0 22px; }
+.landing .rv .shelf-h { --c: var(--s2); position: relative; z-index: 1; display: flex; align-items: baseline; gap: 12px; padding: 0 2px; }
+.landing .rv .shelf-h .lab { font-size: 16px; font-weight: 600; font-style: italic; letter-spacing: .1em; text-transform: uppercase; color: var(--c); text-shadow: 0 0 10px color-mix(in srgb, var(--c) 70%, transparent), 0 0 30px color-mix(in srgb, var(--c) 35%, transparent); animation: tube-on 1.6s linear both; animation-delay: calc(var(--n, 0) * 140ms + 200ms); }
+.landing .rv .shelf-h .tail { flex: 1; height: 1px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 45%, transparent), transparent); }
+.landing .rv .shelf-h .cnt { font-size: 12px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
+.landing .rv[data-room="recommend"] .shelf { margin: 0 0 26px; }
+.landing .rv[data-room="recommend"] .shelf-h { --c: var(--text); align-items: center; min-height: 34px; }
+.landing .rv .ghost { height: 34px; padding: 0 14px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.1); border-radius: 4px; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: color .25s, border-color .25s, opacity .25s; }
+.landing .rv .ghost.press { color: var(--text); border-color: rgba(255,255,255,.28); }
+.landing .rv .ghost.busy { opacity: .5; }
+.landing .rv .srow { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card), 1fr)); gap: var(--gap); padding: 12px 0 14px; }
+.landing .rv .srow.fit { grid-template-columns: repeat(var(--fit, 6), minmax(0, 1fr)); padding: 12px 0 6px; }
+.landing .rv .srow.busy { opacity: .45; transition: opacity .3s; }
+.landing .rv .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card), 1fr)); gap: var(--gap); }
+
+/* cards: the cover, the caption with the name and the rating in the Dashboard's form; a card that enters rises */
+.landing .rv .card { position: relative; min-width: 0; }
+.landing .rv .card.new > * { animation: card-rise .5s var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 24) * 28ms); }
+@keyframes card-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.landing .rv .cv { position: relative; aspect-ratio: 3 / 4; border-radius: 6px; overflow: hidden; background: var(--raised); border: 1px solid #3a3d58; box-shadow: 0 10px 30px rgba(0,0,0,.5); transition: transform .4s var(--ease-out), box-shadow .4s, border-color .4s; }
+.landing .rv .cv img { width: 100%; height: 100%; object-fit: cover; display: block; transition: filter .9s; }
+.landing .rv .cv .nocv { position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; text-align: center; font-size: 12px; color: var(--text-2); }
+/* the chosen card while its modal is open: the lifted ring in the card's colour */
+.landing .rv .card.pick .cv { transform: translateY(-6px) scale(1.03); border-color: transparent; box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 85%, transparent), 0 0 18px color-mix(in srgb, var(--c) 55%, transparent), 0 0 44px color-mix(in srgb, var(--c) 25%, transparent), 0 16px 40px rgba(0,0,0,.6); }
+/* dust: settled on the cover, blown off when the status leaves Dusty */
+.landing .rv .card.dusty .cv img { filter: saturate(.4) brightness(.7); }
+.landing .rv .dust { position: absolute; inset: 0; pointer-events: none; opacity: 0; transform-origin: 50% 60%; transition: opacity 1.6s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http:%2F%2Fwww.w3.org/2000/svg' width='260' height='260'><filter id='d'><feTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .72  0 0 0 0 .66  0 0 0 0 .5  0 0 0 .8 0'/></filter><rect width='100%' height='100%' filter='url(%23d)'/></svg>"); }
+.landing .rv .card.dusty .dust { opacity: .6; }
+.landing .rv .card.blow .dust { animation: blow .8s ease-out forwards; }
+.landing .rv .card.blow .cv img { filter: none; }
+@keyframes blow { 0% { opacity: .6; transform: none; } 100% { opacity: 0; transform: translate(40px, -60px) scale(1.5) rotate(4deg); } }
+.landing .rv .cap { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 9px 2px 0; }
+.landing .rv .cap .nm { flex: 1; min-width: 0; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.landing .rv .rt { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 4px; font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.landing .rv .rt b { font-weight: 600; color: var(--text); font-size: 13px; }
+.landing .rv .rt .glyph { font-size: 12px; color: transparent; background: var(--spectrum); background-size: 400% 100%; -webkit-background-clip: text; background-clip: text; animation: drift 8s linear infinite; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--s2) 50%, transparent)); }
+.landing .rv .rt.none { color: var(--muted); }
+.landing .rv .rt.none .glyph { animation: none; background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--muted); filter: none; }
+.landing .rv .rt.yr { color: var(--text); }
+/* Explore's loading state: the wall cleared, the sign line Loading */
+.landing .rv .empty { padding: 10px 2px 0; }
+.landing .rv .empty .h { display: block; font-size: 16px; font-weight: 600; font-style: italic; letter-spacing: .1em; text-transform: uppercase; color: var(--text); text-shadow: 0 0 10px color-mix(in srgb, var(--text) 70%, transparent), 0 0 30px color-mix(in srgb, var(--text) 35%, transparent); animation: tube-on 1.6s linear both; animation-delay: 200ms; }
+@media (prefers-reduced-motion: reduce) { .landing .rv .rmote { opacity: .5; } }

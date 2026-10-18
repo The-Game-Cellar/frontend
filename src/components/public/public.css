@@ -1,6 +1,6 @@
-/* Shell for the pages outside sign-in: tokens, fog, nav, button family and footer. Everything is
-   scoped under .public so none of it reaches the app. Unlayered on purpose: it outranks Tailwind's
-   base layer without raising specificity. */
+/* Shell for the pages outside sign-in: tokens, fog and the nav's backdrop; the nav, buttons and
+   footer themselves are shell.css. Everything is scoped under .public so none of it reaches the
+   app. Unlayered on purpose: it outranks Tailwind's base layer without raising specificity. */
 .public {
   --bg: #0a0b14;
   --surface: #111220;
@@ -51,79 +51,10 @@
 
 .public .page { position: relative; z-index: 1; }
 
-/* ---------- nav ---------- */
-.public .nav {
-  position: sticky; top: 0; z-index: 4;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px clamp(20px, 4vw, 48px);
-  background: linear-gradient(180deg, rgba(10,11,20,.92), rgba(10,11,20,.6) 70%, rgba(10,11,20,0));
-}
-.public .brand { display: flex; align-items: center; gap: 10px; }
-.public .brand-mark {
-  width: 22px; height: 22px; display: block; overflow: visible; flex: 0 0 auto;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--s2) 60%, transparent)) drop-shadow(0 0 8px color-mix(in srgb, var(--s3) 30%, transparent));
-}
-.public .brand-mark .halo { fill: none; stroke: url(#specMark); stroke-opacity: .35; stroke-width: 4.2; stroke-linecap: round; stroke-linejoin: round; }
-.public .brand-mark .core { fill: none; stroke: url(#specMark); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.public .brand-text { line-height: 1.05; }
-.public .brand-text small { display: block; font-size: 9px; letter-spacing: .3em; color: var(--text-2); }
-.public .brand-text strong { font-size: 13px; letter-spacing: .12em; font-weight: 600; }
-.public .nav-actions { display: flex; gap: 10px; }
-
-.public .btn {
-  position: relative;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 24px; border-radius: 4px;
-  font: inherit; font-size: 15px; font-weight: 500; letter-spacing: .04em; line-height: 1.6;
-  color: var(--text-2);
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--bg), var(--bg)) padding-box,
-    linear-gradient(rgba(10,11,20,.62), rgba(10,11,20,.62)) border-box,
-    var(--spectrum) border-box;
-  background-size: auto, auto, 400% 100%;
-  animation: drift 12s linear infinite;
-  cursor: pointer;
-  transition: color .25s, box-shadow .25s, transform .2s;
-}
-.public .btn:hover, .public .btn.neon {
-  background: linear-gradient(var(--bg), var(--bg)) padding-box, var(--spectrum) border-box;
-  background-size: auto, 400% 100%;
-}
-.public .btn::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit;
-  background: var(--spectrum); background-size: 400% 100%; animation: drift 12s linear infinite;
-  opacity: 0; transition: opacity .25s; pointer-events: none;
-}
-.public .btn:hover { color: var(--text); box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 45%, transparent), 0 0 24px color-mix(in srgb, var(--s3) 22%, transparent); }
-.public .btn:hover::before { opacity: .1; }
-.public .btn.small { padding: 8px 16px; font-size: 13px; }
-.public .btn.neon {
-  color: var(--text);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--s2) 55%, transparent), 0 0 28px color-mix(in srgb, var(--s3) 30%, transparent);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--s2) 60%, transparent);
-}
-.public .btn.neon::before { opacity: .12; }
-.public .btn.soon { cursor: default; user-select: none; }
-
-/* ---------- footer ---------- */
-.public footer {
-  display: flex; justify-content: center; align-items: center; gap: 10px 26px; flex-wrap: wrap;
-  padding: 28px clamp(20px, 6vw, 96px) 40px;
-  border-top: 1px solid var(--line);
-  font-size: 12px; color: var(--muted); letter-spacing: .06em;
-}
-.public footer .brand-mark { width: 18px; height: 18px; }
-.public footer a:hover { color: var(--text-2); }
-.public footer a[aria-current] { color: var(--text-2); }
-.public footer .credit a { color: var(--text-2); }
-.public footer .credit a:hover { color: var(--text); }
+/* a denser backdrop than the front page's, since text scrolls beneath it here */
+.public .nav { background: linear-gradient(180deg, rgba(10,11,20,.92), rgba(10,11,20,.6) 70%, rgba(10,11,20,0)); }
 
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .public *, .public *::before, .public *::after { animation: none !important; transition: none !important; }
-}
-
-@media (max-width: 520px) {
-  .public .nav-actions .btn:not(.neon) { display: none; }
 }

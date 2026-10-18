@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import LoginTransition from './LoginTransition'
+import useAuth from '../../hooks/useAuth'
 import { getDashboard, recommendationKeys } from '../../services/recommendationService'
 import {
   MIN_FIRST_MS,
@@ -11,19 +12,24 @@ import {
   consumePendingLogin,
 } from '../../config/loginTransition'
 
-type TransitionState = 'idle' | 'entering' | 'leaving'
+type TransitionState = 'entering' | 'leaving' | 'done'
 
 export default function PostLoginTransition() {
   const queryClient = useQueryClient()
+  const { isAuthenticated, isLoading } = useAuth()
 
-  // Read once per mount, before first paint, so the overlay is up on the very first
-  // frame after the redirect rather than flashing the dashboard first.
+  // The flag is read and removed on the first load whatever follows, so one that a sign-in
+  // never completed (Keycloak left, or the callback failed) cannot outlive that load.
   const [pending] = useState(consumePendingLogin)
   const [floor] = useState(() => (isFirstLogin() ? MIN_FIRST_MS : MIN_REPEAT_MS))
-  const [state, setState] = useState<TransitionState>(() => (pending ? 'entering' : 'idle'))
+  const [state, setState] = useState<TransitionState>('entering')
+  // Only an arrival the gateway answers as signed in is a sign-in. A signed-out visitor with the
+  // flag gets nothing, since the prefetch would 401 and the client would send them to the sign-in.
+  // Until the answer the routes render nothing, so the dashboard cannot show before the overlay.
+  const arrived = pending && !isLoading && isAuthenticated
 
   useEffect(() => {
-    if (!pending) return
+    if (!arrived) return
 
     const minFloor = floor
     const startedAt = Date.now()
@@ -48,7 +54,7 @@ export default function PostLoginTransition() {
       setState('leaving')
       // Matches LoginTransition's fade-out so the cross-fade reads cleanly.
       fadeTimer = setTimeout(() => {
-        if (!cancelled) setState('idle')
+        if (!cancelled) setState('done')
       }, 250)
     }
 
@@ -58,9 +64,9 @@ export default function PostLoginTransition() {
       cancelled = true
       if (fadeTimer) clearTimeout(fadeTimer)
     }
-  }, [pending, floor, queryClient])
+  }, [arrived, floor, queryClient])
 
-  if (state === 'idle') return null
+  if (!arrived || state === 'done') return null
 
   return <LoginTransition leaving={state === 'leaving'} durationMs={floor} />
 }

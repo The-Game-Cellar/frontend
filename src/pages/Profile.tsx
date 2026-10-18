@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import useAuth from '../hooks/useAuth'
 import {
   startAccountAction,
@@ -33,6 +34,7 @@ function noticeFor(action: string, status: string): Notice | null {
 }
 
 export default function Profile() {
+  useDocumentTitle('Account')
   const { email, logout } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()

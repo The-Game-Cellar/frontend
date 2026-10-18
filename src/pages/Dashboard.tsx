@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import GameCard from '../components/common/GameCard'
 import type { GameCardData } from '../components/common/GameCard'
@@ -159,6 +160,7 @@ function GameScroll<T extends GameCardData>({ games, getKey, onClick, loading = 
 }
 
 export default function Dashboard() {
+  useDocumentTitle('Dashboard')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
